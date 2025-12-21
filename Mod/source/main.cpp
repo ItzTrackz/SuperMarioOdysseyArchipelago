@@ -857,11 +857,12 @@ void stageInitHook(al::ActorInitInfo *info, StageScene *curScene, al::PlacementI
     int worldScenario =
         GameDataFunction::getWorldScenarioNo(info->mActorSceneInfo.mSceneObjHolder, worldId);
 
-    // Enable Cappy on load into Cap Intro
-    if (worldId == 0 && worldScenario < 2 && !GameDataFunction::isEnableCap(accessor))
+    // Enable Cappy on load into Cap Intro (Soft Locks)
+    /*if (worldId == 0 && worldScenario < 2 && !GameDataFunction::isEnableCap(accessor))
     {
         GameDataFunction::enableCap(accessor);
-    }
+        GameDataFunction::restartStage(accessor);
+    }*/
 
     if (worldScenario > Client::getScenario(worldId))
     {

@@ -23,6 +23,11 @@ B59E28 B seadPrintHook // sead::system::print
 // HakoniwaStateDemoOpening::exeLoad(HakoniwaStateDemoOpening *this)
 512ae8 BL onNewGameDemoStart
 
+// HakoniwaSequence::init(HakoniwaSequence *this,SequenceInitInfo *param_1)
+//50ef40 BL onNewGameDemoStart
+
+
+
 // WorldHeap
 5145c8 CMP W20, 500
 
