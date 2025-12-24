@@ -100,8 +100,8 @@ Client::Client() {
 void Client::init(al::LayoutInitInfo const &initInfo, GameDataHolderAccessor holder) {
 
     mConnectStatus = new (mHeap) al::SimpleLayoutAppearWaitEnd("", "SaveMessage", initInfo, 0, false);
-    al::setPaneString(mConnectStatus, "TxtSave", u"Connecting to Server.", 0);
-    al::setPaneString(mConnectStatus, "TxtSaveSh", u"Connecting to Server.", 0);
+    al::setPaneString(mConnectStatus, "TxtSave", u"Connecting to Client.", 0);
+    al::setPaneString(mConnectStatus, "TxtSaveSh", u"Connecting to Client.", 0);
 
     mUIMessage = new (mHeap) al::WindowConfirmWait("ServerWaitConnect", "WindowConfirmWait", initInfo);
     mUIMessage->setTxtMessage(u"a");
@@ -155,7 +155,7 @@ bool Client::startConnection() {
         mKeyboard->setHeaderText(u"Save File does not contain a port!");
         mKeyboard->setSubText(u"Please set a Server Port Below.");
         mServerPort = 1027;
-        Client::openKeyboardPort();
+        //Client::openKeyboardPort();
         isNeedSave = true;
     }
 
