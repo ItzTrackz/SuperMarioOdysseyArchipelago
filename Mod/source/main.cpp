@@ -447,11 +447,19 @@ void drawMainHook(HakoniwaSequence* curSequence, sead::Viewport* viewport,
 bool isGrabShine(GameDataHolderAccessor accessor, int shineIdx) {
     GameDataFile::HintInfo* curHintInfo =
         &accessor.mData->mGameDataFile->mShineHintList[shineIdx];
-    if (!curHintInfo->mIsGrand || (curHintInfo->mUniqueID == 159 && Client::getScenario(3) < 3)) {
+    if (!curHintInfo->mIsGrand) {
         if (curHintInfo->mUniqueID == 205 && Client::getScenario(1) > 1 ||
             curHintInfo->mUniqueID == 129)
         {
             return true;
+        }
+        if (curHintInfo->mUniqueID == 159 && Client::getScenario(3) < 3 &&
+            Client::getScenario(3) > 1 && Client::hasCapture("Senobi") &&
+            Client::hasShine(curHintInfo->mUniqueID)) {
+            ChangeStageInfo info =
+                ChangeStageInfo(accessor.mData, "", "ForestWorldBossStage", false, 2,
+                                static_cast<ChangeStageInfo::SubScenarioType>(0));
+            GameDataFunction::tryChangeNextStage(accessor, &info);
         }
         return Client::hasShine(curHintInfo->mUniqueID);
     }
@@ -579,6 +587,13 @@ void sendShinePacket(GameDataHolderAccessor thisPtr, Shine* curShine) {
     }
     // Add some way to sync shinechecks grabbed before connecting, probably handle on connect or something
     Client::addShine(curHintInfo->mUniqueID);
+    if (curHintInfo->mUniqueID == 107)
+    {
+        ChangeStageInfo info =
+            ChangeStageInfo(thisPtr.mData, "", "CityWorldHomeStage", false, 3,
+                            static_cast<ChangeStageInfo::SubScenarioType>(0));
+        GameDataFunction::tryChangeNextStage(thisPtr, &info);
+    }
 }
 
 void sendItemPacket(GameDataFile thisPtr, ShopItem::ItemInfo* info, bool flag) {
