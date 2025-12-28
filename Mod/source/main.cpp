@@ -30,6 +30,7 @@
 #include "al/layout/IUseLayout.h"
 #include "debugMenu.hpp"
 #include "game/GameData/GameDataFunction.h"
+#include "game/GameData/GameProgressData.h"
 #include "game/HakoniwaSequence/HakoniwaSequence.h"
 #include "game/Player/PlayerFunction.h"
 #include "game/StageScene/StageScene.h"
@@ -44,6 +45,7 @@
 #include "sead/prim/seadSafeString.hpp"
 #include "game/Demo/DemoStateHackFirst.h"
 #include "game/Actors/GrowFlowerPot.h"
+#include "game/SceneObjs/CapMessageMoonNotifier.h"
 
 static int pInfSendTimer = 0;
 static int gameInfSendTimer = 0;
@@ -453,14 +455,6 @@ bool isGrabShine(GameDataHolderAccessor accessor, int shineIdx) {
         {
             return true;
         }
-        if (curHintInfo->mUniqueID == 159 && Client::getScenario(3) < 3 &&
-            Client::getScenario(3) > 1 && Client::hasCapture("Senobi") &&
-            Client::hasShine(curHintInfo->mUniqueID)) {
-            ChangeStageInfo info =
-                ChangeStageInfo(accessor.mData, "", "ForestWorldBossStage", false, 2,
-                                static_cast<ChangeStageInfo::SubScenarioType>(0));
-            GameDataFunction::tryChangeNextStage(accessor, &info);
-        }
         return Client::hasShine(curHintInfo->mUniqueID);
     }
     return false;
@@ -681,6 +675,22 @@ int getUnlockShineNumByWorldId(bool* unkBool, GameDataHolder* thisPtr, int world
     return getUnlockShineNum(thisPtr, unkBool, worldId);
 }
 
+bool showHasUnlockShineNumCapMessage(al::IUseSceneObjHolder* sceneObjHolder)
+{
+    GameDataHolderAccessor accessor = GameDataHolderAccessor(sceneObjHolder);
+    if (GameDataFunction::getGotShineNum(accessor, -1) >= Client::getWorldUnlockCount(GameDataFunction::getCurrentWorldId(accessor)))
+    {
+        if (al::isExistSceneObj(sceneObjHolder, 5)) {
+            CapMessageMoonNotifier* notifier = (CapMessageMoonNotifier*)al::getSceneObj(sceneObjHolder, 5); 
+            notifier->unlockShineNum =
+                Client::getWorldUnlockCount(GameDataFunction::getCurrentWorldId(accessor));
+            return notifier->tryShowCapMessageMoonNotify();
+        }
+        return false;
+    }
+    return false;
+}
+
 void onGrandShineStageChange(GameDataHolderWriter holder, ChangeStageInfo const* stageInfo) 
 {
     Client::sendStage(holder, stageInfo);
@@ -871,6 +881,35 @@ void stageInitHook(al::ActorInitInfo *info, StageScene *curScene, al::PlacementI
     int worldId = GameDataFunction::getCurrentWorldId(info->mActorSceneInfo.mSceneObjHolder);
     int worldScenario =
         GameDataFunction::getWorldScenarioNo(info->mActorSceneInfo.mSceneObjHolder, worldId);
+
+    // Guarantee Lake and Snow selection
+    if (accessor.mData->mGameDataFile->mGameProgressData->mUnlockWorldStatusFirstBranch != GameProgressData::FirstBranch::None)
+    {
+        if (accessor.mData->mGameDataFile->mGameProgressData->mUnlockWorldStatusFirstBranch !=
+            GameProgressData::FirstBranch::Lake)
+        {
+            accessor.mData->mGameDataFile->mGameProgressData->mUnlockWorldStatusFirstBranch =
+                GameProgressData::FirstBranch::Lake;
+        }
+    }
+
+    if (accessor.mData->mGameDataFile->mGameProgressData->mUnlockWorldStatusSecondBranch != GameProgressData::SecondBranch::None)
+    {
+        if (accessor.mData->mGameDataFile->mGameProgressData->mUnlockWorldStatusSecondBranch !=
+            GameProgressData::SecondBranch::Snow)
+        {
+            accessor.mData->mGameDataFile->mGameProgressData->mUnlockWorldStatusSecondBranch =
+                GameProgressData::SecondBranch::Snow;
+        }
+    }
+
+    // Fix possible wooded softlock not sure if needed
+    //if (worldId == 3 && worldScenario == 2 && Client::hasCapture("Senobi") &&
+    //    Client::hasShine(159)) {
+    //    ChangeStageInfo info = ChangeStageInfo(accessor.mData, "", "ForestWorldBossStage", false, 2,
+    //                                           static_cast<ChangeStageInfo::SubScenarioType>(0));
+    //    GameDataFunction::tryChangeNextStage(accessor, &info);
+    //}
 
     // Enable Cappy on load into Cap Intro (Soft Locks)
     /*if (worldId == 0 && worldScenario < 2 && !GameDataFunction::isEnableCap(accessor))

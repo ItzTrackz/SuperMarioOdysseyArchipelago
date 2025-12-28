@@ -218,6 +218,10 @@ B59E28 B seadPrintHook // sead::system::print
 // FUN_71003126ec(LiveActor *param_1)
 312734 BL getUnlockShineNumByWorldId
 
+// Unlock Count Reached Cappy Notification
+// StageScene::exePlay(StageScene *this)
+4cd80c BL showHasUnlockShineNumCapMessage
+
 // GameDataFunction::calcWorldNumForShineList(LayoutActor *param_1)
 52b154 MOV X0, #17
 

@@ -1596,14 +1596,24 @@ void Client::addShine(int uid)
         Logger::log("Static Instance is Null!\n");
         return;
     }
-
     int shines = sInstance->collectedShines[uid / 32];
 
     int index = (uid / 32) * 32;
     int i = 1;
-    while (i > 0) {
+    while (i <= 0x80000000) {
         if (index == uid) {
             shines = shines | i;
+            break;
+        }
+        if (i == 0x80000000)
+        {
+            sead::FixedSafeString<60> str;
+            str = "";
+            str.append("Shine UID ");
+            str.append(intToCstr(uid));
+            str.append(" failed to add to shine list at index ");
+            str.append(intToCstr(index));
+            setMessage(2, str.cstr());
             break;
         }
         i = i << 1;
@@ -1634,10 +1644,21 @@ bool Client::hasShine(int uid)
 
     int index = (uid / 32) * 32;
     int i = 1;
-    while (i > 0) {
+    while (i <= 0x80000000) {
         if (index == uid) {
             shines = shines & i;
             return (shines == i);
+        }
+        if (i == 0x80000000)
+        {
+            sead::FixedSafeString<60> str;
+            str = "";
+            str.append("Shine UID ");
+            str.append(intToCstr(uid));
+            str.append(" failed to find in shine list at index ");
+            str.append(intToCstr(index));
+            setMessage(3, str.cstr());
+            break;
         }
         i = i << 1;
         index += 1;
