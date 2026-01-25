@@ -682,8 +682,9 @@ bool showHasUnlockShineNumCapMessage(al::IUseSceneObjHolder* sceneObjHolder)
     {
         if (al::isExistSceneObj(sceneObjHolder, 5)) {
             CapMessageMoonNotifier* notifier = (CapMessageMoonNotifier*)al::getSceneObj(sceneObjHolder, 5); 
-            notifier->unlockShineNum =
-                Client::getWorldUnlockCount(GameDataFunction::getCurrentWorldId(accessor));
+            /*notifier->unlockShineNum =
+                Client::getWorldUnlockCount(GameDataFunction::getCurrentWorldId(accessor));*/
+            Client::setMessage(1, "Has Enough Moons for notification.")
             return notifier->tryShowCapMessageMoonNotify();
         }
         return false;
