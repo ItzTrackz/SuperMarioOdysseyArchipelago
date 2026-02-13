@@ -381,8 +381,12 @@ class SMOContext(CommonContext):
                                 packet = Packet(guid=self.proxy_guid, packet_type=PacketType.Check,
                                     packet_data=[next_moon, ItemType.Moon, index, "", "", 0])
                             else:
-                                logger.info(f"Received nonexistent moon. This is either caused by a bug or the use of commands to give"
-                                            f" this slot more of a type of moon than can possibly exist.")
+                                match next_moon:
+                                    case -1:
+                                        logger.info(f"Received nonexistent moon. This is either caused by a bug or the use of commands to give"
+                                                    f" this slot more of a type of moon than can possibly exist.")
+                                    case -2:
+                                        pass
                         # Regional Coins
                         case 4:
                             pass

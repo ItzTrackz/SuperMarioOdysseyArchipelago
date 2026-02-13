@@ -1,3 +1,5 @@
+from ..Options import SMOOptions
+
 class ShopReplaceText:
     game_index : int = -1
     slot_index : int = -1
@@ -2923,13 +2925,13 @@ valid_warps = {
 }
 
 goals = {
-    4: 560,
-    5: 424,
-    9: 95,
-    12: 290,
-    14: 2499,
-    17: 1055,
-    18: 1061
+    SMOOptions.goal.option_sand: 560,
+    SMOOptions.goal.option_lake: 424,
+    SMOOptions.goal.option_metro: 95,
+    SMOOptions.goal.option_luncheon: 290,
+    SMOOptions.goal.option_moon: 2499,
+    SMOOptions.goal.option_dark: 1055,
+    SMOOptions.goal.option_darker: 1061
 }
 
 def get_item_type(item : int) -> int:
