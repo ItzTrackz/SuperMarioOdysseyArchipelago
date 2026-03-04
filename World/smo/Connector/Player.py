@@ -2,7 +2,6 @@ from NetUtils import NetworkItem
 from .Data import moon_list, id_to_name, goals
 
 class SMOPlayer:
-    moons = {}
     MAX_MOONS = {
         "Cascade Story Moon": 1,
         "Sand Story Moon": 2,
@@ -26,35 +25,7 @@ class SMOPlayer:
         "Dark Side Multi-Moon": 1,
         "Darker Side Multi-Moon": 1
     }
-    messages : list[str] = []
-    MAX_MESSAGE_SIZE = 0x42
-    item_index : int = 0
-    world_scenarios : dict = {
-        "Cap": 1,
-        "Cascade": 1,
-        "Sand": 1,
-        "Wooded": 1,
-        "Lake": 1,
-        "Cloud": 1,
-        "Lost": 1,
-        "Metro": 1,
-        "Seaside": 1,
-        "Snow": 1,
-        "Luncheon": 1,
-        "Ruined": 1,
-        "Bowser": 1,
-        "Moon": 1,
-        "Mushroom": 1,
-        "Dark": 1,
-        "Darker": 1
-    }
-    goal : int
-    current_home_stage : str = ""
-
     def __init__(self):
-        self.reset_moons()
-
-    def reset_moons(self):
         self.moons = {
         "Cap Power Moon": 0,
         "Cascade Power Moon": 2,
@@ -94,7 +65,74 @@ class SMOPlayer:
         "Dark Side Multi-Moon": 0,
         "Darker Side Multi-Moon": 0,
         "Beat the Game": -1
-    }
+        }
+
+        self.messages : list[str] = []
+        self.MAX_MESSAGE_SIZE = 0x42
+        self.item_index : int = 0
+        self.world_scenarios : dict = {
+            "Cap": 1,
+            "Cascade": 1,
+            "Sand": 1,
+            "Wooded": 1,
+            "Lake": 1,
+            "Cloud": 1,
+            "Lost": 1,
+            "Metro": 1,
+            "Seaside": 1,
+            "Snow": 1,
+            "Luncheon": 1,
+            "Ruined": 1,
+            "Bowser": 1,
+            "Moon": 1,
+            "Mushroom": 1,
+            "Dark": 1,
+            "Darker": 1
+        }
+        self.goal : int
+        self.current_home_stage : str = ""
+
+    def reset_moons(self):
+        self.moons = {
+            "Cap Power Moon": 0,
+            "Cascade Power Moon": 2,
+            "Sand Power Moon": 4,
+            "Wooded Power Moon": 4,
+            "Lake Power Moon": 1,
+            "Cloud Power Moon": 0,
+            "Lost Power Moon": 0,
+            "Metro Power Moon": 7,
+            "Seaside Power Moon": 5,
+            "Snow Power Moon": 5,
+            "Luncheon Power Moon": 5,
+            "Ruined Power Moon": 1,
+            "Bowser Power Moon": 4,
+            "Moon Power Moon": 0,
+            "Power Star": 6,
+            "Dark Side Power Moon": 1,
+            "Cascade Story Moon": 0,
+            "Sand Story Moon": 0,
+            "Wooded Story Moon": 0,
+            "Metro Story Moon": 0,
+            "Seaside Story Moon": 0,
+            "Snow Story Moon": 0,
+            "Luncheon Story Moon": 0,
+            "Bowser Story Moon": 0,
+            "Cascade Multi-Moon": 1,
+            "Sand Multi-Moon": 2,
+            "Wooded Multi-Moon": 2,
+            "Lake Multi-Moon": 0,
+            "Metro Multi-Moon": 5,
+            "Seaside Multi-Moon": 4,
+            "Snow Multi-Moon": 4,
+            "Luncheon Multi-Moon": 3,
+            "Ruined Multi-Moon": 0,
+            "Bowser Multi-Moon": 3,
+            "Mushroom Multi-Moon": 0,
+            "Dark Side Multi-Moon": 0,
+            "Darker Side Multi-Moon": 0,
+            "Beat the Game": -1
+        }
 
     def get_next_moon(self, item : int) -> int:
         """
@@ -109,6 +147,8 @@ class SMOPlayer:
         if item_name in self.MAX_MOONS:
             if self.moons[item_name] >= self.MAX_MOONS[item_name]:
                 return -1
+        elif item_name == "Beat the Game":
+            return -2
         moon_id : int = moon_list["Mushroom" if item_name == "Power Star" else item_name.split(" ")[0]][self.moons[item_name]]
         self.moons[item_name] += 1
         return moon_id
