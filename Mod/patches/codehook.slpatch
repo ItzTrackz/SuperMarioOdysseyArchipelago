@@ -31,6 +31,8 @@ B59E28 B seadPrintHook // sead::system::print
 // WorldHeap
 5145c8 CMP W20, 500
 
+514710 RET
+
 50E89C BL constructHook // HakoniwaSequence::init+1F4
 50EF2C: // HakoniwaSequence::init+884
     MOV X0, X19 // move HakoniwaSequence ptr to arg register
@@ -93,6 +95,8 @@ B59E28 B seadPrintHook // sead::system::print
 
 // CoinCollect::exeGot
 1C043C BL sendCollectPacket
+
+//
 
 // CoinCollect2D::exeCountUp
 //1C0560 BL sendCollectPacket
