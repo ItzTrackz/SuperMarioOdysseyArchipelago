@@ -85,16 +85,16 @@ public:
     s32 calcWorldIdByOrderUnlock(s32 idx) const;
 
 public:
-    s32* mWorldIdForWorldMap = nullptr;
-    s32* mWorldIdForWorldWarpHole = nullptr;
-    s32* mWorldIdForShineList = nullptr;
-    bool* mIsUnlockWorld = nullptr;
-    s32 mUnlockWorldNum = 1; // 0x29
+    s32* mWorldIdForWorldMap = nullptr; // 0x8
+    s32* mWorldIdForWorldWarpHole = nullptr; // 0x10
+    s32* mWorldIdForShineList = nullptr; // 0x18
+    bool* mIsUnlockWorld = nullptr; // 0x20
+    s32 mUnlockWorldNum = 1; // 0x28
     FirstBranch mUnlockWorldStatusFirstBranch = FirstBranch::None; // 0x2C
     SecondBranch mUnlockWorldStatusSecondBranch = SecondBranch::None; // 0x30
-    HomeStatus mHomeStatus = HomeStatus::None;
-    s32 mHomeLevel = 0;
-    const WorldList* mWorldList = nullptr;
-    bool* mIsFirstTimeWorld = nullptr;
-    WaterfallWorldProgress mWaterfallWorldProgress = WaterfallWorldProgress::None;
+    HomeStatus mHomeStatus = HomeStatus::None; //0x34
+    s32 mHomeLevel = 0; // 0x38
+    const WorldList* mWorldList = nullptr; // 0x3C
+    bool* mIsFirstTimeWorld = nullptr; // 0x44
+    WaterfallWorldProgress mWaterfallWorldProgress = WaterfallWorldProgress::None; // 0x4C
 };
