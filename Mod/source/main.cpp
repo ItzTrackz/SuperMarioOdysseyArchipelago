@@ -618,7 +618,7 @@ void sendCollectPacket(GameDataHolderAccessor thisPtr, al::PlacementId* placemen
 {
     if (Client::getRegionalsFlag())
     {
-        sead::FixedSafeString<0x20> placementString;
+        sead::FixedSafeString<0x80> placementString;
         placementId->makeString(&placementString);
         Client::sendCheckPacket(4, placementString.cstr(), GameDataFunction::getCurrentStageName(thisPtr));
     }
@@ -1044,6 +1044,17 @@ bool hakoniwaSequenceHook(HakoniwaSequence* sequence) {
                 isDisableMusic = !isDisableMusic;
             }
         }
+    } else if (al::isPadHoldR(-1)) {
+
+        // Purple Coin Search
+        if (al::isPadHoldRight(-1)) {
+        
+        }
+
+        // Return to Odyssey
+        if (al::isPadHoldLeft(-1)) {
+        }
+    
     }
 
     if (isDisableMusic) {
