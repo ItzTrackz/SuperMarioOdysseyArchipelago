@@ -1,6 +1,5 @@
 from enum import Enum
 from ctypes import c_short as short, c_ushort as ushort, c_byte as sbyte, c_ubyte as byte, c_byte, c_ubyte
-from math import trunc
 from typing import Any
 
 class PacketType(Enum):
