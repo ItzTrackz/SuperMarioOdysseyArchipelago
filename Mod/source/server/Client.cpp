@@ -1460,6 +1460,10 @@ void Client::receiveCheck(Check* packet)
         accessor.mData->mGameDataFile->buyItem(infoPtr, false);
         break;
 
+    case 4:
+        al::PlacementId placementId(packet->objId, nullptr, nullptr);
+        accessor.mData->mGameDataFile->customAddCoinCollect( placementId, packet->amount, packet->stage);
+
     case 5:
         addCapture(captureListNames[packet->locationId]);
         GameDataFunction::addHackDictionary(accessor, captureListNames[packet->locationId]);
