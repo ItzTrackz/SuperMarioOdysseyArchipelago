@@ -14,6 +14,7 @@ from .Data import inverse_shop_items, shop_items, get_item_type, worlds, world_a
     multi_moon_locations, world_prefixes
 from .Player import SMOPlayer
 
+import entrance_rando
 import traceback
 
 message_types = [
@@ -102,6 +103,14 @@ class SMOContext(CommonContext):
         self.logged_in : bool = False
         self.multi_moon_anim : bool = False
         self.death_link_enabled : bool = False
+        # Make Simplified SMOPlayer, SMONetworkPlayer
+        # That only contains a list of packets to be synced, current stage, and
+        # guid. Other important info may be needed.
+        # Have a dict of Slot Names -> SMONetworkPlayer
+        # Make a UDP server to send player packets (movement, etc)
+        # probably on the same port (1027)
+        # Tunnel player packets through AP Lobby connection
+        # Use Set and Get commands
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
@@ -130,6 +139,8 @@ class SMOContext(CommonContext):
     def on_print_json(self, args: dict):
         text = self.gamejsontotext(deepcopy(args["data"]))
         if "type" in args and args["type"] in message_types:
+            if args["type"] == "Hint":
+                print(args)
             self.player_data.add_message(text)
 
         if self.ui:
@@ -381,8 +392,12 @@ class SMOContext(CommonContext):
                                 packet = Packet(guid=self.proxy_guid, packet_type=PacketType.Check,
                                     packet_data=[next_moon, ItemType.Moon, index, "", "", 0])
                             else:
-                                logger.info(f"Received nonexistent moon. This is either caused by a bug or the use of commands to give"
-                                            f" this slot more of a type of moon than can possibly exist.")
+                                match next_moon:
+                                    case -1:
+                                        logger.info(f"Received nonexistent moon. This is either caused by a bug or the use of commands to give"
+                                                    f" this slot more of a type of moon than can possibly exist.")
+                                    case -2:
+                                        pass
                         # Regional Coins
                         case 4:
                             pass
