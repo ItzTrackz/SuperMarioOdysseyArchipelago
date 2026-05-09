@@ -763,6 +763,10 @@ class SMOWorld(World):
                             location.item.name = f"{str(coin_amount)} " + location.item.name
                             self.coin_values[location.player][location.address] = coin_amount
 
+                        # Fixes item_name_to_id calls with coins
+                        if location.item.name not in self.item_name_to_id:
+                            self.item_name_to_id[location.item.name] = self.item_name_to_id["Coins"]
+
 
 
         for world_id in range(len(location_hint_list)):
