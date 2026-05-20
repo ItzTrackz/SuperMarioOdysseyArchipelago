@@ -1,5 +1,9 @@
 from BaseClasses import CollectionState
-from.Items import outfits, shop_items, moon_types
+
+from .Items import outfits, shop_items, moon_types
+from .Locations import  regional_coin_groups, regional_sub_area_to_kingdom
+from .Data.RegionData import SMORegion
+from .Data.EntranceData import SMOEntranceData
 
 def count_moons(state: CollectionState, kingdom : str, player: int) -> int:
     """ Counts the number of in logic moons available for a given kingdom.
@@ -52,7 +56,19 @@ def count_regionals(state: CollectionState, kingdom: str, player: int) -> int:
 
     amt = 0
     player_prog_items = state.prog_items[player]
-    amt += 0 if not kingdom.capitalize() + " Kingdom Regional Coin" in player_prog_items else player_prog_items[
-        kingdom.capitalize() + " Kingdom Regional Coin"]
+    if kingdom.capitalize() + " Kingdom Regional Coin" in player_prog_items:
+        amt += player_prog_items[kingdom.capitalize() + " Kingdom Regional Coin"]
+
+    elif kingdom.capitalize() + " Kingdom Regional Coins" in player_prog_items:
+        num_groups = player_prog_items[kingdom.capitalize() + " Kingdom Regional Coins"]
+        stages = ([kingdom + " Kingdom"] +
+                  regional_sub_area_to_kingdom[kingdom.lower()]) if kingdom.lower() in regional_sub_area_to_kingdom else []
+
+        for stage in stages:
+            internal_stage = SMOEntranceData.display_name_to_internal_name[stage]
+            for group in regional_coin_groups[internal_stage]:
+                if num_groups > 0:
+                    amt += len(regional_coin_groups[internal_stage][group])
+                    num_groups -= 1
 
     return amt
