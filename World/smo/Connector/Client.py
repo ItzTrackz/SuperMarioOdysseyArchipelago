@@ -8,14 +8,15 @@ from NetUtils import encode, NetworkPlayer, NetworkItem, JSONtoTextParser, JSONM
 from MultiServer import Endpoint
 from CommonClient import get_base_parser, gui_enabled, logger, CommonContext, ClientCommandProcessor
 from typing import List, Any
-from .Packets import PacketHeader, PacketType, Packet, ItemType
+from .Packets import PacketHeader, PacketType, Packet, ItemType, MessageType
 
 from .Data import inverse_shop_items, shop_items, get_item_type, worlds, world_alias, valid_warps, inverse_worlds, \
-    multi_moon_locations, world_prefixes
+    multi_moon_locations, world_prefixes, get_regional_coin_location, id_to_name, regional_coin_location_to_internal
 from .Player import SMOPlayer
 
-import entrance_rando
 import traceback
+
+from .. import stage_ids, stage_names, regional_coin_groups
 
 message_types = [
     "ItemSend",
@@ -62,12 +63,77 @@ class SMOCommandProcessor(ClientCommandProcessor):
                 self.ctx.proxy_msgs.append(Packet(guid=self.ctx.proxy_guid, packet_type=PacketType.ChangeStage,
                                                  packet_data=[kingdom, scenario]))
 
-    # def _cmd_unlock(self, kingdom : int, scenario : int = -1):
+    def _cmd_slot(self):
+        """
+        Display the active options according to slot data received from the lobby.
+        """
+        if isinstance(self.ctx, SMOContext):
+            do_not_display = ["entrances", "shop_replace_data", "coin_values",
+                              "shop_games", "shop_players", "shop_ap_items",
+                              "shine_replace_data", "shine_items", "shine_colors"]
+            for key in self.ctx.slot_data:
+                if key not in do_not_display:
+                    logger.info(f"{key}: {self.ctx.slot_data[key]}")
+
+    def _cmd_packets(self):
+        """
+        Display queued packets
+        """
+        if isinstance(self.ctx, SMOContext):
+            packets = []
+            for packet in self.ctx.proxy_msgs:
+                packets.append(packet.header.packet_type.name)
+            logger.info(f"{packets}")
+
+    # def _cmd_init(self):
+    #     """
+    #     init smo connection
+    #     """
     #     if isinstance(self.ctx, SMOContext):
-    #         logger.info(f"Unlocking Kingdom {kingdom}")
-    #         self.ctx.player_data.add_message(f"Kingdom Unlocked")
-    #         self.ctx.proxy_msgs.append(Packet(guid=self.ctx.proxy_guid, packet_type=PacketType.Progress,
-    #                                       packet_data=[kingdom, scenario]))
+    #         init_packet = Packet(guid=self.ctx.proxy_guid, packet_type=PacketType.Init)
+    #         logger.info(f"max players {init_packet.packet.max_players}, version {init_packet.packet.server_version}")
+    #         # Insert init packet at 0 in queue so other packets added before aren't dropped.
+    #         self.ctx.proxy_msgs.insert(0, init_packet)
+    #
+    # def _cmd_allow(self, packet_type: int):
+    #     """
+    #     Add packet to allow list
+    #     """
+    #     if isinstance(self.ctx, SMOContext):
+    #         self.ctx.allowed_packets.append(int(packet_type))
+    #
+    # def _cmd_allowed(self):
+    #     """
+    #     allow list
+    #     """
+    #     if isinstance(self.ctx, SMOContext):
+    #         logger.info(f"{self.ctx.allowed_packets}")
+    # # def _cmd_unlock(self, kingdom : int, scenario : int = -1):
+    # #     if isinstance(self.ctx, SMOContext):
+    # #         logger.info(f"Unlocking Kingdom {kingdom}")
+    # #         self.ctx.player_data.add_message(f"Kingdom Unlocked")
+    # #         self.ctx.proxy_msgs.append(Packet(guid=self.ctx.proxy_guid, packet_type=PacketType.Progress,
+    # #                                       packet_data=[kingdom, scenario]))
+
+    def _cmd_ero(self, entrance_id: str):
+        """
+        Logs the over world entrance at entrance_id
+        """
+        if isinstance(self.ctx, SMOContext):
+            if len(self.ctx.slot_data) > 0:
+                if entrance_id in stage_ids:
+                    entrance = self.ctx.slot_data['entrances']['over_world'][str(stage_ids.index(entrance_id))]
+                    logger.info(f"{entrance_id} leads to {stage_ids[entrance[0]]} in {stage_names[entrance[1]]}")
+
+    def _cmd_ers(self, entrance_id: str):
+        """
+        Logs the sub area entrance at entrance_id
+        """
+        if isinstance(self.ctx, SMOContext):
+            if len(self.ctx.slot_data) > 0:
+                if entrance_id in stage_ids:
+                    entrance = self.ctx.slot_data['entrances']['sub_area'][str(stage_ids.index(entrance_id))]
+                    logger.info(f"{entrance_id} leads to {stage_ids[entrance[0]]} in {stage_names[entrance[1]]}")
 
 # Change send message and related calls to send packet and serialize and deserialize using the packet of the respective packet type.
 # Make sure to receive packets on the connection to send checks through to the AP Server from this client.
@@ -103,6 +169,7 @@ class SMOContext(CommonContext):
         self.logged_in : bool = False
         self.multi_moon_anim : bool = False
         self.death_link_enabled : bool = False
+        self.allowed_packets : list = [PacketType.Init.value]
         # Make Simplified SMOPlayer, SMONetworkPlayer
         # That only contains a list of packets to be synced, current stage, and
         # guid. Other important info may be needed.
@@ -135,6 +202,16 @@ class SMOContext(CommonContext):
     def is_connected(self) -> bool:
         return self.server and self.server.socket.open
 
+    def connect_to_archipelago(self):
+        payload = {
+            'cmd': 'Connect',
+            'password': self.password, 'name': self.auth, 'version': Utils.version_tuple,
+            'tags': self.tags, 'items_handling': self.items_handling,
+            'uuid': Utils.get_unique_identifier(), 'game': self.game, "slot_data": self.want_slot_data,
+        }
+
+        self.server_msgs.append(payload)
+
     # Handle APChatMessage here
     def on_print_json(self, args: dict):
         text = self.gamejsontotext(deepcopy(args["data"]))
@@ -161,7 +238,7 @@ class SMOContext(CommonContext):
         Forwards Slot Data from Archipelago Lobby connection to SMO
         :return:
         """
-        #print(self.slot_data)
+        # print(self.slot_data)
         self.proxy_msgs.append(Packet(guid=self.proxy_guid, packet_type=PacketType.SlotData,
               packet_data=[self.slot_data["counts"]["cascade"],
                            self.slot_data["counts"]["sand"],
@@ -173,7 +250,8 @@ class SMOContext(CommonContext):
                            self.slot_data["counts"]["ruined"],
                            self.slot_data["counts"]["bowser"], self.slot_data["counts"]["dark"],
                            self.slot_data["counts"]["darker"],
-                           self.slot_data["regionals"], self.slot_data["capture_sanity"]]))
+                           self.slot_data["death_link"], self.slot_data["capture_sanity"],
+                           self.slot_data["entrance_randomization"] > 0]))
 
 
 
@@ -281,8 +359,54 @@ class SMOContext(CommonContext):
             if loc < 1167:
                 data[-1].append(loc)
         for i in data:
-            self.proxy_msgs.append(Packet(guid=self.proxy_guid, packet_type=PacketType.ShineChecks,
-                                              packet_data=[i]))
+            self.proxy_msgs.append(Packet(guid=self.proxy_guid, packet_type=PacketType.SentChecks,
+                                              packet_data=[ItemType.Moon, i]))
+
+        data = [[]]
+        for loc in self.checked_locations:
+            if len(data[-1]) == 100:
+                data.append([])
+            if 2700 < loc < 4025:
+                if self.slot_data["regional_coins"] == 1:
+                    for stage in regional_coin_groups:
+                        if loc in regional_coin_groups[stage]:
+                            for group_member in regional_coin_groups[stage][loc]:
+                                data[-1].append(regional_coin_location_to_internal[group_member])
+                                if len(data[-1]) == 100:
+                                    data.append([])
+                else:
+                    data[-1].append(regional_coin_location_to_internal[loc])
+        for i in data:
+            self.proxy_msgs.append(Packet(guid=self.proxy_guid, packet_type=PacketType.SentChecks,
+                                          packet_data=[ItemType.RegionalCoin, i]))
+
+        # Load Zones
+        over_world = []
+        sub_area = []
+        # 50 connections per packet
+        for i in range(259):
+            if str(i) in self.slot_data["entrances"]["over_world"]:
+                over_world.append((i, self.slot_data["entrances"]["over_world"][str(i)][0],
+                              self.slot_data["entrances"]["over_world"][str(i)][1]))
+
+            if str(i) in self.slot_data["entrances"]["sub_area"]:
+                sub_area.append((i, self.slot_data["entrances"]["sub_area"][str(i)][0],
+                                   self.slot_data["entrances"]["sub_area"][str(i)][1]))
+
+
+
+        for i in range(0, len(over_world), 50):
+            self.proxy_msgs.append(Packet(guid=self.proxy_guid, packet_type=PacketType.ShopReplace,
+                                          packet_data=[5, over_world[i:(i + 50
+                                                                    if (i + 50 < len(over_world))
+                                                                    else len(over_world))]]))
+
+        for i in range(0, len(sub_area), 50):
+            self.proxy_msgs.append(Packet(guid=self.proxy_guid, packet_type=PacketType.ShopReplace,
+                                          packet_data=[6, sub_area[i:(i + 50
+                                                                    if (i + 50 < len(sub_area))
+                                                                    else len(sub_area))]]))
+
 
     def forward_shine_data(self):
         world_id = world_prefixes.index(self.player_data.current_home_stage)
@@ -368,6 +492,8 @@ class SMOContext(CommonContext):
                     self.full_inventory.clear()
                     # not sure if this is needed?
                     self.player_data.reset_moons()
+                    self.player_data.reset_regional_coins()
+
                     self.player_data.item_index = 0
                     print("Accept full inventory.")
 
@@ -384,6 +510,7 @@ class SMOContext(CommonContext):
                     packet = None
                     item_type = get_item_type(net_item.item)
                     index = args["index"]
+                    # logger.info(f"Item Type: {ItemType(item_type).name}, Net Item: {net_item.item}, Item Name: {id_to_name[net_item.item]}")
                     match item_type:
                         # Moons
                         case -1:
@@ -400,11 +527,18 @@ class SMOContext(CommonContext):
                                         pass
                         # Regional Coins
                         case 4:
-                            pass
+                            # Packet must contain placementId, stageName, and worldId
+                            # WorldId stored in amount
+                            # logger.info(f"Next Coin: {id_to_name[net_item.item]}")
+                            regional_coin = self.player_data.get_next_regional_coin(net_item.item)
+                            # logger.info(f"Next Coin: {regional_coin}")
+                            if regional_coin[2] != -1:
+                                packet = Packet(guid=self.proxy_guid, packet_type=PacketType.Check,
+                                                packet_data=[net_item.item, ItemType.RegionalCoin, index, regional_coin[0], regional_coin[1], regional_coin[2]])
                         # Captures
                         case 5:
                             packet = Packet(guid=self.proxy_guid, packet_type=PacketType.Check,
-                                            packet_data=[net_item.item - 3701, ItemType.Capture, index, "", "", 0])
+                                            packet_data=[net_item.item - 4025, ItemType.Capture, index, "", "", 0])
                         # Filler
                         case -2:
                             if str(net_item.location) in self.slot_data["coin_values"][str(net_item.player)]:
@@ -442,7 +576,8 @@ class SMOContext(CommonContext):
                     if packet:
                         if packet.header.packet_type == PacketType.Check:
                             if packet.packet.location_id < 0:
-                                logger.info("Invalid Location ID in packet.")
+                                logger.info(f"Invalid Location ID in packet {packet.packet.location_id}.")
+                                logger.info(f"Invalid item in packet {net_item.item}, {packet.packet.item_type.name}.")
                             else:
                                 self.proxy_msgs.append(packet)
                         else:
@@ -504,7 +639,7 @@ async def proxy_chat(ctx : SMOContext):
         while not ctx.exit_event.is_set():
             if (len(ctx.player_data.messages) > 0 or clear_msgs) and ctx.game_connected:
                 msg_packet : Packet = Packet(guid=ctx.proxy_guid, packet_type=PacketType.ArchipelagoChat,
-                                             packet_data=[ctx.player_data.next_messages()])
+                                             packet_data=[[], MessageType.Chat, ctx.player_data.next_messages()])
                 ctx.proxy_msgs.append(msg_packet)
                 if len(ctx.player_data.messages) == 0 and not clear_msgs:
                     clear_msgs = True
@@ -544,6 +679,11 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
             packet.deserialize(data)
 
             if packet.header.packet_type != PacketType.Unknown:
+                if hasattr(packet, "packet"):
+                    if packet_size != packet.packet.SIZE:
+
+                        logger.info(
+                            f"Packet {packet.header.packet_type.name}, Packet Size {packet_size}, AP SIZE {packet.packet.SIZE}")
                 ctx.disconnect_timer = 30
                 # Prevent appending server message before connected to server.
             match packet.header.packet_type:
@@ -551,6 +691,7 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
                     if ctx.proxy_guid != packet.header.guid:
                         ctx.proxy_guid = packet.header.guid
                     init_packet = Packet(guid=ctx.proxy_guid, packet_type=PacketType.Init)
+                    # logger.info(f"max players {init_packet.packet.max_players}, version {init_packet.packet.server_version}")
                     # Insert init packet at 0 in queue so other packets added before aren't dropped.
                     ctx.proxy_msgs.insert(0, init_packet)
                     # Only log initial connection
@@ -572,6 +713,17 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
                 case PacketType.Disconnect:
                     ctx.game_connected = False
                     break
+
+                case PacketType.ArchipelagoConnect:
+                    if packet.packet.host_name != "":
+                        if packet.packet.port != 0:
+                            ctx.port = packet.packet.port
+                        await ctx.connect(f"{packet.packet.host_name}:{ctx.port}")
+                    if packet.packet.password != "":
+                        ctx.password = packet.packet.password
+                    if packet.packet.slot_name != "":
+                        ctx.auth = packet.packet.slot_name
+                    ctx.connect_to_archipelago()
 
                 case PacketType.ChangeStage:
                     stage : str = packet.packet.stage
@@ -613,15 +765,31 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
                             print(f"Got Sticker {location_id}")
                             location_id = packet.packet.location_id + 2582
                             ctx.server_msgs.append({"cmd": "LocationChecks", "locations": [location_id]})
+                        case 4:
+                            location_id = get_regional_coin_location(packet.packet.stage, packet.packet.obj_id)
+                            # logger.info(f"Got Regional Coin {packet.packet.stage}, {packet.packet.obj_id}, {location_id}")
+                            if location_id != -1:
+                                if ctx.slot_data["regional_coins"] == 1:
+                                    location_id = ctx.player_data.get_regional_group(packet.packet.stage, location_id)
+                                    if location_id != -1:
+                                        ctx.server_msgs.append({"cmd": "LocationChecks", "locations": [location_id]})
+
+                                else:
+                                    ctx.server_msgs.append({"cmd": "LocationChecks", "locations": [location_id]})
+
                         case 5:
                             print(f"Got Capture {location_id}")
-                            location_id = packet.packet.location_id + 3701
+                            location_id = packet.packet.location_id + 4025
                             ctx.server_msgs.append({"cmd": "LocationChecks", "locations": [location_id]})
                         # Add Regional Coin
 
                 case PacketType.DeathLink:
                     if ctx.death_link_enabled:
                         await ctx.send_death()
+
+                # case PacketType.ArchipelagoChat:
+                #     logger.info(f"Message Received")
+                #     logger.info(f"{packet.packet.message}")
 
             if len(ctx.proxy_msgs) > 0 and ctx.game_connected:
                 # num_bytes = 0
@@ -643,10 +811,12 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
                         continue
                     response : Packet = ctx.proxy_msgs.pop(packet_send_offset)
                     b = response.serialize()
-                    # if response.header.packet_type == PacketType.ShineColor:
-                    #     print("This one", b[20:])
-                    writer.write(b)
-                    await writer.drain()
+                    # allowed_packets = [PacketType.Init, PacketType.ArchipelagoChat]
+                    if response.header.packet_type.value in ctx.allowed_packets or True:
+                        # logger.info(
+                        #     f"header {len(response.header.serialize())} {response.header.packet_type.name} {len(response.packet.serialize())}")
+                        writer.write(b)
+                        await writer.drain()
                     if response.header.packet_type == PacketType.Connect:
                         await asyncio.sleep(5.0)
 
