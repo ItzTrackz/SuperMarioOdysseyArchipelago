@@ -1,10 +1,160 @@
 from enum import IntEnum
-from typing import Any
-from BaseClasses import Entrance, EntranceType
+from typing import Any, Optional
+from BaseClasses import Entrance, EntranceType, Region
 from .Data.ItemData import SMOItemData
-from.Rules import SMORuleCondition, SMORuleOperation, create_access_rule
-from .Data.EntranceData import SMOEntrance
+from .Data.RuleData import SMORuleCondition, SMORuleOperation, SMOEntranceDataType
+from .Data.EntranceData import SMOEntranceData
 from .Data.RegionData import SMORegion
+from .Rules import create_access_rule
+
+def get_multi_entrance_type(entrance_name: str, internal_name : str, internal_stage: str, types: tuple[str, str, str] = ("entrance", "exit", "")) -> str:
+    special_cases = ["regional", "coin", "shop", "employee"]
+    enter_name, exit_name, fail = types
+    entrance_name = entrance_name.lower()
+    if enter_name in special_cases and enter_name in entrance_name:
+        return enter_name
+    elif exit_name in special_cases and exit_name in entrance_name:
+        return exit_name
+
+    return (enter_name if (' entrance' in entrance_name or ' beginning' in entrance_name) and enter_name in internal_name_to_entrance[internal_name][
+            internal_stage]
+        else exit_name if (' end' in entrance_name or ' exit' in entrance_name) and exit_name in internal_name_to_entrance[internal_name][
+            internal_stage]
+        else fail)
+
+def get_entrance_type(entrance_name: str, internal_name : str, types: tuple[str, str, str] = ("entrance", "end", ""), is_sub_area: bool = False) -> str:
+    enter_name, exit_name, fail = types
+    entrance_name = entrance_name.lower()
+    return (
+            (enter_name if (' beginning' in entrance_name or (' entrance' in entrance_name and not is_sub_area)) and enter_name in internal_name_to_entrance[internal_name]
+        else exit_name if ' end' in entrance_name and exit_name in internal_name_to_entrance[internal_name] or (' entrance' in entrance_name and is_sub_area)
+        else fail))
+
+def has_multiple_exits(stage_name: str, entrances: dict) -> bool:
+    return (stage_name in entrances and
+            isinstance(entrances[stage_name], dict))
+
+def get_stage_id(entrance : Entrance, original_bindings: dict[str,str], is_exit: bool = False) -> str:
+    entrance_name = display_name_to_internal_name[entrance.parent_region.name]
+    while " " in entrance_name:
+        entrance_name = display_name_to_internal_name[entrance_name]
+
+    stage_name = display_name_to_internal_name[original_bindings[entrance.name]]
+
+    stage_id = ""
+
+    # print(entrance_name, stage_name)
+    is_sub_area = "WorldHomeStage" not in entrance_name
+
+    if has_multiple_exits(stage_name, internal_name_to_entrance[entrance_name]):
+        load_zone = get_multi_entrance_type(entrance.name, entrance_name, stage_name)
+        # print("Multiple Exits")
+        if load_zone != "":
+            if is_exit and "WorldHomeStage" in entrance_name and "Unique" not in entrance.name:
+                stage_id = internal_name_to_entrance[stage_name]["entrance"]
+            else:
+                stage_id = internal_name_to_entrance[entrance_name][stage_name][load_zone]
+        else:
+            if "SandWorldShop" in stage_name:
+                load_zone = get_multi_entrance_type(entrance.name if 'Employee' not in entrance.name else "Employee"
+                                                    , entrance_name, stage_name, ("shop", "employee", ""))
+                stage_id = internal_name_to_entrance[entrance_name][stage_name][load_zone]
+            else:
+                load_zone = get_multi_entrance_type(entrance.name, entrance_name, stage_name, ("coin", "regional", ""))
+
+            if load_zone != "":
+                stage_id = (internal_name_to_entrance[entrance_name][stage_name]
+                [load_zone])
+            else:
+                # print("Deep Woods")
+                for entrance_num in range(1, 5):
+                    if hasattr(SMOEntranceData, f"deep_woods_{entrance_num}"):
+                       if getattr(SMOEntranceData, f"deep_woods_{entrance_num}") in entrance.name:
+                            if f"entrance{entrance_num}" in internal_name_to_entrance[entrance_name][stage_name]:
+                                stage_id = internal_name_to_entrance[entrance_name][stage_name][f"entrance{entrance_num}"]
+                            else:
+                                stage_id = internal_name_to_entrance[stage_name][entrance_name][f"entrance{entrance_num}"]
+
+    else:
+        if has_multiple_exits(stage_name, internal_name_to_entrance[entrance_name]):
+            stage_id = internal_name_to_entrance[entrance_name][stage_name]
+        else:
+            # print("Normal")
+            if len(internal_name_to_entrance[entrance_name]) > 2:
+                if "SnowWorldTown" in entrance_name and "Beginning" not in entrance.name:
+                    load_zone = stage_name
+
+                elif "SnowWorldTown" in entrance_name and " Beginning" in entrance.name and is_exit:
+                    load_zone = "exit"
+
+                elif ("Underground001" in entrance_name and "Shortcut" not in entrance.name or
+                      "Press" in entrance_name and "Beginning" in entrance.name and is_exit
+                      ):
+                    load_zone = "entrance2"
+
+                elif "Underground001" in entrance_name and "Shortcut" in entrance.name and is_exit:
+                    load_zone = "exit"
+
+                else:
+                    load_zone = get_entrance_type(entrance.name, entrance_name, ("entrance", "exit", stage_name))
+            elif "CityWorldShop" in entrance_name:
+                load_zone = get_multi_entrance_type(entrance.name, entrance_name, stage_name, ("coin", "regional", ""))
+
+            elif "SandWorldShop" in entrance_name or "SandWorldShop" in stage_name:
+                load_zone = get_multi_entrance_type(entrance.name if 'Employee' not in entrance.name else "Employee"
+                                                    , entrance_name, stage_name, ("shop", "employee", ""))
+
+            elif "Lobby000Stage" in entrance_name and is_exit:
+                load_zone = "exit"
+
+            elif "SnowWorldTown" in stage_name and "SnowWorldHome" in entrance_name and is_exit:
+                load_zone = "exit"
+
+            elif "ForestWorldBonusStage" in entrance_name and is_exit:
+                load_zone = "exit"
+
+            elif "PressEx" in entrance_name and is_exit:
+                load_zone = "exit"
+
+            elif "SphinxEx" in entrance_name and is_exit:
+                load_zone = "exit"
+
+            else:
+                load_zone = get_entrance_type(entrance.name, entrance_name, ("entrance", "exit", stage_name), is_sub_area)
+            if (not is_sub_area) and is_exit:
+            # if load_zone == stage_name:
+                stage_id = internal_name_to_entrance[stage_name]["entrance"]
+            else:
+                if ("Underground" in entrance.name and not "Deepest" in entrance.name and "Beginning" in entrance.name or
+                    "Lightning Beginning" in entrance.name or "Lanceur Beginning" in entrance.name):
+                    stage_id = internal_name_to_entrance[stage_name][entrance_name]
+                else:
+                    stage_id = internal_name_to_entrance[entrance_name][load_zone]
+
+    if stage_id == "":
+        raise Exception(f"stage id failed to parse: {entrance_name}, {stage_name}")
+
+    return stage_id
+
+def get_stage_ids(self, entry: Entrance, _exit: Entrance) -> tuple[str, str]:
+    # add proper support for _rev entrances and exits (ex. Shiveria/SnowWorldTownStage)
+    exit_stage_id = get_stage_id(_exit, self.original_exit_bindings, True)
+    entry_stage_id = get_stage_id(entry, self.original_entrance_bindings)
+
+    return entry_stage_id, exit_stage_id
+
+def get_entrance_pair(self, entrance : str, binding : str) -> tuple[Entrance, Entrance]:
+    if entrance in self.multiworld.regions.entrance_cache[self.player]:
+        _exit = self.get_entrance(entrance)
+    else:
+        raise Exception(f"Entrance '{entrance}' does not exist.")
+    if binding in self.multiworld.regions.entrance_cache[self.player]:
+        entry = self.get_entrance(binding)
+    else:
+        raise Exception(f"Bound Entrance '{binding}' does not exist")
+
+    return entry, _exit
+
 
 
 class SMORandomizationGroup(IntEnum):
@@ -22,224 +172,252 @@ class SMORandomizationGroup(IntEnum):
         TOP_HAT_SUB_AREA_ENTER = 8
         TOP_HAT_SUB_AREA_EXIT = 9
 
+class SMOEntrance(Entrance):
+    """
+    Finish SMOEntrance Object
+    Bool if sub area
+    bool if 2 unique over world entrances
+    possibly Entrance/SMOEntrance of related reverse entrance.
+
+    """
+    is_sub_area : bool
+    has_alternate_entrance: bool
+    paired_entrance_name: str
+    is_reverse: bool
+
+    def __init__(self, player: int, name: str = "", parent: Optional[Region] = None,
+                 randomization_group: int = 0, randomization_type: EntranceType = EntranceType.ONE_WAY,
+                 is_sub_area: bool = False, has_alternate_entrance: bool = False,
+                 is_reverse: bool = False) -> None:
+
+        self.is_sub_area = is_sub_area
+        self.has_alternate_entrance = has_alternate_entrance
+        self.paired_entrance = ""
+        self.is_reverse = is_reverse
+        super().__init__(player, name, parent, randomization_group, randomization_type)
+
 display_name_alias = {
-    SMORegion.cap_kingdom_intro: SMOEntrance.cap_kingdom,
-    "Moon Kingdom Peace": SMOEntrance.moon_kingdom,
-    "Day Metro Kingdom": SMOEntrance.metro_kingdom,
-    "Sand Kingdom Peace": SMOEntrance.sand_kingdom,
-    "Luncheon Kingdom Post Broodals": SMOEntrance.luncheon_kingdom,
-    "Sand Kingdom Moon Rock": SMOEntrance.sand_kingdom,
-    "Luncheon Kingdom Meat": SMOEntrance.luncheon_kingdom,
-    SMORegion.infiltrate_bowsers_castle: SMOEntrance.bowsers_kingdom,
-    "Bowser Kingdom Moon Rock": SMOEntrance.bowsers_kingdom,
-    "Lake Kingdom Moon Rock": SMOEntrance.lake_kingdom,
-    "Wooded Kingdom Moon Rock": SMOEntrance.wooded_kingdom,
-    "Metro Kingdom Moon Rock": SMOEntrance.metro_kingdom,
-    "Snow Kingdom Peace": SMOEntrance.snow_kingdom,
-    "Bowser Kingdom Peace": SMOEntrance.bowsers_kingdom,
+    SMORegion.cap_kingdom_intro: "CapWorldHomeStage",
+    "Moon Kingdom Peace": SMOEntranceData.moon_kingdom,
+    "Day Metro Kingdom": SMOEntranceData.metro_kingdom,
+    "Sand Kingdom Peace": SMOEntranceData.sand_kingdom,
+    "Luncheon Kingdom Post Broodals": SMOEntranceData.luncheon_kingdom,
+    "Sand Kingdom Moon Rock": SMOEntranceData.sand_kingdom,
+    "Luncheon Kingdom Meat": SMOEntranceData.luncheon_kingdom,
+    SMORegion.infiltrate_bowsers_castle: SMOEntranceData.bowsers_kingdom,
+    "Bowser Kingdom Moon Rock": SMOEntranceData.bowsers_kingdom,
+    "Lake Kingdom Moon Rock": SMOEntranceData.lake_kingdom,
+    "Wooded Kingdom Moon Rock": SMOEntranceData.wooded_kingdom,
+    "Metro Kingdom Moon Rock": SMOEntranceData.metro_kingdom,
+    "Snow Kingdom Peace": SMOEntranceData.snow_kingdom,
+    "Bowser Kingdom Peace": SMOEntranceData.bowsers_kingdom,
     SMORegion.night_metro_kingdom: "CityWorldHomeStage",
-    "Bowser Kingdom Smart Bombing": SMOEntrance.bowsers_kingdom,
-    "Moon Kingdom Moon Rock": SMOEntrance.moon_kingdom,
-    "Dark Side Peace": SMOEntrance.dark_side,
-    "Cascade Kingdom Moon Rock": SMOEntrance.cascade_kingdom,
-    "Wooded Kingdom Post Broodals": SMOEntrance.wooded_kingdom,
-    "Cascade Kingdom Peace": SMOEntrance.cascade_kingdom,
-    "Snow Kingdom Moon Rock": SMOEntrance.snow_kingdom,
-    "Lost Kingdom Moon Rock": SMOEntrance.lost_kingdom,
-    "Cap Kingdom Topper": SMOEntrance.cap_kingdom,
-    "Luncheon Kingdom Moon Rock": SMOEntrance.luncheon_kingdom,
-    "Cloud Kingdom Revisit": SMOEntrance.cloud_kingdom,
-    "Cap Kingdom Moon Rock": SMOEntrance.cap_kingdom,
-    "Wooded Kingdom Peace": SMOEntrance.wooded_kingdom,
-    "Cloud Kingdom Moon Rock": SMOEntrance.cloud_kingdom,
-    "Sand Kingdom Shop Employee Entrance": SMOEntrance.sand_kingdom_shop,
-    "Bowser Kingdom Mecha Broodal": SMOEntrance.bowsers_kingdom,
-    "Ruined Kingdom Moon Rock": SMOEntrance.ruined_kingdom,
-    "Seaside Kingdom Moon Rock": SMOEntrance.seaside_kingdom,
-    "Dark Side 4th Floor": "Special1WorldHomeStage",
-    "Dark Side 3rd Floor": "Special1WorldHomeStage",
-    "Dark Side 2nd Floor": "Special1WorldHomeStage",
+    "Bowser Kingdom Smart Bombing": SMOEntranceData.bowsers_kingdom,
+    "Moon Kingdom Moon Rock": SMOEntranceData.moon_kingdom,
+    "Dark Side Peace": SMOEntranceData.dark_side,
+    "Cascade Kingdom Moon Rock": SMOEntranceData.cascade_kingdom,
+    "Wooded Kingdom Post Broodals": SMOEntranceData.wooded_kingdom,
+    "Cascade Kingdom Peace": SMOEntranceData.cascade_kingdom,
+    "Snow Kingdom Moon Rock": SMOEntranceData.snow_kingdom,
+    "Lost Kingdom Moon Rock": SMOEntranceData.lost_kingdom,
+    "Cap Kingdom Topper": SMOEntranceData.cap_kingdom,
+    "Luncheon Kingdom Moon Rock": SMOEntranceData.luncheon_kingdom,
+    SMORegion.cloud_kingdom_revisit: SMOEntranceData.cloud_kingdom,
+    "Cap Kingdom Moon Rock": SMOEntranceData.cap_kingdom,
+    "Wooded Kingdom Peace": SMOEntranceData.wooded_kingdom,
+    "Cloud Kingdom Moon Rock": SMOEntranceData.cloud_kingdom,
+    "Sand Kingdom Shop Employee Entrance": "SandWorldShopStage",
+    "Bowser Kingdom Mecha Broodal": SMOEntranceData.bowsers_kingdom,
+    "Ruined Kingdom Moon Rock": SMOEntranceData.ruined_kingdom,
+    "Seaside Kingdom Moon Rock": SMOEntranceData.seaside_kingdom,
+    SMORegion.dark_side_2: "Special1WorldHomeStage",
+    SMORegion.dark_side_3: "Special1WorldHomeStage",
+    SMORegion.dark_side_4: "Special1WorldHomeStage",
+    SMORegion.dark_side_5: "Special1WorldHomeStage",
 }
 
 display_name_to_internal_name = {
-    SMOEntrance.cap_kingdom:"CapWorldHomeStage",
-    SMOEntrance.top_hat_tower:"CapWorldTowerStage",
-    SMOEntrance.poison_tides:"PoisonWaveExStage",
-    SMOEntrance.push_blocks:"PushBlockExStage",
-    SMOEntrance.frog_pond:"FrogSearchExStage",
-    SMOEntrance.rolling_lane:"RollingExStage",
-    SMOEntrance.cascade_kingdom:"WaterfallWorldHomeStage",
-    SMOEntrance.t_rex_nest:"TrexPoppunExStage",
-    SMOEntrance.chain_chomp_cave:"WanwanClashExStage",
-    SMOEntrance.chasm_lifts:"Lift2DExStage",
-    SMOEntrance.mysterious_clouds:"CapAppearExStage",
-    SMOEntrance.gusty_bridges:"WindBlowExStage",
-    SMOEntrance.sand_kingdom:"SandWorldHomeStage",
-    SMOEntrance.sand_kingdom_shop:"SandWorldShopStage",
-    SMOEntrance.sand_slots:"SandWorldSlotStage",
-    SMOEntrance.sand_costume_bonus_dancing_room:"SandWorldCostumeStage",
-    SMOEntrance.sand_sphynx_vault:"SandWorldSecretStage",
-    SMOEntrance.sand_rumbling_floor_house:"SandWorldVibrationStage",
-    SMOEntrance.inverted_pyramid_lower_interior:"SandWorldPyramid000Stage",
-    SMOEntrance.inverted_pyramid_mural:"SandWorldHomeStage",
-    SMOEntrance.inverted_pyramid_upper_interior:"SandWorldPyramid001Stage",
-    SMOEntrance.top_of_the_inverted_pyramid: "SandWorldHomeStage",
-    SMOEntrance.underground_ruins:"SandWorldUnderground000Stage",
-    SMOEntrance.deepest_underground:"SandWorldUnderground001Stage",
-    SMOEntrance.ice_cave:"SandWorldPressExStage",
-    SMOEntrance.moe_eye_invisible_maze:"SandWorldMeganeExStage",
-    SMOEntrance.bullet_bill_maze:"SandWorldKillerExStage",
-    SMOEntrance.jaxi_ruins:"SandWorldSphinxExStage",
-    SMOEntrance.strange_neighborhood:"SandWorldRotateExStage",
-    SMOEntrance.moe_eye_invisible_floor:"MeganeLiftExStage",
-    SMOEntrance.colossal_ruins:"RocketFlowerExStage",
-    SMOEntrance.freezing_waterway:"WaterTubeExStage",
-    SMOEntrance.lake_kingdom:"LakeWorldHomeStage",
-    SMOEntrance.lake_kingdom_shop:"LakeWorldShopStage",
-    SMOEntrance.arch_repair:"GotogotonExStage",
-    SMOEntrance.zipper_chasm:"FastenerExStage",
-    SMOEntrance.bouncy_flowers:"TrampolineWallCatchExStage",
-    SMOEntrance.poison_swamp:"FrogPoisonExStage",
-    SMOEntrance.wooded_kingdom:"ForestWorldHomeStage",
-    SMOEntrance.sky_garden_tower:"ForestWorldTowerStage",
-    SMOEntrance.secret_flower_field:"ForestWorldBossStage",
-    SMOEntrance.deep_woods:"ForestWorldWoodsStage",
-    SMOEntrance.deep_woods_costume_bonus_treasure_chest:"ForestWorldWoodsCostumeStage",
-    SMOEntrance.deep_woods_treasure_trap:"ForestWorldWoodsTreasureStage",
-    SMOEntrance.spinning_platforms_treasure_vault:"ForestWorldBonusStage", # Unsure
-    SMOEntrance.flooding_pipeway:"ForestWorldWaterExStage",
-    SMOEntrance.fog_wandering:"FogMountainExStage",
-    SMOEntrance.wooded_flower_road:"RailCollisionExStage",
-    SMOEntrance.sherm_elevator:"ShootingElevatorExStage",
-    SMOEntrance.walking_on_clouds:"ForestWorldCloudBonusExStage",
-    SMOEntrance.invisible_road:"PackunPoisonExStage",
-    SMOEntrance.sheep_herding:"AnimalChaseExStage",
-    SMOEntrance.breakdown_road:"KillerRoadExStage",
-    SMOEntrance.cloud_kingdom:"CloudWorldHomeStage",
-    SMOEntrance.cloud_picture_match:"FukuwaraiKuriboStage",
-    SMOEntrance.king_of_the_cube:"Cube2DExStage",
-    SMOEntrance.lost_kingdom:"ClashWorldHomeStage",
-    SMOEntrance.lost_kingdom_shop:"ClashWorldShopStage",
-    SMOEntrance.tropical_wiggler_swamp:"ImomuPoisonExStage",
-    SMOEntrance.klepto_lava_bath:"JangoExStage",
-    SMOEntrance.metro_kingdom:"CityWorldHomeStage",
-    SMOEntrance.metro_kingdom_shop:"CityWorldShop01Stage",
-    SMOEntrance.metro_kingdom_shop_regional:"CityWorldShop01Stage", # Might Change
-    SMOEntrance.metro_slots:"CityWorldSandSlotStage",
-    SMOEntrance.city_hall:"CityWorldMainTowerStage",
-    SMOEntrance.sewers:"CityWorldFactoryStage",
-    SMOEntrance.rc_race:"RadioControlExStage",
-    SMOEntrance.private_room:"Note2D3DRoomExStage",
-    SMOEntrance.projection_room:"Theater2DExStage",
-    SMOEntrance.crowded_street:"CityPeopleRoadStage",
-    SMOEntrance.builder_outfit:"ElectricWireExStage",
-    SMOEntrance.metro_siege:"ShootingCityExStage",
-    SMOEntrance.rotating_maze:"CapRotatePackunExStage",
-    SMOEntrance.high_rise:"PoleGrabCeilExStage",
-    SMOEntrance.bullet_building:"PoleKillerExStage",
-    SMOEntrance.t_rex_escape:"TrexBikeExStage",
-    SMOEntrance.pitch_black_island:"DonsukeExStage",
-    SMOEntrance.swinging_scaffolding:"SwingSteelExStage",
-    SMOEntrance.vanishing_road:"BikeSteelExStage",
-    SMOEntrance.snow_kingdom:"SnowWorldHomeStage",
-    SMOEntrance.snow_kingdom_shop:"SnowWorldShopStage",
-    SMOEntrance.freezing_room:"SnowWorldCostumeStage",
-    SMOEntrance.ice_trace_walking:"IceWalkerExStage",
-    SMOEntrance.shiveria:"SnowWorldTownStage",
-    SMOEntrance.snowline_circuit_lobby:"SnowWorldLobby000Stage",
+    SMOEntranceData.cap_kingdom:"CapWorldHomeStage",
+    SMOEntranceData.top_hat_tower:"CapWorldTowerStage",
+    SMOEntranceData.poison_tides:"PoisonWaveExStage",
+    SMOEntranceData.push_blocks:"PushBlockExStage",
+    SMOEntranceData.frog_pond:"FrogSearchExStage",
+    SMOEntranceData.rolling_lane:"RollingExStage",
+    SMOEntranceData.cascade_kingdom:"WaterfallWorldHomeStage",
+    SMOEntranceData.t_rex_nest:"TrexPoppunExStage",
+    SMOEntranceData.chain_chomp_cave:"WanwanClashExStage",
+    SMOEntranceData.chasm_lifts:"Lift2DExStage",
+    SMOEntranceData.mysterious_clouds:"CapAppearExStage",
+    SMOEntranceData.gusty_bridges:"WindBlowExStage",
+    SMOEntranceData.sand_kingdom:"SandWorldHomeStage",
+    SMOEntranceData.sand_kingdom_shop:"SandWorldShopStage",
+    SMOEntranceData.sand_slots:"SandWorldSlotStage",
+    SMOEntranceData.sand_costume_bonus_dancing_room:"SandWorldCostumeStage",
+    SMOEntranceData.sand_sphynx_vault:"SandWorldSecretStage",
+    SMOEntranceData.sand_rumbling_floor_house:"SandWorldVibrationStage",
+    SMOEntranceData.inverted_pyramid_lower_interior:"SandWorldPyramid000Stage",
+    SMOEntranceData.inverted_pyramid_mural:"SandWorldHomeStage",
+    SMOEntranceData.inverted_pyramid_upper_interior:"SandWorldPyramid001Stage",
+    SMOEntranceData.top_of_the_inverted_pyramid: "SandWorldHomeStage",
+    SMOEntranceData.underground_ruins:"SandWorldUnderground000Stage",
+    SMOEntranceData.deepest_underground:"SandWorldUnderground001Stage",
+    SMOEntranceData.ice_cave:"SandWorldPressExStage",
+    SMOEntranceData.moe_eye_invisible_maze:"SandWorldMeganeExStage",
+    SMOEntranceData.bullet_bill_maze:"SandWorldKillerExStage",
+    SMOEntranceData.jaxi_ruins:"SandWorldSphinxExStage",
+    SMOEntranceData.strange_neighborhood:"SandWorldRotateExStage",
+    SMOEntranceData.moe_eye_invisible_floor:"MeganeLiftExStage",
+    SMOEntranceData.colossal_ruins:"RocketFlowerExStage",
+    SMOEntranceData.freezing_waterway:"WaterTubeExStage",
+    SMOEntranceData.lake_kingdom:"LakeWorldHomeStage",
+    SMOEntranceData.lake_kingdom_shop:"LakeWorldShopStage",
+    SMOEntranceData.arch_repair:"GotogotonExStage",
+    SMOEntranceData.zipper_chasm:"FastenerExStage",
+    SMOEntranceData.bouncy_flowers:"TrampolineWallCatchExStage",
+    SMOEntranceData.poison_swamp:"FrogPoisonExStage",
+    SMOEntranceData.wooded_kingdom:"ForestWorldHomeStage",
+    SMOEntranceData.sky_garden_tower:"ForestWorldTowerStage",
+    SMOEntranceData.secret_flower_field:"ForestWorldBossStage",
+    SMORegion.deep_woods:"ForestWorldWoodsStage",
+    SMOEntranceData.deep_woods_costume_bonus_treasure_chest:"ForestWorldWoodsCostumeStage",
+    SMOEntranceData.deep_woods_treasure_trap:"ForestWorldWoodsTreasureStage",
+    SMOEntranceData.spinning_platforms_treasure_vault:"ForestWorldBonusStage", # Unsure
+    SMOEntranceData.flooding_pipeway:"ForestWorldWaterExStage",
+    SMOEntranceData.fog_wandering:"FogMountainExStage",
+    SMOEntranceData.wooded_flower_road:"RailCollisionExStage",
+    SMOEntranceData.sherm_elevator:"ShootingElevatorExStage",
+    SMOEntranceData.walking_on_clouds:"ForestWorldCloudBonusExStage",
+    SMOEntranceData.invisible_road:"PackunPoisonExStage",
+    SMOEntranceData.sheep_herding:"AnimalChaseExStage",
+    SMOEntranceData.breakdown_road:"KillerRoadExStage",
+    SMOEntranceData.cloud_kingdom:"CloudWorldHomeStage",
+    SMOEntranceData.cloud_picture_match:"FukuwaraiKuriboStage",
+    SMOEntranceData.king_of_the_cube:"Cube2DExStage",
+    SMOEntranceData.lost_kingdom:"ClashWorldHomeStage",
+    SMOEntranceData.lost_kingdom_shop:"ClashWorldShopStage",
+    SMOEntranceData.tropical_wiggler_swamp:"ImomuPoisonExStage",
+    SMOEntranceData.klepto_lava_bath:"JangoExStage",
+    SMOEntranceData.metro_kingdom:"CityWorldHomeStage",
+    SMORegion.metro_kingdom_shop:"CityWorldShop01Stage",
+    SMOEntranceData.metro_kingdom_shop:"CityWorldShop01Stage",
+    SMOEntranceData.metro_kingdom_shop_regional:"CityWorldShop01Stage", # Might Change
+    SMOEntranceData.metro_slots:"CityWorldSandSlotStage",
+    SMOEntranceData.city_hall:"CityWorldMainTowerStage",
+    SMOEntranceData.sewers:"CityWorldFactoryStage",
+    SMOEntranceData.rc_race:"RadioControlExStage",
+    SMOEntranceData.private_room:"Note2D3DRoomExStage",
+    SMOEntranceData.projection_room:"Theater2DExStage",
+    SMOEntranceData.crowded_street:"CityPeopleRoadStage",
+    SMOEntranceData.builder_outfit:"ElectricWireExStage",
+    SMOEntranceData.metro_siege:"ShootingCityExStage",
+    SMOEntranceData.rotating_maze:"CapRotatePackunExStage",
+    SMOEntranceData.high_rise:"PoleGrabCeilExStage",
+    SMOEntranceData.bullet_building:"PoleKillerExStage",
+    SMOEntranceData.t_rex_escape:"TrexBikeExStage",
+    SMOEntranceData.pitch_black_island:"DonsukeExStage",
+    SMOEntranceData.swinging_scaffolding:"SwingSteelExStage",
+    SMOEntranceData.vanishing_road:"BikeSteelExStage",
+    SMOEntranceData.snow_kingdom:"SnowWorldHomeStage",
+    SMOEntranceData.snow_kingdom_shop:"SnowWorldShopStage",
+    SMOEntranceData.freezing_room:"SnowWorldCostumeStage",
+    SMOEntranceData.ice_trace_walking:"IceWalkerExStage",
+    SMOEntranceData.shiveria:"SnowWorldTownStage",
+    SMOEntranceData.snowline_circuit_lobby:"SnowWorldLobby000Stage",
     "Snowline Circuit: Class S Lobby":"SnowWorldLobby001Stage",
     "Snowline Circuit: Class A":"SnowWorldRace000Stage",
     "Snowline Circuit: Class S":"SnowWorldRace001Stage",
     "Snowline Circuit: Tutorial":"SnowWorldRaceTutorialStage",
-    SMOEntrance.iceburn_circuit_class_a_lobby:"SnowWorldLobbyExStage",
+    SMOEntranceData.iceburn_circuit_class_a_lobby:"SnowWorldLobbyExStage",
     "Iceburn Circuit: Class A":"SnowWorldRaceExStage",
     "Iceburn Circuit: Class S":"SnowWorldRaceHardExStage",
-    SMOEntrance.rocket_flower_dash:"IceWaterDashExStage",
-    SMOEntrance.freezing_water:"IceWaterBlockExStage",
-    SMOEntrance.ty_foo_sliding_puzzle:"ByugoPuzzleExStage",
-    SMOEntrance.above_the_clouds:"SnowWorldCloudBonusExStage",
-    SMOEntrance.snow_flower_road:"KillerRailCollisionExStage",
-    SMOEntrance.seaside_kingdom:"SeaWorldHomeStage",
-    SMOEntrance.seaside_costume_bonus_dancing_room:"SeaWorldCostumeStage",
-    SMOEntrance.seaside_sphynx_treasure_vault:"SeaWorldSecretStage",
-    SMOEntrance.seaside_rumbling_floor_cave:"SeaWorldVibrationStage",
-    SMOEntrance.underwater_tunnel:"SeaWorldUtsuboCaveStage",
-    SMOEntrance.sandy_bottom:"SeaWorldSneakingManStage",
-    SMOEntrance.wading_in_the_cloud_sea:"CloudExStage",
-    SMOEntrance.narrow_valley:"WaterValleyExStage",
-    SMOEntrance.sinking_island:"SenobiTowerExStage",
-    SMOEntrance.pokio_bomb_aiming:"ReflectBombExStage",
-    SMOEntrance.spinning_maze:"TogezoRotateExStage",
-    SMOEntrance.luncheon_kingdom:"LavaWorldHomeStage",
-    SMOEntrance.luncheon_kingdom_shop:"LavaWorldShopStage",
-    SMOEntrance.luncheon_costume_bonus_cooking_pots:"LavaWorldCostumeStage",
-    SMOEntrance.luncheon_slots:"LavaBonus1Zone",
-    SMOEntrance.luncheon_treasure_vault:"LavaWorldTreasureStage",
-    SMOEntrance.magma_swamp:"LavaWorldUpDownExStage",
-    SMOEntrance.magma_narrow_path:"LavaWorldBubbleLaneExStage",
-    SMOEntrance.fork_flickin:"ForkExStage",
-    SMOEntrance.cheese_excavate:"LavaWorldExcavationExStage",
-    SMOEntrance.spinning_athletics:"LavaWorldClockExStage",
-    SMOEntrance.rotating_gears_with_bitefrost:"GabuzouClockExStage",
-    SMOEntrance.volcano_cave:"CapAppearLavaLiftExStage",
-    SMOEntrance.lava_islands:"LavaWorldFenceLiftExStage",
-    SMOEntrance.ruined_kingdom:"BossRaidWorldHomeStage",
-    SMOEntrance.roulette_tower:"DotTowerExStage",
-    SMOEntrance.chargin_chuck_arena:"BullRunExStage",
-    SMOEntrance.bowsers_kingdom:"SkyWorldHomeStage",
-    SMOEntrance.bowsers_kingdom_shop:"SkyWorldShopStage",
-    SMOEntrance.folding_screen:"SkyWorldCostumeStage",
-    SMOEntrance.bowsers_treasure_vault:"SkyWorldTreasureStage",
-    SMOEntrance.spinning_tower:"TsukkunRotateExStage",
-    SMOEntrance.jizos_adventure:"JizoSwitchExStage",
-    SMOEntrance.dashing_above_the_clouds:"SkyWorldCloudBonusExStage",
-    SMOEntrance.hexagon_tower:"KaronWingTowerStage",
-    SMOEntrance.wooden_tower:"TsukkunClimbExStage",
-    SMOEntrance.moon_kingdom:"MoonWorldHomeStage",
-    SMOEntrance.moon_kingdom_shop:"MoonWorldShopRoom",
-    SMOEntrance.moon_sphynx_vault:"MoonWorldSphinxRoom",
-    SMOEntrance.moon_cave:"MoonWorldCaptureParadeStage",
-    SMOEntrance.inside_the_church:"MoonWorldWeddingRoomStage",
+    SMOEntranceData.rocket_flower_dash:"IceWaterDashExStage",
+    SMOEntranceData.freezing_water:"IceWaterBlockExStage",
+    SMOEntranceData.ty_foo_sliding_puzzle:"ByugoPuzzleExStage",
+    SMOEntranceData.above_the_clouds:"SnowWorldCloudBonusExStage",
+    SMOEntranceData.snow_flower_road:"KillerRailCollisionExStage",
+    SMOEntranceData.seaside_kingdom:"SeaWorldHomeStage",
+    SMOEntranceData.seaside_costume_bonus_dancing_room:"SeaWorldCostumeStage",
+    SMOEntranceData.seaside_sphynx_treasure_vault:"SeaWorldSecretStage",
+    SMOEntranceData.seaside_rumbling_floor_cave:"SeaWorldVibrationStage",
+    SMOEntranceData.underwater_tunnel:"SeaWorldUtsuboCaveStage",
+    SMOEntranceData.sandy_bottom:"SeaWorldSneakingManStage",
+    SMOEntranceData.wading_in_the_cloud_sea:"CloudExStage",
+    SMOEntranceData.narrow_valley:"WaterValleyExStage",
+    SMOEntranceData.sinking_island:"SenobiTowerExStage",
+    SMOEntranceData.pokio_bomb_aiming:"ReflectBombExStage",
+    SMOEntranceData.spinning_maze:"TogezoRotateExStage",
+    SMOEntranceData.luncheon_kingdom:"LavaWorldHomeStage",
+    SMOEntranceData.luncheon_kingdom_shop:"LavaWorldShopStage",
+    SMOEntranceData.luncheon_costume_bonus_cooking_pots:"LavaWorldCostumeStage",
+    SMOEntranceData.luncheon_slots:"LavaBonus1Zone",
+    SMOEntranceData.luncheon_treasure_vault:"LavaWorldTreasureStage",
+    SMOEntranceData.magma_swamp:"LavaWorldUpDownExStage",
+    SMOEntranceData.magma_narrow_path:"LavaWorldBubbleLaneExStage",
+    SMOEntranceData.fork_flickin:"ForkExStage",
+    SMOEntranceData.cheese_excavate:"LavaWorldExcavationExStage",
+    SMOEntranceData.spinning_athletics:"LavaWorldClockExStage",
+    SMOEntranceData.rotating_gears_with_bitefrost:"GabuzouClockExStage",
+    SMOEntranceData.volcano_cave:"CapAppearLavaLiftExStage",
+    SMOEntranceData.lava_islands:"LavaWorldFenceLiftExStage",
+    SMOEntranceData.ruined_kingdom:"BossRaidWorldHomeStage",
+    SMOEntranceData.roulette_tower:"DotTowerExStage",
+    SMOEntranceData.chargin_chuck_arena:"BullRunExStage",
+    SMOEntranceData.bowsers_kingdom:"SkyWorldHomeStage",
+    SMOEntranceData.bowsers_kingdom_shop:"SkyWorldShopStage",
+    SMOEntranceData.folding_screen:"SkyWorldCostumeStage",
+    SMOEntranceData.bowsers_treasure_vault:"SkyWorldTreasureStage",
+    SMOEntranceData.spinning_tower:"TsukkunRotateExStage",
+    SMOEntranceData.jizos_adventure:"JizoSwitchExStage",
+    SMOEntranceData.dashing_above_the_clouds:"SkyWorldCloudBonusExStage",
+    SMOEntranceData.hexagon_tower:"KaronWingTowerStage",
+    SMOEntranceData.wooden_tower:"TsukkunClimbExStage",
+    SMOEntranceData.moon_kingdom:"MoonWorldHomeStage",
+    SMOEntranceData.moon_kingdom_shop:"MoonWorldShopRoom",
+    SMOEntranceData.moon_sphynx_vault:"MoonWorldSphinxRoom",
+    SMOEntranceData.moon_cave:"MoonWorldCaptureParadeStage",
+    SMOEntranceData.inside_the_church:"MoonWorldWeddingRoomStage",
     "Inside the Church 2 (possibly unused)":"MoonWorldWeddingRoom2Stage",
     "Moon":"MoonWorldKoopa1Stage",
     #"Moon":"MoonWorldKoopa2Stage",
     "Bowser Caverns:":"MoonWorldBasementStage",
-    SMOEntrance.dot_galaxy:"Galaxy2DExStage",
-    SMOEntrance.giant_swings:"MoonAthleticExStage",
-    SMOEntrance.dark_side:"Special1WorldHomeStage",
-    SMOEntrance.dark_side_topper:"Special1WorldTowerStackerStage",
-    SMOEntrance.dark_side_hariet:"Special1WorldTowerBombTailStage",
-    SMOEntrance.dark_side_spewart:"Special1WorldTowerFireBlowerStage",
-    SMOEntrance.dark_side_rango:"Special1WorldTowerCapThrowerStage",
-    SMOEntrance.dark_side_breakdown_road:"KillerRoadNoCapExStage",
-    SMOEntrance.dark_side_invisible_road:"PackunPoisonNoCapExStage",
-    SMOEntrance.dark_side_vanishing_road:"BikeSteelNoCapExStage",
-    SMOEntrance.dark_side_siege:"ShootingCityYoshiExStage",
-    SMOEntrance.dark_side_sinking_island:"SenobiTowerYoshiExStage",
-    SMOEntrance.dark_side_magma_swamp:"LavaWorldUpDownYoshiExStage",
-    SMOEntrance.darker_side:"Special2WorldHomeStage",
-    "Darker Side: Main":"Special2WorldLavaStage",
-    "Darker Side: Pokio":"Special2WorldCloudStage",
-    "Darker Side: Bowser":"Special2WorldKoopaStage",
+    SMOEntranceData.dot_galaxy:"Galaxy2DExStage",
+    SMOEntranceData.giant_swings:"MoonAthleticExStage",
+    SMOEntranceData.dark_side:"Special1WorldHomeStage",
+    SMOEntranceData.dark_side_topper:"Special1WorldTowerStackerStage",
+    SMOEntranceData.dark_side_hariet:"Special1WorldTowerBombTailStage",
+    SMOEntranceData.dark_side_spewart:"Special1WorldTowerFireBlowerStage",
+    SMOEntranceData.dark_side_rango:"Special1WorldTowerCapThrowerStage",
+    SMOEntranceData.dark_side_breakdown_road:"KillerRoadNoCapExStage",
+    SMOEntranceData.dark_side_invisible_road:"PackunPoisonNoCapExStage",
+    SMOEntranceData.dark_side_vanishing_road:"BikeSteelNoCapExStage",
+    SMOEntranceData.dark_side_siege:"ShootingCityYoshiExStage",
+    SMOEntranceData.dark_side_sinking_island:"SenobiTowerYoshiExStage",
+    SMOEntranceData.dark_side_magma_swamp:"LavaWorldUpDownYoshiExStage",
+    SMOEntranceData.darker_side:"Special2WorldHomeStage",
+    SMOEntranceData.darker_side_main:"Special2WorldLavaStage",
+    SMOEntranceData.darker_side_pokio:"Special2WorldCloudStage",
+    SMOEntranceData.darker_side_bowser:"Special2WorldKoopaStage",
+    SMOEntranceData.darker_side_end:"Special2WorldLavaStage",
+    SMOEntranceData.darker_side_tower:"Special2WorldHomeStage",
     "Mushroom Kingdom":"PeachWorldHomeStage",
-    SMOEntrance.peachs_castle:"PeachWorldCastleStage",
-    SMOEntrance.mushroom_kingdom_shop:"PeachWorldShopStage",
-    SMOEntrance.castle_courtyard:"PeachWorldCostumeStage",
-    SMOEntrance.mushroom_picture_match:"FukuwaraiMarioStage",
-    SMOEntrance.painting_room_knucklotec:"PeachWorldPictureBossKnuckleStage",
-    SMOEntrance.painting_room_torkdrift:"PeachWorldPictureBossForestStage",
-    SMOEntrance.painting_room_mecha_wiggler:"PeachWorldPictureMofumofuStage",
-    SMOEntrance.painting_room_mollusque_lanceur:"PeachWorldPictureGiantWanderBossStage",
-    SMOEntrance.painting_room_cookatiel:"PeachWorldPictureBossMagmaStage",
-    SMOEntrance.painting_room_lord_of_lightning:"PeachWorldPictureBossRaidStage",
-    SMOEntrance.knucklotec_rematch:"RevengeBossKnuckleStage",
-    SMOEntrance.torkdrift_rematch:"RevengeForestBossStage",
-    SMOEntrance.mecha_wiggler_rematch:"RevengeMofumofuStage",
-    SMOEntrance.mollusque_lanceur_rematch:"RevengeGiantWanderBossStage",
-    SMOEntrance.cookatiel_rematch:"RevengeBossMagmaStage",
-    SMOEntrance.lord_of_lightning_rematch:"RevengeBossRaidStage",
-    SMOEntrance.yoshi_in_the_sea_of_clouds:"YoshiCloudExStage",
-    SMOEntrance.mushroom_well:"DotHardExStage",
+    SMOEntranceData.peachs_castle:"PeachWorldCastleStage",
+    SMOEntranceData.mushroom_kingdom_shop:"PeachWorldShopStage",
+    SMOEntranceData.castle_courtyard:"PeachWorldCostumeStage",
+    SMOEntranceData.mushroom_picture_match:"FukuwaraiMarioStage",
+    SMOEntranceData.painting_room_knucklotec:"PeachWorldPictureBossKnuckleStage",
+    SMOEntranceData.painting_room_torkdrift:"PeachWorldPictureBossForestStage",
+    SMOEntranceData.painting_room_mecha_wiggler:"PeachWorldPictureMofumofuStage",
+    SMOEntranceData.painting_room_mollusque_lanceur:"PeachWorldPictureGiantWanderBossStage",
+    SMOEntranceData.painting_room_cookatiel:"PeachWorldPictureBossMagmaStage",
+    SMOEntranceData.painting_room_lord_of_lightning:"PeachWorldPictureBossRaidStage",
+    SMOEntranceData.knucklotec_rematch:"RevengeBossKnuckleStage",
+    SMOEntranceData.torkdrift_rematch:"RevengeForestBossStage",
+    SMOEntranceData.mecha_wiggler_rematch:"RevengeMofumofuStage",
+    SMOEntranceData.mollusque_lanceur_rematch:"RevengeGiantWanderBossStage",
+    SMOEntranceData.cookatiel_rematch:"RevengeBossMagmaStage",
+    SMOEntranceData.lord_of_lightning_rematch:"RevengeBossRaidStage",
+    SMOEntranceData.yoshi_in_the_sea_of_clouds:"YoshiCloudExStage",
+    SMOEntranceData.mushroom_well:"DotHardExStage",
     **display_name_alias,
 }
 
@@ -340,6 +518,7 @@ stage_id_to_name = {
     "wall": "SandWorldMeganeExStage",
     "arijigoku1": "SandWorldPressExStage",
     "arijigoku2": "SandWorldPressExStage",
+    "arijigoku": "SandWorldPressExStage",
     "run00return": "SandWorldSphinxExStage",
     "run00": "SandWorldSphinxExStage",
     "PukupukuCaveGoal": "SeaWorldUtsuboCaveStage",
@@ -415,7 +594,7 @@ stage_id_to_name = {
     "KillerRoad": "KillerRoadExStage",
     "LakeWorldShop": "LakeWorldShopStage",
     "MartinCubeEx": "LavaWorldExcavationExStage",
-    "shop(lava)": "LavaWorldShopStage", # "shop"
+    "shop_lava": "LavaWorldShopStage", # "shop"
     "TreasureEventWorldLava": "LavaWorldTreasureStage",
     # "None": "MoonWorldKoopa1Stage",
     # "None": "MoonWorldKoopa2Stage",
@@ -527,8 +706,8 @@ internal_name_to_entrance = {
         "exit": "main_exit",
     },
     "CityWorldShop01Stage": {
-        "exit": "shop_corect",
-        "entrance": "shop_coin",
+        "regional": "shop_corect",
+        "coin": "shop_coin",
     },
     "ElectricWireExStage": {
         "exit": "densendokan",
@@ -540,6 +719,7 @@ internal_name_to_entrance = {
     },
     "ForestWorldBossStage": {
         "entrance": "boss001",
+        "exit": "boss002",
     },
     "ForestWorldTowerStage": {
         "entrance": "Tower001",
@@ -550,10 +730,14 @@ internal_name_to_entrance = {
         "exit": "EX_Water_Exit",
     },
     "ForestWorldWoodsStage": {
-        "exit1": "Jyukai001v",
-        "exit2": "Jyukai002",
-        "exit3": "Jyukai003v",
-        "exit4": "Jyukai004",
+        "ForestWorldHomeStage": {
+            "entrance1": "Jyukai001v",
+            "entrance2": "Jyukai002",
+            "entrance3": "Jyukai003v",
+            "entrance4": "Jyukai004",
+        },
+        "ForestWorldWoodsCostumeStage": "Explorer_Bonus",
+        "ForestWorldWoodsTreasureStage": "TreasureTree",
     },
     "ForkExStage": {
         "entrance": "ForkEX",
@@ -624,8 +808,8 @@ internal_name_to_entrance = {
         "entrance": "moon",
     },
     "MoonWorldCaptureParadeStage": {
-        "exit": "vvv",
-        "entrance": "bbb",
+        "exit": "bbb",
+        "entrance": "ccc",
     },
     "PackunPoisonExStage": {
         "exit": "PoisonEx_Exit",
@@ -674,12 +858,14 @@ internal_name_to_entrance = {
         "entrance": "wall",
     },
     "SandWorldPressExStage": {
-        "entrance": "arijigoku1",
+        "entrance": "arijigoku",
+        "entrance2": "arijigoku1",
         "exit": "arijigoku2",
     },
     "SandWorldSphinxExStage": {
         "exit": "run00return",
-        "entrance": "run00",
+        "entrance": "aaa",
+        "entrance2": "run00",
     },
     "SeaWorldUtsuboCaveStage": {
         "exit": "PukupukuCaveGoal",
@@ -699,6 +885,7 @@ internal_name_to_entrance = {
     },
     "SkyWorldCloudBonusExStage": {
         "entrance": "sora001",
+        "exit": "sora001",
     },
     "Special1WorldTowerBombTailStage": {
         "entrance": "BombTailRoomStart",
@@ -719,6 +906,14 @@ internal_name_to_entrance = {
     "Special2WorldLavaStage": {
         "exit": "MoonGoal",
         "entrance": "CP_Entrance",
+        "Special2WorldCloudStage": {
+            "entrance": "room2_start",
+            "exit": "room2_goal",
+        },
+        "Special2WorldKoopaStage": {
+            "exit": "room3_goal",
+            "entrance": "room3_start",
+        },
     },
     "SwingSteelExStage": {
         "exit": "gragrareturn",
@@ -826,6 +1021,7 @@ internal_name_to_entrance = {
         "entrance": "MartinCubeEx",
     },
     "LavaWorldShopStage": {
+        "entrance": "shop_lava",
     },
     "LavaWorldTreasureStage": {
         "entrance": "TreasureEventWorldLava",
@@ -838,6 +1034,7 @@ internal_name_to_entrance = {
     },
     "MoonWorldWeddingRoomStage": {
         "entrance": "aaa",
+        "secret": "fff",
     },
     "Note2D3DRoomExStage": {
         "entrance": "onpu",
@@ -875,21 +1072,26 @@ internal_name_to_entrance = {
     },
     "SandWorldPyramid000Stage": {
         "entrance": "pyramid01",
+        "exit": "pyramid02"
     },
     "SandWorldPyramid001Stage": {
-        "entrance": "pyramid04",
+        "entrance": "pyramid03",
+        "exit": "pyramid04",
     },
     "SandWorldSecretStage": {
         "entrance": "hide",
     },
     "SandWorldShopStage": {
-        "entrance": "bar1",
+        "shop": "bar1",
+        "employee": "bar2",
     },
     "SandWorldSlotStage": {
         "entrance": "town"
     },
     "SandWorldUnderground001Stage": {
-        "entrance": "Yadokari00",
+        "entrance": "start",
+        "exit": "Out",
+        "entrance2": "Yadokari00"
     },
     "SandWorldVibrationStage": {
         "entrance": "shindo",
@@ -922,7 +1124,8 @@ internal_name_to_entrance = {
         "entrance": "SnowCostumeEx",
     },
     "SnowWorldLobby000Stage": {
-        "entrance": "RaceTrackExit",
+        "entrance": "RaceEntrance",
+        "exit": "RaceTrackExit",
     },
     "SnowWorldLobbyExStage": {
         "entrance": "MoonRace",
@@ -932,9 +1135,11 @@ internal_name_to_entrance = {
     },
     "Special2WorldCloudStage": {
         "entrance": "room2_start",
+        "exit": "room2_goal",
     },
     "Special2WorldKoopaStage": {
-        "entrance": "room3_goal",
+        "exit": "room3_goal",
+        "entrance": "room3_start",
     },
     "Theater2DExStage": {
         "entrance": "theater",
@@ -950,11 +1155,17 @@ internal_name_to_entrance = {
     },
     "SnowWorldTownStage": {
         "entrance": "SnowUGEnt",
-        "entrance_rev": "SnowUGExit",
-        "exit": "RaceEntrance",
-        "exit_rev": "RaceTrackExit"
+        "exit": "SnowUGExit",
+        "SnowWorldCostumeStage": "SnowCostumeEx",
+        "SnowWorldLobby000Stage": {
+            "entrance": "RaceEntrance",
+            "exit": "RaceTrackExit",
+        },
+        "SnowWorldShopStage": "ShopDoor",
     },
     "SandWorldUnderground000Stage": {
+        "entrance": "icestart",
+        "exit": "Yadokari00",
     },
     "SandWorldRotateExStage": {
         "entrance": "biru",
@@ -969,10 +1180,11 @@ internal_name_to_entrance = {
     },
     "CloudExStage": {
         "entrance": "SeaWorldEX2",
+        "exit": "SeaWorldEX2Return",
     },
-    # "LavaBonus1Zone": {
-    #     "entrance": "town",
-    # },
+    "LavaBonus1Zone": {
+        "entrance": "town_lava",
+    },
     "DotTowerExStage": {
         "entrance": "BossRaidWorldEx01_Eixt",
         "exit": "BossRaidWorldEx01_Eixt2"
@@ -1002,21 +1214,27 @@ internal_name_to_entrance = {
     },
     "RevengeBossMagmaStage": {
         "entrance": "PictureBossMagma",
+        "exit": 'PictureBossMagma'
     },
     "RevengeMofumofuStage": {
         "entrance": "PictureMofumofu",
+        "exit": 'PictureMofumofu'
     },
     "RevengeBossRaidStage": {
         "entrance": "PictureBossRaid",
+        "exit": 'PictureBossRaid'
     },
     "RevengeForestBossStage": {
         "entrance": "PictureBossForest",
+        "exit": 'PictureBossForest'
     },
     "RevengeBossKnuckleStage": {
         "entrance": "PictureBossKnuckle",
+        "exit": 'PictureBossKnuckle'
     },
     "RevengeGiantWanderBossStage": {
         "entrance": "PictureGiantWanderBoss",
+        "exit": 'PictureGiantWanderBoss'
     },
     "FukuwaraiMarioStage": {
         "entrance": "Fukuwarai2",
@@ -1026,12 +1244,12 @@ internal_name_to_entrance = {
     },
 
     # Over worlds
-    # replace with SMOEntrance.name : id
+    # replace with SMOEntranceData.name : id
     'CapWorldHomeStage': {
         'CapWorldTowerStage':
             {
-                'exit' : 'Ex',
-                'entrance': 'Goal'
+                'entrance' : 'Ex',
+                'exit': 'Goal'
             },
         'PoisonWaveExStage': 'PoisonWaveExExit',
         'FrogSearchExStage': 'FrogSearchExStageEnt',
@@ -1049,18 +1267,35 @@ internal_name_to_entrance = {
         },
 
     'SandWorldHomeStage': {
-        'SandWorldPyramid000Stage': 'pyramid01',
-        'SandWorldPyramid001Stage': 'pyramid04',
-        'SandWorldShopStage': 'bar2',
+        'SandWorldPyramid000Stage': {
+            'entrance': 'pyramid01',
+            'exit': 'pyramid02',
+        },
+        'SandWorldPyramid001Stage': {
+            'entrance': 'pyramid03',
+            'exit': 'pyramid04',
+        },
+        'SandWorldShopStage': {
+            'shop': 'bar1',
+            'employee': 'bar2',
+        },
         'SandWorldSecretStage': 'hide',
         'SandWorldUnderground001Stage': 'Out',
         'SandWorldMeganeExStage': 'anki2',
         'SandWorldPressExStage': {
+            'entrance0': 'arijigoku',
             'entrance': 'arijigoku1',
             'exit': 'arijigoku2',
         },
-        'SandWorldSphinxExStage': 'run00',
-        'SandWorldKillerExStage': 'doukutu2',
+        'SandWorldSphinxExStage': {
+            "entrance0": 'aaa',
+            "entrance": 'run00',
+            "exit": 'run00return',
+        },
+        'SandWorldKillerExStage': {
+            "entrance": 'doukutu1',
+            "exit": 'doukutu2',
+        },
         'SandWorldVibrationStage': 'shindo',
         'SandWorldUnderground000Stage': 'Under01',
         'MeganeLiftExStage': 'meganelift02',
@@ -1069,7 +1304,11 @@ internal_name_to_entrance = {
         'SandWorldCostumeStage': 'abc',
         'SandWorldSlotStage': 'town',
         'SandWorldRotateExStage': 'birureturn',
+        "SandWorldPyramidMural": {
+            'entrance': 'pyramid02',
+            'exit': 'pyramid03',
         },
+    },
 
     'ForestWorldHomeStage': {
         'ForestWorldTowerStage': {
@@ -1079,10 +1318,10 @@ internal_name_to_entrance = {
         'ForestWorldBossStage': 'boss002',
         'ForestWorldWoodsStage':{
             'entrance1': 'Jyukai001',
-            'entrance2': 'Jyukai003',
+            'entrance3': 'Jyukai003',
         },
 
-
+        'FogMountainExStage': 'EX_Mist',
         'ForestWorldCloudBonusExStage': 'EXCloud',
         'ForestWorldWaterExStage': 'EX_Water_Exit',
         'ForestWorldBonusStage': 'bonus2',
@@ -1095,6 +1334,7 @@ internal_name_to_entrance = {
 
     'LakeWorldHomeStage': {
         'FrogPoisonExStage': 'LakeWorldMoonEX1b',
+        'GotogotonExStage': 'Goton',
         'TrampolineWallCatchExStage': 'CapTrampolineB',
         'LakeWorldShopStage': 'LakeWorldShop',
         'FastenerExStage' : 'FastenerEx'
@@ -1178,8 +1418,8 @@ internal_name_to_entrance = {
         'LavaWorldFenceLiftExStage': 'FenceLiftExdokan',
         'CapAppearLavaLiftExStage': 'LavaLiftExdokan',
         'GabuzouClockExStage': 'GabuzouClockExdokan',
-        'LavaBonus1Zone': 'town',
-        'LavaWorldShopStage': 'shop',
+        'LavaBonus1Zone': 'town_lava',
+        'LavaWorldShopStage': 'shop_lava',
         'LavaWorldTreasureStage': 'TreasureEventWorldLava',
         },
 
@@ -1449,7 +1689,7 @@ stage_ids = [
     'Tower002',
     'SeaWorldMoonEX1b',
     'Bonus',
-    'None',
+    'None', # Not needed
     'KeyMoveEx',
     'ShootingCityYoshiEx_Exit',
     'CP_Entrance',
@@ -1504,6 +1744,7 @@ stage_ids = [
     'EX_AnimalChase',
     'ForkEX',
     'town',
+    'town_lava',
     'PeachWorldEx2a',
     'main_exit',
     'Goton',
@@ -1527,6 +1768,7 @@ stage_ids = [
     'taxireturn',
     'shop_dress',
     'room2_start',
+    'room3_start',
     'sora001',
     'TreasureEventWorldSea',
     'arijigoku2',
@@ -1601,12 +1843,12 @@ stage_ids = [
     'FastenerEx',
     'FigureWalker',
     'shop',
+    'shop_lava',
     'CapThrowerRoomStart',
     'ForkEX2',
     'arijigoku1',
     'CapThrowerRoomGoal',
     'Jyukai003v',
-    'HomeEntrance',
     'pyramid04',
     'doukutu2',
     'PoisonWaveExExit',
@@ -1676,16 +1918,16 @@ stage_ids = [
 def create_entrances(self):
     world_sub_area_exits = [
         (SMORegion.cap_kingdom_intro, {
-            SMOEntrance.top_hat_tower: None,
+            SMOEntranceData.top_hat_tower: None,
         }),
         # (SMORegion.cap_kingdom_topper, {
-        #     SMOEntrance.top_hat_tower_end: None,
+        #     SMOEntranceData.top_hat_tower_end: None,
         # }),
         (SMORegion.cap_kingdom, {
-            SMOEntrance.push_blocks: None,
-            SMOEntrance.poison_tides: None,
-            SMOEntrance.frog_pond: None,
-            SMOEntrance.rolling_lane: (create_access_rule(self, [
+            SMOEntranceData.push_blocks: None,
+            SMOEntranceData.poison_tides: None,
+            SMOEntranceData.frog_pond: None,
+            SMOEntranceData.rolling_lane: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.cap_kingdom_moon_rock, SMORuleOperation.NONE)
             ])),
         }),
@@ -1693,13 +1935,13 @@ def create_entrances(self):
         #
         # , SMORuleOperation.NONE)
         (SMORegion.cascade_kingdom_peace, {
-            SMOEntrance.chasm_lifts: None,
-            SMOEntrance.t_rex_nest: None,
-            SMOEntrance.chain_chomp_cave: None,
-            SMOEntrance.gusty_bridges: (create_access_rule(self, [
+            SMOEntranceData.chasm_lifts: None,
+            SMOEntranceData.t_rex_nest: None,
+            SMOEntranceData.chain_chomp_cave: None,
+            SMOEntranceData.gusty_bridges: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.cascade_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.mysterious_clouds: (create_access_rule(self, [
+            SMOEntranceData.mysterious_clouds: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.cascade_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
@@ -1707,35 +1949,43 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.sand_kingdom, {
-            SMOEntrance.ice_cave: None,
-            SMOEntrance.bullet_bill_maze: None,
-            SMOEntrance.jaxi_ruins: None,
-            SMOEntrance.inverted_pyramid_lower_interior: None,
-            SMOEntrance.moe_eye_invisible_maze: None,
-            SMOEntrance.sand_kingdom_shop: None,
-            SMOEntrance.sand_sphynx_vault: None,
-            SMOEntrance.underground_ruins: None,
-            SMOEntrance.sand_costume_bonus_dancing_room : (create_access_rule(self, [
+            SMOEntranceData.ice_cave: None,
+            SMOEntranceData.bullet_bill_maze: None,
+            SMOEntranceData.jaxi_ruins: None,
+            SMOEntranceData.inverted_pyramid_lower_interior: None,
+            SMOEntranceData.inverted_pyramid_upper_interior: create_access_rule(self, [
+                (SMORuleCondition.ENTRANCE,
+                 [SMORegion.sand_kingdom, f"{SMOEntranceData.inverted_pyramid_lower_interior} Unique Exit",
+                  SMOEntranceDataType.EXIT], SMORuleOperation.OR),
+                (SMORuleCondition.ENTRANCE,
+                 [SMORegion.sand_kingdom, f"{SMOEntranceData.inverted_pyramid_upper_interior} Unique Exit",
+                  SMOEntranceDataType.EXIT], SMORuleOperation.NONE)
+            ]),
+            SMOEntranceData.moe_eye_invisible_maze: None,
+            SMOEntranceData.sand_kingdom_shop: None,
+            SMOEntranceData.sand_sphynx_vault: None,
+            SMOEntranceData.underground_ruins: None,
+            SMOEntranceData.sand_costume_bonus_dancing_room : (create_access_rule(self, [
                 (SMORuleCondition.ITEM ,[SMOItemData.sombrero, SMOItemData.poncho], SMORuleOperation.OR),
                 (SMORuleCondition.ITEM, [SMOItemData.skeleton_suit], SMORuleOperation.NONE)
             ])),
-            SMOEntrance.sand_slots: None,
-            SMOEntrance.sand_kingdom_employee: None,
-            SMOEntrance.sand_rumbling_floor_house: None,
-            SMOEntrance.deepest_underground_shortcut: (create_access_rule(self, [
+            SMOEntranceData.sand_slots: None,
+            SMOEntranceData.sand_kingdom_employee: None,
+            SMOEntranceData.sand_rumbling_floor_house: None,
+            SMOEntranceData.deepest_underground_shortcut: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.sand_kingdom_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.strange_neighborhood: (create_access_rule(self, [
+            SMOEntranceData.strange_neighborhood: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, [SMOItemData.mini_rocket], SMORuleOperation.AND),
                 (SMORuleCondition.REGION, SMORegion.sand_kingdom_peace, SMORuleOperation.NONE)
                  ])),
-            SMOEntrance.colossal_ruins: (create_access_rule(self, [
+            SMOEntranceData.colossal_ruins: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.sand_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.freezing_waterway: (create_access_rule(self, [
+            SMOEntranceData.freezing_waterway: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.sand_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.moe_eye_invisible_floor: (create_access_rule(self, [
+            SMOEntranceData.moe_eye_invisible_floor: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.sand_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
@@ -1743,38 +1993,39 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.top_of_the_inverted_pyramid, {
-            #SMOEntrance.inverted_pyramid_upper_interior_reverse: None,
+            #SMOEntranceData.inverted_pyramid_upper_interior_reverse: None,
         }),
         # (SMORegion.sand_kingdom_moon_rock, {
         #
         # }),
         (SMORegion.wooded_kingdom, {
-            SMOEntrance.sky_garden_tower: None,
-            SMOEntrance.deep_woods: None,
-            SMOEntrance.flooding_pipeway: None,
-            SMOEntrance.sherm_elevator: None,
-            SMOEntrance.wooded_flower_road: None,
-            SMOEntrance.secret_flower_field: (create_access_rule(self, [
+            SMOEntranceData.sky_garden_tower: None,
+            SMOEntranceData.deep_woods_1: None,
+            SMOEntranceData.deep_woods_3: None,
+            SMOEntranceData.flooding_pipeway: None,
+            SMOEntranceData.sherm_elevator: None,
+            SMOEntranceData.wooded_flower_road: None,
+            SMOEntranceData.secret_flower_field: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.sherm, SMORuleOperation.AND),
                 (SMORuleCondition.REGION, SMORegion.wooded_kingdom_post_broodals, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.spinning_platforms_treasure_vault: (create_access_rule(self, [
+            SMOEntranceData.spinning_platforms_treasure_vault: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.wooded_kingdom_post_broodals, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.walking_on_clouds: (create_access_rule(self, [
+            SMOEntranceData.walking_on_clouds: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.cascade_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.fog_wandering: (create_access_rule(self, [
+            SMOEntranceData.fog_wandering: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.mini_rocket, SMORuleOperation.AND),
                 (SMORuleCondition.REGION, SMORegion.wooded_kingdom_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.sheep_herding: (create_access_rule(self, [
+            SMOEntranceData.sheep_herding: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.wooded_kingdom_moon_rock, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.invisible_road: (create_access_rule(self, [
+            SMOEntranceData.invisible_road: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.wooded_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.breakdown_road: (create_access_rule(self, [
+            SMOEntranceData.breakdown_road: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.wooded_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
@@ -1787,19 +2038,23 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.deep_woods, {
-            SMOEntrance.deep_woods_costume_bonus_treasure_chest: (create_access_rule( self, [
-                (SMORuleCondition.ITEM, [SMOItemData.explorer_hat, SMOItemData.explorer_outfit], SMORuleOperation.NONE)
+            SMOEntranceData.deep_woods_costume_bonus_treasure_chest: (create_access_rule( self, [
+                (SMORuleCondition.ITEM, [SMOItemData.explorer_hat, SMOItemData.explorer_outfit], SMORuleOperation.NONE),
             ])),
-            SMOEntrance.deep_woods_treasure_trap: None,
+            SMOEntranceData.deep_woods_treasure_trap: None,
+            SMOEntranceData.deep_woods_2: None,
+            SMOEntranceData.deep_woods_4: (create_access_rule(self, [
+                (SMORuleCondition.REGION, SMORegion.wooded_kingdom_post_broodals, SMORuleOperation.NONE)
+            ])),
         }),
         (SMORegion.lake_kingdom, {
-            SMOEntrance.arch_repair: None,
-            SMOEntrance.zipper_chasm: (create_access_rule(self, [
+            SMOEntranceData.arch_repair: None,
+            SMOEntranceData.zipper_chasm: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
             ])),
-            SMOEntrance.bouncy_flowers: None,
-            SMOEntrance.lake_kingdom_shop: None,
-            SMOEntrance.poison_swamp: (create_access_rule(self, [
+            SMOEntranceData.bouncy_flowers: None,
+            SMOEntranceData.lake_kingdom_shop: None,
+            SMOEntranceData.poison_swamp: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.lake_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
@@ -1807,8 +2062,8 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.cloud_kingdom_revisit, {
-            SMOEntrance.cloud_picture_match: None,
-            SMOEntrance.king_of_the_cube: (create_access_rule(self, [
+            SMOEntranceData.cloud_picture_match: None,
+            SMOEntranceData.king_of_the_cube: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.cloud_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
@@ -1816,11 +2071,11 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.lost_kingdom, {
-            SMOEntrance.lost_kingdom_shop: None,
-            SMOEntrance.klepto_lava_bath: (create_access_rule(self, [
+            SMOEntranceData.lost_kingdom_shop: None,
+            SMOEntranceData.klepto_lava_bath: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.lost_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.tropical_wiggler_swamp: (create_access_rule(self, [
+            SMOEntranceData.tropical_wiggler_swamp: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.lost_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
@@ -1828,82 +2083,82 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.night_metro_kingdom, {
-            SMOEntrance.city_hall: None,
-            SMOEntrance.metro_kingdom_shop: None,
-            SMOEntrance.metro_kingdom_shop_regional: None,
-            SMOEntrance.private_room: (create_access_rule(self, [
+            SMOEntranceData.city_hall: None,
+            SMOEntranceData.metro_kingdom_shop: None,
+            SMOEntranceData.metro_kingdom_shop_regional: None,
+            SMOEntranceData.private_room: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.bullet_building: (create_access_rule(self, [
+            SMOEntranceData.bullet_building: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.rc_race: (create_access_rule(self, [
+            SMOEntranceData.rc_race: (create_access_rule(self, [
                     (SMORuleCondition.CAPTURE, SMOItemData.rc_car, SMORuleOperation.AND),
                     (SMORuleCondition.REGION, SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.builder_outfit: (create_access_rule(self, [
+            SMOEntranceData.builder_outfit: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.day_metro_kingdom, SMORuleOperation.AND),
                 (SMORuleCondition.ITEM, [SMOItemData.builder_helmet, SMOItemData.builder_outfit], SMORuleOperation.NONE)
             ])),
-            SMOEntrance.metro_slots: (create_access_rule(self, [
+            SMOEntranceData.metro_slots: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.rotating_maze: (create_access_rule(self, [
+            SMOEntranceData.rotating_maze: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.manhole, SMORuleOperation.AND),
                 (SMORuleCondition.REGION, SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.t_rex_escape: (create_access_rule(self, [
+            SMOEntranceData.t_rex_escape: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.crowded_street: (create_access_rule(self, [
+            SMOEntranceData.crowded_street: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.metro_siege: (create_access_rule(self, [
+            SMOEntranceData.metro_siege: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.taxi, SMORuleOperation.AND),
                 (SMORuleCondition.REGION, SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.high_rise: (create_access_rule(self, [
+            SMOEntranceData.high_rise: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.mini_rocket, SMORuleOperation.AND),
                 (SMORuleCondition.REGION, SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.sewers: (create_access_rule(self, [
+            SMOEntranceData.sewers: (create_access_rule(self, [
                     (SMORuleCondition.CAPTURE, SMOItemData.manhole, SMORuleOperation.AND),
                     (SMORuleCondition.REGION, SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.projection_room: (create_access_rule(self, [
+            SMOEntranceData.projection_room: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.metro_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.swinging_scaffolding: (create_access_rule(self, [
+            SMOEntranceData.swinging_scaffolding: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.metro_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.vanishing_road: (create_access_rule(self, [
+            SMOEntranceData.vanishing_road: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.metro_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.pitch_black_island: (create_access_rule(self, [
+            SMOEntranceData.pitch_black_island: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.metro_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
         # (SMORegion.day_metro_kingdom, {
         #     }),
         # (SMORegion.metro_kingdom_sewers, {
-        #     SMOEntrance.sewers: None,
+        #     SMOEntranceData.sewers: None,
         # }),
         # (SMORegion.metro_kingdom_moon_rock, {
         #
         # }),
         (SMORegion.seaside_kingdom, {
-            SMOEntrance.seaside_rumbling_floor_cave: None,
-            SMOEntrance.spinning_maze: None,
-            SMOEntrance.wading_in_the_cloud_sea: (create_access_rule(self, [
+            SMOEntranceData.seaside_rumbling_floor_cave: None,
+            SMOEntranceData.spinning_maze: None,
+            SMOEntranceData.wading_in_the_cloud_sea: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.mini_rocket, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.sandy_bottom: None,
-            SMOEntrance.narrow_valley: None,
-            SMOEntrance.sinking_island: None,
-            SMOEntrance.seaside_costume_bonus_dancing_room: None,
-            SMOEntrance.seaside_sphynx_treasure_vault: None,
-            SMOEntrance.underwater_tunnel: None,
-            SMOEntrance.pokio_bomb_aiming: (create_access_rule(self, [
+            SMOEntranceData.sandy_bottom: None,
+            SMOEntranceData.narrow_valley: None,
+            SMOEntranceData.sinking_island: None,
+            SMOEntranceData.seaside_costume_bonus_dancing_room: None,
+            SMOEntranceData.seaside_sphynx_treasure_vault: None,
+            SMOEntranceData.underwater_tunnel: None,
+            SMOEntranceData.pokio_bomb_aiming: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.seaside_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
@@ -1911,27 +2166,27 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.snow_kingdom, {
-            SMOEntrance.shiveria: None,
-            SMOEntrance.rocket_flower_dash: (create_access_rule(self, [
+            SMOEntranceData.shiveria: None,
+            SMOEntranceData.rocket_flower_dash: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.snow_kingdom_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.ty_foo_sliding_puzzle: (create_access_rule(self, [
+            SMOEntranceData.ty_foo_sliding_puzzle: (create_access_rule(self, [
                     (SMORuleCondition.CAPTURE, SMOItemData.ty_foo, SMORuleOperation.AND),
                     (SMORuleCondition.REGION ,SMORegion.snow_kingdom_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.ice_trace_walking: (create_access_rule(self, [
+            SMOEntranceData.ice_trace_walking: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.snow_kingdom_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.above_the_clouds: (create_access_rule(self, [
+            SMOEntranceData.above_the_clouds: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.snow_kingdom_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.freezing_water: (create_access_rule(self, [
+            SMOEntranceData.freezing_water: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.snow_kingdom_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.snow_flower_road: (create_access_rule(self, [
+            SMOEntranceData.snow_flower_road: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.snow_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.iceburn_circuit_class_a_lobby: (create_access_rule(self, [
+            SMOEntranceData.iceburn_circuit_class_a_lobby: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.snow_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
         }),
@@ -1942,39 +2197,39 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.luncheon_kingdom, {
-            SMOEntrance.magma_swamp: None,
-            SMOEntrance.fork_flickin: (create_access_rule(self, [
+            SMOEntranceData.magma_swamp: None,
+            SMOEntranceData.fork_flickin: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_post_broodals, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.luncheon_kingdom_shop: (create_access_rule(self, [
+            SMOEntranceData.luncheon_kingdom_shop: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_post_broodals, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.luncheon_costume_bonus_cooking_pots: (create_access_rule(self, [
+            SMOEntranceData.luncheon_costume_bonus_cooking_pots: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_post_broodals, SMORuleOperation.AND),
                 (SMORuleCondition.ITEM,[SMOItemData.chef_hat, SMOItemData.chef_suit], SMORuleOperation.NONE)
             ])),
-            SMOEntrance.luncheon_slots: (create_access_rule(self, [
+            SMOEntranceData.luncheon_slots: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_post_broodals, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.cheese_excavate: (create_access_rule(self, [
+            SMOEntranceData.cheese_excavate: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_meat, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.spinning_athletics: (create_access_rule(self, [
+            SMOEntranceData.spinning_athletics: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_meat, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.magma_narrow_path: (create_access_rule(self, [
+            SMOEntranceData.magma_narrow_path: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_meat, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.luncheon_treasure_vault: (create_access_rule(self, [
+            SMOEntranceData.luncheon_treasure_vault: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_meat, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.volcano_cave: (create_access_rule(self, [
+            SMOEntranceData.volcano_cave: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_moon_rock, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.rotating_gears_with_bitefrost: (create_access_rule(self, [
+            SMOEntranceData.rotating_gears_with_bitefrost: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_moon_rock, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.lava_islands: (create_access_rule(self, [
+            SMOEntranceData.lava_islands: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.luncheon_kingdom_moon_rock, SMORuleOperation.NONE)
             ])),
         }),
@@ -1989,10 +2244,10 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.ruined_kingdom, {
-            SMOEntrance.roulette_tower: (create_access_rule(self, [
+            SMOEntranceData.roulette_tower: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE,[SMORegion.mini_rocket], SMORuleOperation.NONE)
             ])),
-            SMOEntrance.chargin_chuck_arena: (create_access_rule(self, [
+            SMOEntranceData.chargin_chuck_arena: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.ruined_kingdom_moon_rock, SMORuleOperation.NONE)
             ])),
         }),
@@ -2000,29 +2255,29 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.infiltrate_bowsers_castle, {
-            SMOEntrance.bowsers_kingdom_shop: (create_access_rule(self, [
+            SMOEntranceData.bowsers_kingdom_shop: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.bowser_kingdom_smart_bombing, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.folding_screen: (create_access_rule(self, [
+            SMOEntranceData.folding_screen: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.bowser_kingdom_smart_bombing, SMORuleOperation.AND),
                 (SMORuleCondition.ITEM,[SMOItemData.samurai_helmet, SMOItemData.samurai_armor], SMORuleOperation.NONE)
             ])),
-            SMOEntrance.dashing_above_the_clouds: (create_access_rule(self, [
+            SMOEntranceData.dashing_above_the_clouds: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.bowser_kingdom_mecha_broodal, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.spinning_tower: (create_access_rule(self, [
+            SMOEntranceData.spinning_tower: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.bowser_kingdom_peace, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.jizos_adventure: (create_access_rule(self, [
+            SMOEntranceData.jizos_adventure: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.bowser_kingdom_peace, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.bowsers_treasure_vault: (create_access_rule(self, [
+            SMOEntranceData.bowsers_treasure_vault: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.bowser_kingdom_peace, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.hexagon_tower: (create_access_rule(self, [
+            SMOEntranceData.hexagon_tower: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.bowser_kingdom_moon_rock, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.wooden_tower: (create_access_rule(self, [
+            SMOEntranceData.wooden_tower: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.bowser_kingdom_moon_rock, SMORuleOperation.NONE)
             ])),
         }),
@@ -2038,131 +2293,132 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.moon_kingdom, {
-            SMOEntrance.inside_the_church: None,
-            SMOEntrance.moon_cave: None,
+            SMOEntranceData.inside_the_church: None,
+            SMOEntranceData.moon_cave: None,
         }),
         (SMORegion.moon_kingdom_peace, {
-            SMOEntrance.moon_sphynx_vault: None,
-            SMOEntrance.moon_kingdom_shop: None,
+            SMOEntranceData.moon_sphynx_vault: None,
+            SMOEntranceData.moon_kingdom_shop: None,
         }),
         (SMORegion.moon_kingdom_moon_rock, {
-            SMOEntrance.giant_swings: None,
-            SMOEntrance.dot_galaxy: None,
+            SMOEntranceData.giant_swings: None,
+            SMOEntranceData.dot_galaxy: None,
         }),
         (SMORegion.mushroom_kingdom, {
-            SMOEntrance.peachs_castle: None,
-            SMOEntrance.mushroom_kingdom_shop: None,
-            SMOEntrance.painting_room_cookatiel: None,
-            SMOEntrance.painting_room_mecha_wiggler: None,
-            SMOEntrance.painting_room_knucklotec: None,
-            SMOEntrance.painting_room_torkdrift: None,
-            SMOEntrance.mushroom_well: None,
-            SMOEntrance.yoshi_in_the_sea_of_clouds: (create_access_rule(self, [
+            SMOEntranceData.peachs_castle: None,
+            SMOEntranceData.mushroom_kingdom_shop: None,
+            SMOEntranceData.painting_room_cookatiel: None,
+            SMOEntranceData.painting_room_mecha_wiggler: None,
+            SMOEntranceData.painting_room_knucklotec: None,
+            SMOEntranceData.painting_room_torkdrift: None,
+            SMOEntranceData.mushroom_well: None,
+            SMOEntranceData.yoshi_in_the_sea_of_clouds: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.yoshi, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.painting_room_mollusque_lanceur: None,
-            SMOEntrance.painting_room_lord_of_lightning: (create_access_rule(self, [
+            SMOEntranceData.painting_room_mollusque_lanceur: None,
+            SMOEntranceData.painting_room_lord_of_lightning: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.yoshi, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.mushroom_picture_match : (create_access_rule(self, [
+            SMOEntranceData.mushroom_picture_match : (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.mini_rocket, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.castle_courtyard : (create_access_rule(self, [
+            SMOEntranceData.castle_courtyard : (create_access_rule(self, [
                 (SMORuleCondition.ITEM, [SMOItemData.mario_64_cap, SMOItemData.mario_64_suit], SMORuleOperation.OR),
                 (SMORuleCondition.ITEM, [SMOItemData.metal_mario_cap, SMOItemData.metal_mario_suit], SMORuleOperation.NONE)
             ])),
         }),
         (SMORegion.dark_side, {
-            SMOEntrance.dark_side_topper: (create_access_rule(self, [
+            SMOEntranceData.dark_side_topper: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.NONE)
             ])),
-            SMOEntrance.dark_side_vanishing_road: (create_access_rule(self, [
+            SMOEntranceData.dark_side_vanishing_road: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.dark_side_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.dark_side_invisible_road: (create_access_rule(self, [
+            SMOEntranceData.dark_side_invisible_road: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.dark_side_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.dark_side_breakdown_road: (create_access_rule(self, [
+            SMOEntranceData.dark_side_breakdown_road: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.dark_side_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.dark_side_siege: (create_access_rule(self, [
+            SMOEntranceData.dark_side_siege: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.dark_side_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.dark_side_sinking_island: (create_access_rule(self, [
+            SMOEntranceData.dark_side_sinking_island: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.dark_side_peace, SMORuleOperation.NONE)
                 ])),
-            SMOEntrance.dark_side_magma_swamp: (create_access_rule(self, [
+            SMOEntranceData.dark_side_magma_swamp: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.dark_side_peace, SMORuleOperation.NONE)
                 ])),
         }),
         (SMORegion.dark_side_2 , {
-            SMOEntrance.dark_side_hariet: None,
+            SMOEntranceData.dark_side_hariet: None,
         }),
         (SMORegion.dark_side_3 , {
-            SMOEntrance.dark_side_spewart: None,
+            SMOEntranceData.dark_side_spewart: None,
         }),
         (SMORegion.dark_side_4 , {
-            SMOEntrance.dark_side_rango: None,
+            SMOEntranceData.dark_side_rango: None,
         }),
 
         # (SMORegion.dark_side_peace, {
         #
         # }),
         (SMORegion.darker_side, {
-            SMOEntrance.darker_side_main: (create_access_rule(self, [
+            SMOEntranceData.darker_side_main: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.frog, SMORuleOperation.NONE)
             ])),
         }),
         (SMORegion.darker_side_entrance, {
-            SMOEntrance.darker_side_pokio: (create_access_rule(self, [
+            SMOEntranceData.darker_side_pokio: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble, SMOItemData.uproot, SMOItemData.yoshi, SMOItemData.glydon, SMOItemData.volbonan], SMORuleOperation.NONE)
             ])),
-        }),
-        (SMORegion.darker_side_climb, {
-            SMOEntrance.darker_side_bowser: (create_access_rule(self, [
+            SMOEntranceData.darker_side_bowser: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.pokio, SMORuleOperation.NONE)
             ])),
         }),
-        (SMORegion.darker_side_bowser, {
-            SMOEntrance.darker_side_end: (create_access_rule(self, [
-                (SMORuleCondition.CAPTURE, SMOItemData.bowser, SMORuleOperation.NONE)
-            ])),
-        }),
-        (SMORegion.darker_side_end, {
-            SMOEntrance.darker_side_tower: (create_access_rule(self, [
-                (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.NONE)
-            ])),
-        }),
+        # (SMORegion.darker_side_climb, {
+        #
+        # }),
+        # (SMORegion.darker_side_bowser, {
+        #     SMOEntranceData.darker_side_end: (create_access_rule(self, [
+        #         (SMORuleCondition.CAPTURE, SMOItemData.bowser, SMORuleOperation.NONE)
+        #     ])),
+        # }),
+        # (SMORegion.darker_side_end, {
+        #     SMOEntranceData.darker_side_tower: (create_access_rule(self, [
+        #         (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.NONE)
+        #     ])),
+        # }),
 
         # sub_areas
         # (SMORegion.top_hat_tower, {
-        #     SMOEntrance.top_hat_tower_end: (create_access_rule(self, [
+        #     SMOEntranceData.top_hat_tower_end: (create_access_rule(self, [
         #         (SMORuleCondition.CAPTURE, SMOItemData.frog , SMORuleOperation.NONE)
         #     ])),
         # }),
 
-        (SMORegion.inverted_pyramid_lower_interior, {
-            SMOEntrance.inverted_pyramid_mural: None,
-        }),
-        (SMORegion.inverted_pyramid_mural, {
-            SMOEntrance.inverted_pyramid_upper_interior: None,
-        }),
-        (SMORegion.inverted_pyramid_upper_interior, {
-            SMOEntrance.top_of_the_inverted_pyramid: None,
-        }),
+        # (SMORegion.inverted_pyramid_lower_interior, {
+        #     SMOEntranceData.inverted_pyramid_mural: None,
+        # }),
+        # (SMORegion.inverted_pyramid_mural, {
+        #     SMOEntranceData.inverted_pyramid_upper_interior: None,
+        # }),
+        # (SMORegion.inverted_pyramid_upper_interior, {
+        #     SMOEntranceData.top_of_the_inverted_pyramid: None,
+        # }),
         (SMORegion.underground_ruins, {
-            SMOEntrance.deepest_underground: (create_access_rule(self, [
+            SMOEntranceData.deepest_underground: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill, SMOItemData.knucklotecs_fist], SMORuleOperation.NONE)
             ])),
         }),
 
 
         (SMORegion.shiveria, {
-            SMOEntrance.snowline_circuit_lobby: None,
-            SMOEntrance.freezing_room: (create_access_rule(self, [
+            SMOEntranceData.snowline_circuit_lobby: None,
+            SMOEntranceData.freezing_room: (create_access_rule(self, [
                 (SMORuleCondition.ITEM, [SMOItemData.snow_hood, SMOItemData.snow_suit], SMORuleOperation.NONE)
             ])),
-            SMOEntrance.snow_kingdom_shop: None,
+            SMOEntranceData.snow_kingdom_shop: None,
         }),
 
 
@@ -2171,22 +2427,22 @@ def create_entrances(self):
 
 
         (SMORegion.painting_room_knucklotec, {
-            SMOEntrance.knucklotec_rematch: None,
+            SMOEntranceData.knucklotec_rematch: None,
         }),
         (SMORegion.painting_room_torkdrift, {
-            SMOEntrance.torkdrift_rematch: None,
+            SMOEntranceData.torkdrift_rematch: None,
         }),
         (SMORegion.painting_room_mecha_wiggler, {
-            SMOEntrance.mecha_wiggler_rematch: None,
+            SMOEntranceData.mecha_wiggler_rematch: None,
         }),
         (SMORegion.painting_room_mollusque_lanceur, {
-            SMOEntrance.mollusque_lanceur_rematch: None,
+            SMOEntranceData.mollusque_lanceur_rematch: None,
         }),
         (SMORegion.painting_room_cookatiel, {
-            SMOEntrance.cookatiel_rematch: None,
+            SMOEntranceData.cookatiel_rematch: None,
         }),
         (SMORegion.painting_room_lord_of_lightning, {
-            SMOEntrance.lord_of_lightning_rematch: None,
+            SMOEntranceData.lord_of_lightning_rematch: None,
         }),
 
 
@@ -2197,250 +2453,253 @@ def create_entrances(self):
     ]
 
     sub_area_coupled_entrances = [
-        SMOEntrance.top_hat_tower,
-        SMOEntrance.push_blocks,
-        SMOEntrance.poison_tides,
-        SMOEntrance.frog_pond,
-        SMOEntrance.rolling_lane,
-        SMOEntrance.chasm_lifts,
-        SMOEntrance.t_rex_nest,
-        SMOEntrance.chain_chomp_cave,
-        SMOEntrance.gusty_bridges,
-        SMOEntrance.mysterious_clouds,
-        SMOEntrance.ice_cave,
-        SMOEntrance.bullet_bill_maze,
-        SMOEntrance.jaxi_ruins,
-        SMOEntrance.inverted_pyramid_lower_interior,
-        SMOEntrance.inverted_pyramid_mural,
-        SMOEntrance.moe_eye_invisible_maze,
-        SMOEntrance.sand_kingdom_shop,
-        SMOEntrance.sand_sphynx_vault,
-        SMOEntrance.underground_ruins,
-        SMOEntrance.inverted_pyramid_upper_interior,
-        SMOEntrance.deepest_underground,
-        SMOEntrance.sand_rumbling_floor_house,
-        SMOEntrance.strange_neighborhood,
-        SMOEntrance.colossal_ruins,
-        SMOEntrance.freezing_waterway,
-        SMOEntrance.moe_eye_invisible_floor,
-        SMOEntrance.sky_garden_tower,
-        SMOEntrance.deep_woods,
-        SMOEntrance.flooding_pipeway,
-        SMOEntrance.sherm_elevator,
-        SMOEntrance.wooded_flower_road,
-        SMOEntrance.secret_flower_field,
-        SMOEntrance.walking_on_clouds,
-        SMOEntrance.fog_wandering,
-        SMOEntrance.sheep_herding,
-        SMOEntrance.invisible_road,
-        SMOEntrance.breakdown_road,
-        SMOEntrance.poison_swamp,
-        SMOEntrance.cloud_picture_match,
-        SMOEntrance.king_of_the_cube,
-        SMOEntrance.lost_kingdom_shop,
-        SMOEntrance.klepto_lava_bath,
-        SMOEntrance.tropical_wiggler_swamp,
-        SMOEntrance.city_hall,
-        SMOEntrance.metro_kingdom_shop,
-        SMOEntrance.metro_kingdom_shop_regional,
-        SMOEntrance.private_room,
-        SMOEntrance.bullet_building,
-        SMOEntrance.rc_race,
-        SMOEntrance.builder_outfit,
-        SMOEntrance.metro_slots,
-        SMOEntrance.rotating_maze,
-        SMOEntrance.t_rex_escape,
-        SMOEntrance.crowded_street,
-        SMOEntrance.metro_siege,
-        SMOEntrance.high_rise,
-        SMOEntrance.sewers,
-        SMOEntrance.projection_room,
-        SMOEntrance.swinging_scaffolding,
-        SMOEntrance.vanishing_road,
-        SMOEntrance.pitch_black_island,
-        SMOEntrance.seaside_rumbling_floor_cave,
-        SMOEntrance.spinning_maze,
-        SMOEntrance.wading_in_the_cloud_sea,
-        SMOEntrance.pokio_bomb_aiming,
-        SMOEntrance.rocket_flower_dash,
-        SMOEntrance.shiveria,
-        SMOEntrance.ty_foo_sliding_puzzle,
-        SMOEntrance.ice_trace_walking,
-        SMOEntrance.above_the_clouds,
-        SMOEntrance.freezing_water,
-        SMOEntrance.snow_flower_road,
-        SMOEntrance.iceburn_circuit_class_a_lobby,
-        SMOEntrance.fork_flickin,
-        SMOEntrance.magma_swamp,
-        SMOEntrance.cheese_excavate,
-        SMOEntrance.spinning_athletics,
-        SMOEntrance.magma_narrow_path,
-        SMOEntrance.volcano_cave,
-        SMOEntrance.rotating_gears_with_bitefrost,
-        SMOEntrance.lava_islands,
-        SMOEntrance.roulette_tower,
-        SMOEntrance.chargin_chuck_arena,
-        SMOEntrance.bowsers_kingdom_shop,
-        SMOEntrance.inside_the_church,
-        SMOEntrance.moon_cave,
-        SMOEntrance.moon_sphynx_vault,
-        SMOEntrance.moon_kingdom_shop,
-        SMOEntrance.giant_swings,
-        SMOEntrance.dot_galaxy,
-        SMOEntrance.peachs_castle,
-        SMOEntrance.mushroom_kingdom_shop,
-        SMOEntrance.painting_room_cookatiel,
-        SMOEntrance.painting_room_mecha_wiggler,
-        SMOEntrance.painting_room_knucklotec,
-        SMOEntrance.painting_room_torkdrift,
-        SMOEntrance.mushroom_well,
-        SMOEntrance.yoshi_in_the_sea_of_clouds,
-        SMOEntrance.painting_room_mollusque_lanceur,
-        SMOEntrance.painting_room_lord_of_lightning,
-        SMOEntrance.mushroom_picture_match,
-        SMOEntrance.dark_side_topper,
-        SMOEntrance.dark_side_hariet,
-        SMOEntrance.dark_side_spewart,
-        SMOEntrance.dark_side_rango,
-        SMOEntrance.dark_side_vanishing_road,
-        SMOEntrance.dark_side_invisible_road,
-        SMOEntrance.dark_side_siege,
-        SMOEntrance.dark_side_sinking_island,
-        SMOEntrance.dark_side_magma_swamp,
-        SMOEntrance.darker_side_main,
-        SMOEntrance.darker_side_pokio,
-        SMOEntrance.darker_side_bowser,
-        SMOEntrance.darker_side_end,
-        SMOEntrance.darker_side_tower,
-        SMOEntrance.luncheon_treasure_vault,
-        SMOEntrance.snowline_circuit_lobby,
-        SMOEntrance.sandy_bottom,
-        SMOEntrance.sand_slots,
-        SMOEntrance.sand_costume_bonus_dancing_room,
-        SMOEntrance.sand_kingdom_employee,
-        SMOEntrance.arch_repair,
-        SMOEntrance.zipper_chasm,
-        SMOEntrance.bouncy_flowers,
-        SMOEntrance.seaside_costume_bonus_dancing_room,
-        SMOEntrance.sinking_island,
-        SMOEntrance.deep_woods_costume_bonus_treasure_chest,
-        SMOEntrance.deep_woods_treasure_trap,
-        SMOEntrance.spinning_platforms_treasure_vault,
-        SMOEntrance.underwater_tunnel,
-        SMOEntrance.seaside_sphynx_treasure_vault,
-        SMOEntrance.narrow_valley,
-        SMOEntrance.luncheon_costume_bonus_cooking_pots,
-        SMOEntrance.luncheon_slots,
-        SMOEntrance.folding_screen,
-        SMOEntrance.dashing_above_the_clouds,
-        SMOEntrance.bowsers_treasure_vault,
-        SMOEntrance.jizos_adventure,
-        SMOEntrance.spinning_tower,
-        SMOEntrance.hexagon_tower,
-        SMOEntrance.wooden_tower,
-        SMOEntrance.castle_courtyard,
-        SMOEntrance.knucklotec_rematch,
-        SMOEntrance.torkdrift_rematch,
-        SMOEntrance.mecha_wiggler_rematch,
-        SMOEntrance.mollusque_lanceur_rematch,
-        SMOEntrance.cookatiel_rematch,
-        SMOEntrance.lord_of_lightning_rematch,
-        SMOEntrance.freezing_room,
-        SMOEntrance.dark_side_breakdown_road,
-        SMOEntrance.deepest_underground_shortcut,
-        SMOEntrance.lake_kingdom_shop,
-        SMOEntrance.snow_kingdom_shop,
-        SMOEntrance.luncheon_kingdom_shop,
+        SMOEntranceData.top_hat_tower,
+        SMOEntranceData.push_blocks,
+        SMOEntranceData.poison_tides,
+        SMOEntranceData.frog_pond,
+        SMOEntranceData.rolling_lane,
+        SMOEntranceData.chasm_lifts,
+        SMOEntranceData.t_rex_nest,
+        SMOEntranceData.chain_chomp_cave,
+        SMOEntranceData.gusty_bridges,
+        SMOEntranceData.mysterious_clouds,
+        SMOEntranceData.ice_cave,
+        SMOEntranceData.bullet_bill_maze,
+        SMOEntranceData.jaxi_ruins,
+        SMOEntranceData.inverted_pyramid_lower_interior,
+        # SMOEntranceData.inverted_pyramid_mural,
+        SMOEntranceData.moe_eye_invisible_maze,
+        SMOEntranceData.sand_kingdom_shop,
+        SMOEntranceData.sand_sphynx_vault,
+        SMOEntranceData.underground_ruins,
+        SMOEntranceData.inverted_pyramid_upper_interior,
+        SMOEntranceData.deepest_underground,
+        SMOEntranceData.sand_rumbling_floor_house,
+        SMOEntranceData.strange_neighborhood,
+        SMOEntranceData.colossal_ruins,
+        SMOEntranceData.freezing_waterway,
+        SMOEntranceData.moe_eye_invisible_floor,
+        SMOEntranceData.sky_garden_tower,
+        SMOEntranceData.deep_woods_1,
+        SMOEntranceData.deep_woods_2,
+        SMOEntranceData.deep_woods_3,
+        SMOEntranceData.deep_woods_4,
+        SMOEntranceData.flooding_pipeway,
+        SMOEntranceData.sherm_elevator,
+        SMOEntranceData.wooded_flower_road,
+        SMOEntranceData.secret_flower_field,
+        SMOEntranceData.walking_on_clouds,
+        SMOEntranceData.fog_wandering,
+        SMOEntranceData.sheep_herding,
+        SMOEntranceData.invisible_road,
+        SMOEntranceData.breakdown_road,
+        SMOEntranceData.poison_swamp,
+        SMOEntranceData.cloud_picture_match,
+        SMOEntranceData.king_of_the_cube,
+        SMOEntranceData.lost_kingdom_shop,
+        SMOEntranceData.klepto_lava_bath,
+        SMOEntranceData.tropical_wiggler_swamp,
+        SMOEntranceData.city_hall,
+        SMOEntranceData.metro_kingdom_shop,
+        SMOEntranceData.metro_kingdom_shop_regional,
+        SMOEntranceData.private_room,
+        SMOEntranceData.bullet_building,
+        SMOEntranceData.rc_race,
+        SMOEntranceData.builder_outfit,
+        SMOEntranceData.metro_slots,
+        SMOEntranceData.rotating_maze,
+        SMOEntranceData.t_rex_escape,
+        SMOEntranceData.crowded_street,
+        SMOEntranceData.metro_siege,
+        SMOEntranceData.high_rise,
+        SMOEntranceData.sewers,
+        SMOEntranceData.projection_room,
+        SMOEntranceData.swinging_scaffolding,
+        SMOEntranceData.vanishing_road,
+        SMOEntranceData.pitch_black_island,
+        SMOEntranceData.seaside_rumbling_floor_cave,
+        SMOEntranceData.spinning_maze,
+        SMOEntranceData.wading_in_the_cloud_sea,
+        SMOEntranceData.pokio_bomb_aiming,
+        SMOEntranceData.rocket_flower_dash,
+        SMOEntranceData.shiveria,
+        SMOEntranceData.ty_foo_sliding_puzzle,
+        SMOEntranceData.ice_trace_walking,
+        SMOEntranceData.above_the_clouds,
+        SMOEntranceData.freezing_water,
+        SMOEntranceData.snow_flower_road,
+        SMOEntranceData.iceburn_circuit_class_a_lobby,
+        SMOEntranceData.fork_flickin,
+        SMOEntranceData.magma_swamp,
+        SMOEntranceData.cheese_excavate,
+        SMOEntranceData.spinning_athletics,
+        SMOEntranceData.magma_narrow_path,
+        SMOEntranceData.volcano_cave,
+        SMOEntranceData.rotating_gears_with_bitefrost,
+        SMOEntranceData.lava_islands,
+        SMOEntranceData.roulette_tower,
+        SMOEntranceData.chargin_chuck_arena,
+        SMOEntranceData.bowsers_kingdom_shop,
+        SMOEntranceData.inside_the_church,
+        SMOEntranceData.moon_cave,
+        SMOEntranceData.moon_sphynx_vault,
+        SMOEntranceData.moon_kingdom_shop,
+        SMOEntranceData.giant_swings,
+        SMOEntranceData.dot_galaxy,
+        SMOEntranceData.peachs_castle,
+        SMOEntranceData.mushroom_kingdom_shop,
+        SMOEntranceData.painting_room_cookatiel,
+        SMOEntranceData.painting_room_mecha_wiggler,
+        SMOEntranceData.painting_room_knucklotec,
+        SMOEntranceData.painting_room_torkdrift,
+        SMOEntranceData.mushroom_well,
+        SMOEntranceData.yoshi_in_the_sea_of_clouds,
+        SMOEntranceData.painting_room_mollusque_lanceur,
+        SMOEntranceData.painting_room_lord_of_lightning,
+        SMOEntranceData.mushroom_picture_match,
+        SMOEntranceData.dark_side_topper,
+        SMOEntranceData.dark_side_hariet,
+        SMOEntranceData.dark_side_spewart,
+        SMOEntranceData.dark_side_rango,
+        SMOEntranceData.dark_side_vanishing_road,
+        SMOEntranceData.dark_side_invisible_road,
+        SMOEntranceData.dark_side_siege,
+        SMOEntranceData.dark_side_sinking_island,
+        SMOEntranceData.dark_side_magma_swamp,
+        SMOEntranceData.darker_side_main,
+        SMOEntranceData.darker_side_pokio,
+        SMOEntranceData.darker_side_bowser,
+        SMOEntranceData.darker_side_end,
+        SMOEntranceData.darker_side_tower,
+        SMOEntranceData.luncheon_treasure_vault,
+        SMOEntranceData.snowline_circuit_lobby,
+        SMOEntranceData.sandy_bottom,
+        SMOEntranceData.sand_slots,
+        SMOEntranceData.sand_costume_bonus_dancing_room,
+        SMOEntranceData.sand_kingdom_employee,
+        SMOEntranceData.arch_repair,
+        SMOEntranceData.zipper_chasm,
+        SMOEntranceData.bouncy_flowers,
+        SMOEntranceData.seaside_costume_bonus_dancing_room,
+        SMOEntranceData.sinking_island,
+        SMOEntranceData.deep_woods_costume_bonus_treasure_chest,
+        SMOEntranceData.deep_woods_treasure_trap,
+        SMOEntranceData.spinning_platforms_treasure_vault,
+        SMOEntranceData.underwater_tunnel,
+        SMOEntranceData.seaside_sphynx_treasure_vault,
+        SMOEntranceData.narrow_valley,
+        SMOEntranceData.luncheon_costume_bonus_cooking_pots,
+        SMOEntranceData.luncheon_slots,
+        SMOEntranceData.folding_screen,
+        SMOEntranceData.dashing_above_the_clouds,
+        SMOEntranceData.bowsers_treasure_vault,
+        SMOEntranceData.jizos_adventure,
+        SMOEntranceData.spinning_tower,
+        SMOEntranceData.hexagon_tower,
+        SMOEntranceData.wooden_tower,
+        SMOEntranceData.castle_courtyard,
+        SMOEntranceData.knucklotec_rematch,
+        SMOEntranceData.torkdrift_rematch,
+        SMOEntranceData.mecha_wiggler_rematch,
+        SMOEntranceData.mollusque_lanceur_rematch,
+        SMOEntranceData.cookatiel_rematch,
+        SMOEntranceData.lord_of_lightning_rematch,
+        SMOEntranceData.freezing_room,
+        SMOEntranceData.dark_side_breakdown_road,
+        SMOEntranceData.deepest_underground_shortcut,
+        SMOEntranceData.lake_kingdom_shop,
+        SMOEntranceData.snow_kingdom_shop,
+        SMOEntranceData.luncheon_kingdom_shop,
         ]
 
     sub_area_unique_exits = [
-        SMOEntrance.top_hat_tower,
-        SMOEntrance.push_blocks,
-        SMOEntrance.poison_tides,
-        SMOEntrance.rolling_lane,
-        SMOEntrance.chasm_lifts,
-        SMOEntrance.chain_chomp_cave,
-        SMOEntrance.gusty_bridges,
-        SMOEntrance.mysterious_clouds,
-        SMOEntrance.ice_cave,
-        SMOEntrance.bullet_bill_maze,
-        SMOEntrance.jaxi_ruins,
-        SMOEntrance.inverted_pyramid_lower_interior,
-        SMOEntrance.inverted_pyramid_mural,
-        SMOEntrance.moe_eye_invisible_maze,
-        SMOEntrance.underground_ruins,
-        SMOEntrance.inverted_pyramid_upper_interior,
-        SMOEntrance.strange_neighborhood,
-        SMOEntrance.colossal_ruins,
-        SMOEntrance.freezing_waterway,
-        SMOEntrance.moe_eye_invisible_floor,
-        SMOEntrance.sky_garden_tower,
-        SMOEntrance.deep_woods,
-        SMOEntrance.flooding_pipeway,
-        SMOEntrance.sherm_elevator,
-        SMOEntrance.wooded_flower_road,
-        SMOEntrance.secret_flower_field,
-        SMOEntrance.invisible_road,
-        SMOEntrance.poison_swamp,
-        SMOEntrance.tropical_wiggler_swamp,
-        SMOEntrance.city_hall,
-        # SMOEntrance.metro_kingdom_shop,
-        SMOEntrance.bullet_building,
-        SMOEntrance.builder_outfit,
-        SMOEntrance.t_rex_escape,
-        SMOEntrance.crowded_street,
-        SMOEntrance.metro_siege,
-        SMOEntrance.high_rise,
-        SMOEntrance.swinging_scaffolding,
-        SMOEntrance.vanishing_road,
-       # SMOEntrance.spinning_maze # ?,
-        SMOEntrance.wading_in_the_cloud_sea,
-        SMOEntrance.pokio_bomb_aiming,
-        SMOEntrance.rocket_flower_dash,
-        SMOEntrance.shiveria,
-        SMOEntrance.freezing_water,
-        SMOEntrance.snow_flower_road,
-        SMOEntrance.fork_flickin,
-        SMOEntrance.magma_swamp,
-        SMOEntrance.spinning_athletics,
-        SMOEntrance.magma_narrow_path,
-        SMOEntrance.volcano_cave,
-        SMOEntrance.rotating_gears_with_bitefrost,
-        SMOEntrance.lava_islands,
-        SMOEntrance.roulette_tower,
-        SMOEntrance.chargin_chuck_arena,
-        SMOEntrance.moon_cave,
-        SMOEntrance.giant_swings,
-        SMOEntrance.dot_galaxy,
-        SMOEntrance.painting_room_cookatiel,
-        SMOEntrance.painting_room_mecha_wiggler,
-        SMOEntrance.painting_room_knucklotec,
-        SMOEntrance.painting_room_torkdrift,
-        SMOEntrance.painting_room_mollusque_lanceur,
-        SMOEntrance.painting_room_lord_of_lightning,
-        SMOEntrance.dark_side_topper,
-        SMOEntrance.dark_side_hariet,
-        SMOEntrance.dark_side_spewart,
-        SMOEntrance.dark_side_rango,
-        SMOEntrance.dark_side_vanishing_road,
-        SMOEntrance.dark_side_invisible_road,
-        SMOEntrance.dark_side_siege,
-        SMOEntrance.dark_side_sinking_island,
-        SMOEntrance.dark_side_magma_swamp,
-        SMOEntrance.darker_side_main,
-        SMOEntrance.bouncy_flowers,
-        SMOEntrance.sinking_island,
-        SMOEntrance.spinning_platforms_treasure_vault, # ? oneway?,
-        SMOEntrance.underwater_tunnel,
-        SMOEntrance.narrow_valley,
-        SMOEntrance.luncheon_costume_bonus_cooking_pots,
-        SMOEntrance.jizos_adventure,
-        SMOEntrance.spinning_tower,
-        SMOEntrance.wooden_tower,
-        SMOEntrance.deepest_underground_shortcut,
-        # SMOEntrance.darker_side_pokio,
-        # SMOEntrance.darker_side_bowser,
-        # SMOEntrance.darker_side_end,
+        SMOEntranceData.top_hat_tower,
+        SMOEntranceData.push_blocks,
+        SMOEntranceData.poison_tides,
+        SMOEntranceData.rolling_lane,
+        SMOEntranceData.chasm_lifts,
+        SMOEntranceData.chain_chomp_cave,
+        SMOEntranceData.gusty_bridges,
+        SMOEntranceData.mysterious_clouds,
+        SMOEntranceData.ice_cave,
+        SMOEntranceData.bullet_bill_maze,
+        SMOEntranceData.jaxi_ruins,
+        SMOEntranceData.inverted_pyramid_lower_interior,
+        # SMOEntranceData.inverted_pyramid_mural,
+        SMOEntranceData.moe_eye_invisible_maze,
+        # SMOEntranceData.underground_ruins,
+        SMOEntranceData.inverted_pyramid_upper_interior,
+        SMOEntranceData.strange_neighborhood,
+        SMOEntranceData.freezing_waterway,
+        SMOEntranceData.moe_eye_invisible_floor,
+        SMOEntranceData.sky_garden_tower,
+        # SMOEntranceData.deep_woods_1,
+        # SMOEntranceData.deep_woods_3,
+        SMOEntranceData.flooding_pipeway,
+        SMOEntranceData.sherm_elevator,
+        SMOEntranceData.wooded_flower_road,
+        SMOEntranceData.secret_flower_field,
+        SMOEntranceData.invisible_road,
+        SMOEntranceData.poison_swamp,
+        SMOEntranceData.tropical_wiggler_swamp,
+        SMOEntranceData.city_hall,
+        # SMOEntranceData.metro_kingdom_shop,
+        SMOEntranceData.bullet_building,
+        SMOEntranceData.builder_outfit,
+        SMOEntranceData.t_rex_escape,
+        SMOEntranceData.crowded_street,
+        SMOEntranceData.metro_siege,
+        SMOEntranceData.high_rise,
+        SMOEntranceData.swinging_scaffolding,
+        SMOEntranceData.vanishing_road,
+       # SMOEntranceData.spinning_maze # ?,
+        SMOEntranceData.wading_in_the_cloud_sea,
+        SMOEntranceData.pokio_bomb_aiming,
+        SMOEntranceData.rocket_flower_dash,
+        SMOEntranceData.freezing_water,
+        SMOEntranceData.snow_flower_road,
+        SMOEntranceData.fork_flickin,
+        SMOEntranceData.magma_swamp,
+        SMOEntranceData.spinning_athletics,
+        SMOEntranceData.magma_narrow_path,
+        SMOEntranceData.volcano_cave,
+        SMOEntranceData.rotating_gears_with_bitefrost,
+        SMOEntranceData.lava_islands,
+        SMOEntranceData.roulette_tower,
+        SMOEntranceData.chargin_chuck_arena,
+        SMOEntranceData.moon_cave,
+        SMOEntranceData.giant_swings,
+        SMOEntranceData.dot_galaxy,
+        SMOEntranceData.painting_room_cookatiel,
+        SMOEntranceData.painting_room_mecha_wiggler,
+        SMOEntranceData.painting_room_knucklotec,
+        SMOEntranceData.painting_room_torkdrift,
+        SMOEntranceData.painting_room_mollusque_lanceur,
+        SMOEntranceData.painting_room_lord_of_lightning,
+        SMOEntranceData.dark_side_topper,
+        SMOEntranceData.dark_side_hariet,
+        SMOEntranceData.dark_side_spewart,
+        SMOEntranceData.dark_side_rango,
+        SMOEntranceData.dark_side_vanishing_road,
+        SMOEntranceData.dark_side_invisible_road,
+        SMOEntranceData.dark_side_siege,
+        SMOEntranceData.dark_side_sinking_island,
+        SMOEntranceData.dark_side_magma_swamp,
+        SMOEntranceData.darker_side_main,
+        SMOEntranceData.bouncy_flowers,
+        SMOEntranceData.sinking_island,
+        SMOEntranceData.underwater_tunnel,
+        SMOEntranceData.narrow_valley,
+        SMOEntranceData.luncheon_costume_bonus_cooking_pots,
+        SMOEntranceData.jizos_adventure,
+        SMOEntranceData.spinning_tower,
+        SMOEntranceData.wooden_tower,
+        # SMOEntranceData.spinning_platforms_treasure_vault, # ? oneway?,
+        # SMOEntranceData.shiveria,
+        # SMOEntranceData.deepest_underground_shortcut,
+        SMOEntranceData.darker_side_pokio,
+        SMOEntranceData.darker_side_bowser,
+        # SMOEntranceData.darker_side_end,
     ]
 
     return world_sub_area_exits, sub_area_coupled_entrances, sub_area_unique_exits
