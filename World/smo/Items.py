@@ -266,6 +266,19 @@ regional_coin_types = {
     SMOItemData.bowsers_kingdom_regional_coin : 49,
     SMOItemData.moon_kingdom_regional_coin : 50,
     SMOItemData.mushroom_kingdom_regional_coin : 51,
+    SMOItemData.cap_kingdom_regional_group: 52,
+    SMOItemData.cascade_kingdom_regional_group: 53,
+    SMOItemData.sand_kingdom_regional_group: 54,
+    SMOItemData.wooded_kingdom_regional_group: 55,
+    SMOItemData.lake_kingdom_regional_group: 56,
+    SMOItemData.lost_kingdom_regional_group: 57,
+    SMOItemData.metro_kingdom_regional_group: 58,
+    SMOItemData.seaside_kingdom_regional_group: 59,
+    SMOItemData.snow_kingdom_regional_group: 60,
+    SMOItemData.luncheon_kingdom_regional_group: 61,
+    SMOItemData.bowsers_kingdom_regional_group: 62,
+    SMOItemData.moon_kingdom_regional_group: 63,
+    SMOItemData.mushroom_kingdom_regional_group: 64,
 }
 
 world_list = [
