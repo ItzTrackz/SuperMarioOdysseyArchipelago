@@ -2,21 +2,26 @@ import random
 from math import floor
 from typing import Mapping, Any, TextIO
 
-from .Data.EntranceData import SMOEntrance
+from schema import Optional
+
+from .Data.EntranceData import SMOEntranceData
 from .Data.RegionData import SMORegion
+from .Data.ItemData import SMOItemData
+from .Data.RuleData import kingdom_name_to_id, SMOKingdoms
+from .Options import SMOOptions
 from .Items import item_table, SMOItem, filler_item_table, outfits, shop_items, \
     moon_item_table, moon_types, world_list, stickers, souvenirs, capture_items, \
-    location_hint_list
+    location_hint_list, regional_coin_types
 from .Locations import locations_table, SMOLocation, locations_list, post_game_locations_list, \
-    special_locations_table, full_moon_locations_list, story_moons, multi_moons, goals_table
-from .Options import SMOOptions
-from .Rules import set_rules
+    special_locations_table, full_moon_locations_list, story_moons, multi_moons, goals_table, regional_coin_table, \
+    regional_coin_groups, regional_coins, regional_coin_groups_table, regional_sub_area_to_kingdom, shop_location_costs
 from .Regions import create_regions
 from .Entrances import display_name_to_internal_name, display_name_alias, stage_id_to_name, SMORandomizationGroup, \
-                        internal_name_to_entrance, stage_names, stage_ids
+    internal_name_to_entrance, stage_names, stage_ids, get_entrance_pair, get_stage_ids, SMOEntrance
 from BaseClasses import Item, ItemClassification, Entrance, Region, EntranceType, MultiWorld
 from worlds.AutoWorld import World
 from worlds.LauncherComponents import (Component, components, Type as component_type, SuffixIdentifier, launch as launch_component)
+from .Rules import set_rules
 from entrance_rando import ERPlacementState, randomize_entrances, disconnect_entrance_for_randomization
 
 
@@ -47,7 +52,7 @@ class SMOWorld(World):
     # The following two dicts are required for the generation to know which
     # items exist. They could be generated from json or something else. They can
     # include events, but don't have to since events will be placed manually.
-    item_name_to_id = {**item_table, **moon_types}
+    item_name_to_id = {**item_table, **moon_types, **regional_coin_types}
 
     location_name_to_id = locations_table
     # Number of Power Moons required to leave each kingdom
@@ -67,10 +72,26 @@ class SMOWorld(World):
         "darker": 500
     }
 
+    default_regional_counts = {
+        "cap": 50,
+        "cascade": 50,
+        "sand": 100,
+        "lake": 50,
+        "wooded": 100,
+        "lost": 50,
+        "metro": 100,
+        "snow": 50,
+        "seaside": 100,
+        "luncheon": 100,
+        "bowser": 100,
+        "moon": 50,
+        "mushroom": 100,
+    }
+
     # Number of Power Moons required to unlock post game outfits.
     outfit_moon_counts = {
-        "Luigi Cap" : 160,
-        "Luigi Suit" : 180,
+        SMOItemData.luigi_cap : 160,
+        SMOItemData.luigi_suit : 180,
         "Doctor Headwear" : 220,
         "Doctor Outfit" : 240,
         "Waluigi Cap" : 260,
@@ -103,6 +124,7 @@ class SMOWorld(World):
         "luncheon": 53,
         "ruined": 6,
         "bowser": 40,
+        "mushroom": 43, # Needs recount
         "dark": 375,
         "darker": 750
     }
@@ -125,22 +147,6 @@ class SMOWorld(World):
         "mushroom": 55,
         "dark": 26,
         "darker": 3
-    }
-
-    placed_counts = {
-        "cascade": 0,
-        "sand": 0,
-        "lake": 0,
-        "wooded": 0,
-        "lost": 0,
-        "metro": 0,
-        "snow": 0,
-        "seaside": 0,
-        "luncheon": 0,
-        "ruined": 0,
-        "bowser": 0,
-        "dark": 0,
-        "darker": 0
     }
 
     # Items can be grouped using their names to allow easy checking if any item
@@ -181,9 +187,52 @@ class SMOWorld(World):
             "luncheon": 18,
             "ruined": 3,
             "bowser": 8,
+            "mushroom": 0,
             "dark": 250,
             "darker": 500
         }
+        # Number of moons placed for each kingdom
+        self.placement_counts = [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+
+        # Number of regionals required for each kingdom in progression
+        self.needed_regionals = [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+
         self.shine_items: dict[int, list[str]] = {}
         self.shine_replace_data = {}
         self.shine_colors: dict[int, int] = {}
@@ -203,7 +252,9 @@ class SMOWorld(World):
         self.valid_top_hat_replacements: list[str] = []
         self.top_hat_tower_bind: str = ""
         self.randomized_entrances: ERPlacementState = None
-        self.entrance_data: list[tuple[int,int, int, bool]] = []
+        self.original_entrance_bindings : dict[str, str] = {}
+        self.original_exit_bindings : dict[str, str] = {}
+        self.entrance_data: dict[str, dict[int, tuple[int, int, bool]]] = { "over_world": {}, "sub_area": {}}
         super().__init__(multiworld, player)
 
 
@@ -222,9 +273,11 @@ class SMOWorld(World):
             self.randomize_moon_amounts()
 
         create_regions(self)
-        sub_area_index = random.randint(0, len(self.valid_top_hat_replacements) - 1)
-        self.top_hat_tower_bind = self.valid_top_hat_replacements[sub_area_index]
-        print(self.top_hat_tower_bind)
+
+        # if self.options.entrance_randomization.value > self.options.entrance_randomization.option_off:
+            # sub_area_index = random.randint(0, len(self.valid_top_hat_replacements) - 1)
+            # self.top_hat_tower_bind = self.valid_top_hat_replacements[sub_area_index]
+            # print(self.top_hat_tower_bind)
 
     def create_item(self, name: str) -> Item:
         item_id = self.item_name_to_id[name]
@@ -247,6 +300,14 @@ class SMOWorld(World):
                 else:
                     classification = ItemClassification.progression
             elif name in moon_types:
+                kingdom = name.split()[0].lower()
+                self.placement_counts[world_list.index(kingdom.capitalize())] += 1
+                if self.placement_counts[world_list.index(kingdom.capitalize())] <= self.moon_counts[kingdom]:
+                    classification = ItemClassification.progression
+                else:
+                    classification = ItemClassification.useful
+
+            elif name in regional_coin_types:
                 classification = ItemClassification.progression
 
         item: SMOItem
@@ -269,38 +330,22 @@ class SMOWorld(World):
                 locations += [location.name]
         #print(locations)
 
-        placement_counts = [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        ]
 
         revised_counts = [
             0,
-            min(floor(self.moon_counts["cascade"] * self.options.extra_moons.value / 100.0), self.max_counts["cascade"]),
+            min(floor(self.moon_counts["cascade"] * self.options.extra_moons.value / 100.0),
+                self.max_counts["cascade"]),
             min(floor(self.moon_counts["sand"] * self.options.extra_moons.value / 100.0), self.max_counts["sand"]),
             min(floor(self.moon_counts["wooded"] * self.options.extra_moons.value / 100.0), self.max_counts["wooded"]),
             min(floor(self.moon_counts["lake"] * self.options.extra_moons.value / 100.0), self.max_counts["lake"]),
             0,
             min(floor(self.moon_counts["lost"] * self.options.extra_moons.value / 100.0), self.max_counts["lost"]),
             min(floor(self.moon_counts["metro"] * self.options.extra_moons.value / 100.0), self.max_counts["metro"]),
-            min(floor(self.moon_counts["seaside"] * self.options.extra_moons.value / 100.0), self.max_counts["seaside"]),
+            min(floor(self.moon_counts["seaside"] * self.options.extra_moons.value / 100.0),
+                self.max_counts["seaside"]),
             min(floor(self.moon_counts["snow"] * self.options.extra_moons.value / 100.0), self.max_counts["snow"]),
-            min(floor(self.moon_counts["luncheon"] * self.options.extra_moons.value / 100.0), self.max_counts["luncheon"]),
+            min(floor(self.moon_counts["luncheon"] * self.options.extra_moons.value / 100.0),
+                self.max_counts["luncheon"]),
             min(floor(self.moon_counts["ruined"] * self.options.extra_moons.value / 100.0), self.max_counts["ruined"]),
             min(floor(self.moon_counts["bowser"] * self.options.extra_moons.value / 100.0), self.max_counts["bowser"]),
             0,
@@ -308,6 +353,26 @@ class SMOWorld(World):
             0,
             0,
         ]
+
+        # revised_counts = [
+        #     0,
+        #     min(floor(self.moon_counts["cascade"] * self.options.extra_moons.value / 100.0), self.max_counts["cascade"]),
+        #     min(floor(self.moon_counts["sand"] * self.options.extra_moons.value / 100.0), self.max_counts["sand"]),
+        #     min(floor(self.moon_counts["wooded"] * self.options.extra_moons.value / 100.0), self.max_counts["wooded"]),
+        #     min(floor(self.moon_counts["lake"] * self.options.extra_moons.value / 100.0), self.max_counts["lake"]),
+        #     0,
+        #     min(floor(self.moon_counts["lost"] * self.options.extra_moons.value / 100.0), self.max_counts["lost"]),
+        #     min(floor(self.moon_counts["metro"] * self.options.extra_moons.value / 100.0), self.max_counts["metro"]),
+        #     min(floor(self.moon_counts["seaside"] * self.options.extra_moons.value / 100.0), self.max_counts["seaside"]),
+        #     min(floor(self.moon_counts["snow"] * self.options.extra_moons.value / 100.0), self.max_counts["snow"]),
+        #     min(floor(self.moon_counts["luncheon"] * self.options.extra_moons.value / 100.0), self.max_counts["luncheon"]),
+        #     min(floor(self.moon_counts["ruined"] * self.options.extra_moons.value / 100.0), self.max_counts["ruined"]),
+        #     min(floor(self.moon_counts["bowser"] * self.options.extra_moons.value / 100.0), self.max_counts["bowser"]),
+        #     0,
+        #     0,
+        #     0,
+        #     0,
+        # ]
         if self.options.goal == self.options.goal.option_dark:
             kingdoms : list = list(range(15))
             while sum(revised_counts[0:15]) < self.moon_counts["dark"]:
@@ -327,23 +392,23 @@ class SMOWorld(World):
             for i in range(len(story_moons[kingdom])):
                 if story_moons[kingdom][i] in locations:
                     pool.append(f"{kingdom} Story Moon")
-                    placement_counts[world_list.index(kingdom.capitalize())] += 1
-                    placement_counts[15] += 1
-                    placement_counts[16] += 1
+                    self.placement_counts[world_list.index(kingdom.capitalize())] += 1
+                    self.placement_counts[15] += 1
+                    self.placement_counts[16] += 1
         for kingdom in multi_moons.keys():
             for i in range(len(multi_moons[kingdom])):
                 if multi_moons[kingdom][i] in locations:
                     pool.append(f"{kingdom + (' Side' if 'Dark' in kingdom else '')} Multi-Moon")
-                    placement_counts[world_list.index(kingdom.capitalize())] += 3
-                    placement_counts[15] += 3
-                    placement_counts[16] += 3
+                    self.placement_counts[world_list.index(kingdom.capitalize())] += 3
+                    self.placement_counts[15] += 3
+                    self.placement_counts[16] += 3
 
         for index in range(len(world_list)):
-            while placement_counts[index] < revised_counts[index]:
+            while self.placement_counts[index] < revised_counts[index]:
                 pool.append(f"{world_list[index] + (' Side' if 'Dark' in world_list[index] else '')} Power Moon")
-                placement_counts[index] += 1
-                placement_counts[15] += 1
-                placement_counts[16] += 1
+                self.placement_counts[index] += 1
+                self.placement_counts[15] += 1
+                self.placement_counts[16] += 1
 
 
         # for location in locations:
@@ -393,12 +458,13 @@ class SMOWorld(World):
         #     # if not found:
         #     #     print(location)
         for index in range(len(world_list)):
-            while placement_counts[index] > revised_counts[index]:
+            while self.placement_counts[index] > revised_counts[index]:
                 if world_list[index] + " Power Moon" in pool:
                     pool.remove(world_list[index] + " Power Moon")
-                    placement_counts[index] -= 1
+                    self.placement_counts[index] -= 1
                 else:
                     break
+            self.placement_counts[index] = 0
 
         #endregion Moons
 
@@ -456,8 +522,29 @@ class SMOWorld(World):
         #endregion Captures
 
         #region Regional Coins
+        locations: list = []
+        for location in self.get_locations():
+            if (location.name in regional_coin_table or location.name in regional_coin_groups_table) and not location.item:
+                locations += [location]
 
+        for location in locations:
+            kingdom = ""
+            if "Kingdom" in location.name:
+                kingdom = location.name.replace("'", "").split()[0].lower()
+            else:
+                for place in regional_sub_area_to_kingdom:
+                    if location.parent_region.name in regional_sub_area_to_kingdom[place]:
+                        kingdom = place
+                        break
+            match self.options.regional_coins.value:
+                case self.options.regional_coins.option_groups:
+                    pool.append(getattr(SMOItemData, f"{kingdom}_kingdom_regional_group"))
 
+                case self.options.regional_coins.option_individual:
+                    pool.append(getattr(SMOItemData, f"{kingdom}_kingdom_regional_coin"))
+
+                case self.options.regional_coins.option_off:
+                    location.place_locked_item(self.create_item(getattr(SMOItemData, f"{kingdom}_kingdom_regional_coin")))
 
         #endregion Regional Coins
 
@@ -468,7 +555,7 @@ class SMOWorld(World):
                 pool.remove(start_item)
 
         needed_items = len(list(self.multiworld.get_unfilled_locations(self.player))) - 1
-        print(len(pool), needed_items)
+        #print(len(pool), needed_items)
         if len(pool) < needed_items:
             while len(pool) - 1 < needed_items:
                 pool.append(self.get_filler_item_name())
@@ -479,29 +566,73 @@ class SMOWorld(World):
 
         for i in pool:
             self.multiworld.itempool += [self.create_item(i)]
-        # Reset placed counts so multi worlds support more than one SMO instance
-        for key in self.placed_counts.keys():
-            self.placed_counts[key] = 0
 
     def set_rules(self):
         set_rules(self, self.options)
 
     def connect_entrances(self) -> None:
+        def get_coupled_entrance(source_region, source_exit_name: str) -> Entrance | None:
+            for reverse_entrance in source_region.entrances:
+                if reverse_entrance.name == source_exit_name:
+                    return reverse_entrance
+            else:
+                return None
+
+        def get_coupled_exit(target_region: Region, target_entrance_name: str) -> Entrance | None:
+            for reverse_exit in target_region.exits:
+                if reverse_exit.name == target_entrance_name:
+                    return reverse_exit
+            else:
+                return None
+
+        def on_connect(state: ERPlacementState, placed_exits: list[SMOEntrance], placed_entrances: list[SMOEntrance]) -> bool:
+            """
+            Use this to connect over world sub area end to the same placement as its enter counterpart and vise versa
+            Return True when a placement is made so generator performs another sweep
+            """
+            has_placed: bool = False
+            for _exit in placed_exits:
+                # if "Sub Area Exit" in
+                pass
+
+            for _entrance in placed_entrances:
+                if isinstance(_entrance, SMOEntrance):
+                    if not _entrance.is_sub_area and not _entrance.has_alternate_entrance:
+                        if _entrance.paired_entrance != "":
+                            other_exit = self.get_entrance(_entrance.paired_entrance)
+
+                            if other_exit:
+                                other_exit.parent_region = _entrance.connected_region
+                                if state.coupled and other_exit.randomization_type == EntranceType.TWO_WAY:
+                                    coupled_exit = get_coupled_exit(other_exit.connected_region, other_exit.name)
+                                    if coupled_exit:
+                                        coupled_exit.connected_region = _entrance.connected_region
+                                has_placed = True
+
+            return has_placed
+
             # SOMEWHERE in reassigning of top hat, exits and entrances become unequal
         if self.options.entrance_randomization > 0:
 
-            intro = self.get_region(SMORegion.cap_kingdom_intro)
-            topper = self.get_region(SMORegion.cap_kingdom_topper)
-            bind_region = self.get_region(self.top_hat_tower_bind)
-            top_hat = self.get_region(SMORegion.top_hat_tower)
+            # intro = self.get_region(SMORegion.cap_kingdom_intro)
+            # topper = self.get_region(SMORegion.cap_kingdom_topper)
+            # bind_region = self.get_region(self.top_hat_tower_bind)
+            # top_hat = self.get_region(SMORegion.top_hat_tower)
 
-            if len(self.sub_area_entrances) != len(self.sub_area_exits):
-               raise("Mismatch. ", f"Entrances: {len(self.sub_area_entrances)} Exits: {len(self.sub_area_exits)}")
+            # if len(self.sub_area_entrances) != len(self.sub_area_exits):
+            #    raise Exception("Mismatch. ", f"Entrances: {len(self.sub_area_entrances)} Exits: {len(self.sub_area_exits)}")
 
+            added_entrances = []
             for entrance in self.sub_area_entrances:
+                if entrance.name in self.original_entrance_bindings:
+                    raise "Duplicate entrance name"
+                self.original_entrance_bindings[entrance.name] = entrance.parent_region.name if entrance.parent_region else "None"
                 if entrance.randomization_type == EntranceType.ONE_WAY:
                     disconnect_entrance_for_randomization(entrance, SMORandomizationGroup.DOOR,
                                                           f"{entrance.name}")
+                    if entrance not in self.get_entrances():
+                        raise Exception(f"Attempted to disconnect entrance '{entrance.name}' not in entrance cache")
+                    pass
                 else:
                     # if " Entrance" in entrance.name and entrance.parent_region == bind_region:
                     #     disconnect_entrance_for_randomization(entrance,  SMORandomizationGroup.TOP_HAT_ENTER)
@@ -517,9 +648,23 @@ class SMOWorld(World):
                     #     disconnect_entrance_for_randomization(entrance, SMORandomizationGroup.TOP_HAT_EXIT)
                     #
                     # else:
-                        disconnect_entrance_for_randomization(entrance, SMORandomizationGroup.DOOR)
+                    entrance.parent_region = None
+                    if entrance.connected_region:
+                        # disconnect_entrance_for_randomization(entrance, SMORandomizationGroup.DOOR)
+                        # for added_target in entrance.parent_region.entrances:
+                        #     if added_target.name == entrance.name:
+                        #         added_entrances.append(added_target)
+                        pass
+
+
+            # for entrance in added_entrances:
+            #     self.sub_area_entrances.append(entrance)
 
             for possible_exit in self.sub_area_exits:
+                if possible_exit.name in self.original_exit_bindings:
+                    raise "Duplicate entrance name"
+                self.original_exit_bindings[possible_exit.name] = possible_exit.connected_region.name
+
                 # if f"{self.top_hat_tower_bind} Entrance" in possible_exit.name and possible_exit.parent_region == bind_region:
                 #     possible_exit.randomization_group = SMORandomizationGroup.TOP_HAT_EXIT
                 #
@@ -533,6 +678,7 @@ class SMOWorld(World):
                 #     possible_exit.randomization_group = SMORandomizationGroup.TOP_HAT_ENTER
 
                 possible_exit.connected_region = None
+                pass
 
             no_target_group = {
             SMORandomizationGroup.DOOR: [SMORandomizationGroup.DOOR, SMORandomizationGroup.PIPE],
@@ -541,8 +687,13 @@ class SMOWorld(World):
                 # SMORandomizationGroup.TOP_HAT_SUB_AREA_ENTER: [SMORandomizationGroup.TOP_HAT_ENTER],
                 # SMORandomizationGroup.TOP_HAT_SUB_AREA_EXIT: [SMORandomizationGroup.TOP_HAT_EXIT],
             }
+            print(f"Entrances: {len(self.sub_area_entrances)}, Exits: {len(self.sub_area_exits)}")
+            self.randomized_entrances = randomize_entrances(self, coupled=True, target_group_lookup=no_target_group,
+                                                            exits=self.sub_area_exits, er_targets=self.sub_area_entrances)
+            #print(self.randomized_entrances.entrance_lookup)
 
-            self.randomized_entrances = randomize_entrances(self, coupled=True, target_group_lookup=no_target_group, exits=self.sub_area_exits)
+            from Utils import visualize_regions
+            visualize_regions(self.get_region("Menu"), "smo_er.puml")
 
         # Finish Regional Coin Rules in Rules.py
         # Fix some exits not having a corresponding entrance
@@ -621,19 +772,25 @@ class SMOWorld(World):
 
 
     def bind_game_entrances(self) -> None:
+        """
+            Creates a list of entrance bindings that link in-game entrances to different Stage Names and Stage Ids
+        """
         entry : Entrance
         missing_bindings = []
         for entry in self.randomized_entrances.placements:
-            if entry.name == "Top Hat Tower Entrance":
-                print(entry.name, entry.connected_region)
-            if entry.connected_region.name == SMORegion.cap_kingdom_topper:
-                print(entry.name, entry.connected_region)
-            if entry.parent_region.name not in display_name_to_internal_name.keys():
-                if entry.parent_region.name not in missing_bindings and entry.parent_region.name not in display_name_alias.keys():
-                    missing_bindings.append(entry.parent_region.name)
-            if entry.connected_region.name not in display_name_to_internal_name.keys():
-                if entry.connected_region.name not in missing_bindings and entry.connected_region.name not in display_name_alias.keys():
-                    missing_bindings.append(entry.connected_region.name)
+            # if entry.name == "Top Hat Tower Entrance":
+            #     print(entry.name, entry.connected_region)
+            # if entry.connected_region.name == SMORegion.cap_kingdom_topper:
+            #     print(entry.name, entry.connected_region)
+            # if entry.parent_region.name not in display_name_to_internal_name.keys():
+            #     if entry.parent_region.name not in missing_bindings and entry.parent_region.name not in display_name_alias.keys():
+            #         missing_bindings.append(entry.parent_region.name)
+            # if entry.connected_region.name not in display_name_to_internal_name.keys():
+            #     if entry.connected_region.name not in missing_bindings and entry.connected_region.name not in display_name_alias.keys():
+            #         missing_bindings.append(entry.connected_region.name)
+            # if "Invisible Road" in entry.name:
+            #     print(f"{entry.name}, {entry.parent_region}, {entry.connected_region}, {entry.paired_entrance}, {entry.is_sub_area}")
+            pass
 
         for unique_entry in missing_bindings:
             pass
@@ -676,55 +833,117 @@ class SMOWorld(World):
         for i in missing_stage_ids:
             print(f"'{i}',")
 
-        pass_through_areas = [*world_list, "Inverted", "Underground", "Rematch"]
+        repeats = {}
+        repeat_entrances = {}
+        is_all_reverse: bool = True
+
         for entrance, binding in self.randomized_entrances.pairings:
-            if entrance in self.multiworld.regions.entrance_cache[self.player]:
-                _exit = self.get_entrance(entrance)
-            else:
-                print(entrance)
-            if binding in self.multiworld.regions.entrance_cache[self.player]:
-                entry = self.get_entrance(binding)
-            else:
-                print(binding)
-            # add proper support for _rev entrances and exits (ex. Shiveria/SnowWorldTownStage)
-            exit_name = (display_name_to_internal_name[_exit.parent_region.name
-                if (_exit.name.split(' ')[0] in pass_through_areas or _exit.name.split(' ')[1] in pass_through_areas)
-                else _exit.name[0:_exit.name.index(" Entrance")]
-                if " Entrance" in _exit.name else _exit.name[0:_exit.name.index(" End")]])
-            entry_name = (display_name_to_internal_name[entry.parent_region.name
-                if (entry.name.split(' ')[0] in pass_through_areas or entry.name.split(' ')[1] in pass_through_areas)
-                else entry.name[0:entry.name.index(" Entrance")]
-                if " Entrance" in entry.name else entry.name[0:entry.name.index(" End")]])
-            exit_stage_name = exit_name if 'WorldHomeStage' not in exit_name else display_name_to_internal_name[_exit.name[0:-9 if " Entrance" in _exit.name else -4]]
-            entry_stage_name = entry_name if 'WorldHomeStage' not in entry_name else display_name_to_internal_name[entry.name[0:entry.name.index(" Entrance" if " Entrance" in entry.name else " End")]]
-            if 'entrance' in internal_name_to_entrance[exit_name] or 'exit' in internal_name_to_entrance[exit_name]:
-                exit_stage_id = (internal_name_to_entrance[exit_name]
-                    ['entrance' if ' entrance' in _exit.name.lower()
-                        else 'exit' if  ' end' in _exit.name.lower()
-                        else ''])
-            else:
-                if isinstance(internal_name_to_entrance[exit_name][exit_stage_name], dict):
-                    exit_stage_id = (internal_name_to_entrance[exit_name][exit_stage_name]
-                    ['entrance' if ' entrance' in _exit.name.lower()
-                    else 'exit' if  ' end' in _exit.name.lower() else ''])
-                else:
-                    exit_stage_id = internal_name_to_entrance[exit_name][exit_stage_name]
-            if 'entrance' in internal_name_to_entrance[entry_name] or 'exit' in internal_name_to_entrance[entry_name]:
-                enter_stage_id = (internal_name_to_entrance[entry_name]
-                ['entrance' if ' entrance' in entry.name.lower()
-                    else 'exit' if  ' end' in entry.name.lower() else ''])
-            else:
-                if isinstance(internal_name_to_entrance[entry_name][entry_stage_name], dict):
-                    enter_stage_id = (internal_name_to_entrance[entry_name][entry_stage_name]
-                    ['entrance' if ' entrance' in entry.name.lower()
-                    else 'exit' if  ' end' in entry.name.lower() else ''])
-                else:
-                    enter_stage_id = internal_name_to_entrance[entry_name][entry_stage_name]
+            entry, _exit = get_entrance_pair(self, entrance, binding)
+
+
+            enter_stage_id, exit_stage_id = get_stage_ids(self, entry, _exit)
+            entry_name = display_name_to_internal_name[entry.parent_region.name]
+            exit_name = display_name_to_internal_name[_exit.parent_region.name]
+            while " " in entry_name:
+                entry_name = display_name_to_internal_name[entry_name]
+            while " " in exit_name:
+                exit_name = display_name_to_internal_name[exit_name]
+            entry_stage_name = display_name_to_internal_name[self.original_entrance_bindings[entry.name]]
+
             exit_stage_id_index = stage_ids.index(exit_stage_id)
             enter_stage_id_index = stage_ids.index(enter_stage_id)
             entry_index = stage_names.index(entry_name)
-            self.entrance_data.append((exit_stage_id_index, enter_stage_id_index, entry_index, entry_stage_name == entry_name))
 
+            # if exit_stage_id_index in self.entrance_data["over_world"] and exit_stage_id_index in self.entrance_data["sub_area"]:
+            if exit_stage_id in repeats:
+                repeats[exit_stage_id] += 1
+            else:
+                repeats[exit_stage_id] = 1
+                # raise Exception(f"Duplicate ER Entry Error ({exit_stage_id_index}, {exit_stage_id}, {enter_stage_id_index}, {entry_name}), "
+                #                 f"({stage_ids[self.entrance_data["over_world"][exit_stage_id_index][0]]}, {stage_names[self.entrance_data["over_world"][exit_stage_id_index][1]]})"
+                #                 f"({stage_ids[self.entrance_data["sub_area"][exit_stage_id_index][0]]}, {stage_names[self.entrance_data["sub_area"][exit_stage_id_index][1]]})")
+            over_world_ids = ["WorldHomeStage", "Revenge", "SnowWorldTown", "Underground000"]
+
+            is_over_world = False
+            for over_world_id in over_world_ids:
+                is_over_world = (over_world_id in exit_name ) or ("WorldHomeStage" not in exit_name and "Entrance" in _exit.name) # and not "Beginning" in _exit.name
+                if is_over_world:
+                    break
+
+            excluded_stage_ids = ["SnowUGEnt", "SnowUGExit"]
+            if is_over_world and exit_stage_id in excluded_stage_ids:
+                if "SnowWorldTown" in exit_name:
+                    is_over_world = False
+
+
+            if exit_stage_id != "None":
+                if exit_stage_id_index not in self.entrance_data["over_world" if is_over_world and not exit_stage_id_index in self.entrance_data["over_world"] else "sub_area"]:
+                    self.entrance_data["over_world" if is_over_world and not exit_stage_id_index in self.entrance_data["over_world"] else "sub_area"][exit_stage_id_index] = (enter_stage_id_index, entry_index, entry_stage_name == entry_name)
+
+                    if exit_stage_id_index in self.entrance_data['over_world'] and "WorldHomeStage" in exit_name:
+                        repeat_entrances[exit_stage_id_index] = []
+                        repeat_entrances[exit_stage_id_index].append(f"OVER WORLD {entrance}, {binding}: ({stage_ids[exit_stage_id_index]},"
+                              f" {stage_ids[self.entrance_data['over_world'][exit_stage_id_index][0]]},"
+                              f" {stage_names[self.entrance_data['over_world'][exit_stage_id_index][1]]}, {entry.is_reverse})")
+                    if exit_stage_id_index in self.entrance_data['sub_area'] and not "WorldHomeStage" in exit_name:
+                        repeat_entrances[exit_stage_id_index] = []
+                        repeat_entrances[exit_stage_id_index].append(f"SUB AREA {entrance}, {binding}: ({stage_ids[exit_stage_id_index]},"
+                              f" {stage_ids[self.entrance_data['sub_area'][exit_stage_id_index][0]]},"
+                              f" {stage_names[self.entrance_data['sub_area'][exit_stage_id_index][1]]}, {entry.is_reverse})")
+
+                else:
+                    # if exit_stage_id_index in self.entrance_data['over_world'] and "WorldHomeStage" in exit_name:
+                    #     repeat_entrances.append(f"OVER WORLD ({stage_ids[exit_stage_id_index]},"
+                    #           f" {stage_ids[self.entrance_data['over_world'][exit_stage_id_index][0]]},"
+                    #           f" {stage_names[self.entrance_data['over_world'][exit_stage_id_index][1]]}, {entry.is_reverse})")
+                    # if exit_stage_id_index in self.entrance_data['sub_area'] and not "WorldHomeStage" in exit_name:
+                    #     repeat_entrances.append(f"SUB AREA ({stage_ids[exit_stage_id_index]},"
+                    #           f" {stage_ids[self.entrance_data['sub_area'][exit_stage_id_index][0]]},"
+                    #           f" {stage_names[self.entrance_data['sub_area'][exit_stage_id_index][1]]}, {entry.is_reverse})")
+
+                    if exit_stage_id_index in self.entrance_data['over_world'] and "WorldHomeStage" in exit_name:
+                        repeat_entrances[exit_stage_id_index].append(f"REPEAT OVER WORLD {entrance}, {binding}: ({stage_ids[exit_stage_id_index]},"
+                              f" {stage_ids[self.entrance_data['over_world'][exit_stage_id_index][0]]},"
+                              f" {stage_names[self.entrance_data['over_world'][exit_stage_id_index][1]]}, {entry.is_reverse}),"
+                                                f"({self.original_entrance_bindings[entrance]}, {self.original_exit_bindings[binding]})")
+                    if exit_stage_id_index in self.entrance_data['sub_area'] and not "WorldHomeStage" in exit_name:
+                        repeat_entrances[exit_stage_id_index].append(f"REPEAT SUB AREA {entrance}, {binding}: ({stage_ids[exit_stage_id_index]},"
+                              f" {stage_ids[self.entrance_data['sub_area'][exit_stage_id_index][0]]},"
+                              f" {stage_names[self.entrance_data['sub_area'][exit_stage_id_index][1]]}, {entry.is_reverse}),"
+                                                f"({self.original_entrance_bindings[entrance]}, {self.original_exit_bindings[binding]})")
+
+                    if is_all_reverse:
+                        is_all_reverse = entry.is_reverse
+
+        for i in repeats:
+            if repeats[i] > 2:
+                print(i, repeats[i])
+
+        if is_all_reverse:
+            print("All incorrect repeats were reverse entrances/exits.")
+
+        count = 0
+        for i in repeat_entrances:
+            if len(repeat_entrances[i]) > 1:
+                count += 1
+                for k in repeat_entrances[i]:
+                    print(k)
+
+        print("Repeated Entrances: ", count)
+
+        for index in range(len(stage_ids)):
+            cur_id = stage_ids[index]
+            if (index not in self.entrance_data["over_world"] and index in self.entrance_data["sub_area"]
+                    and not "exdokan" in cur_id.lower() and not "exit" in cur_id.lower() and not "goal" in cur_id.lower()
+                    and not "return" in cur_id.lower() and not "2" == cur_id[-1] and not "b" == cur_id.lower()[-1]
+                    and not "out" in cur_id.lower()):
+                print(f"Over world missing: {cur_id}")
+            elif index not in self.entrance_data["sub_area"] and index in self.entrance_data["over_world"]:
+                print(f"Sub area missing: {cur_id}")
+            elif index not in self.entrance_data["over_world"] and index not in self.entrance_data["sub_area"]:
+                print(f"Stage Id missing: {cur_id}")
+            # if index == stage_ids.index("SnowUGEnt"):
+            #     print(f"{self.entrance_data["sub_area"][index]}, {self.entrance_data["over_world"][index]}")
 
 
     # Change regionals to be dependent on the option
@@ -732,15 +951,21 @@ class SMOWorld(World):
         # Entrance Rando
         if self.options.entrance_randomization:
             self.bind_game_entrances()
-            print("test")
-
+            # print(len(self.original_entrance_bindings))
+            # print(len(self.original_exit_bindings))
+            # print(len(stage_ids))
+            # print(len(stage_names))
+            # print(len(self.entrance_data))
+            #
+            # print("Finished entrance rando slot data")
 
         for player in range(1, self.multiworld.players + 1):
             if not player in self.coin_values:
                 self.coin_values[player] = {}
             for location in self.multiworld.get_locations(player):
                 if location.item.player == self.player:
-                    if location.item.game == self.game and location.item.name == "Coins":
+                    #region Generate Coin Values
+                    if location.item.game == self.game and location.item.name == SMOItemData.coins:
                         rand_num = self.random.randint(0,99)
                         if rand_num < 44:
                             coin_amount = self.random.randint(50, 100)
@@ -764,9 +989,37 @@ class SMOWorld(World):
                             self.coin_values[location.player][location.address] = coin_amount
 
                         # Fixes item_name_to_id calls with coins
+                        start_id = self.item_name_to_id[SMOItemData.coins]
                         if location.item.name not in self.item_name_to_id:
-                            self.item_name_to_id[location.item.name] = self.item_name_to_id["Coins"]
+                            start_id += 1
+                            self.item_name_to_id[location.item.name] = start_id
 
+                    #endregion
+
+
+        # Changing regional coin classification depending on shop item classification
+        # may not be feasible due to player order inconsistencies
+        # # Regional Coin Items
+        # regional_totals = {}
+        # for item, option, kingdom, cost in shop_location_costs:
+        #     if kingdom not in regional_totals:
+        #         regional_totals[kingdom] = 0
+        #     if self.options.goal.value >= option or self.options.entrance_randomization > 0:
+        #         regional_totals[kingdom] += cost
+        #         self.get_location(item)
+        #
+        # shop_item_classifications = {}
+        # for location, option, kingdom, cost in shop_location_costs:
+        #     if kingdom not in shop_item_classifications:
+        #         shop_item_classifications[kingdom] = []
+        #
+        #     shop_item_classifications[kingdom].append(self.get_location(location[0]).item.classification)
+
+
+        # Interpret current game spheres
+        # for sphere in self.multiworld.get_spheres():
+        #     for location in sphere:
+        #         if
 
 
         for world_id in range(len(location_hint_list)):
@@ -776,8 +1029,9 @@ class SMOWorld(World):
         for location in self.multiworld.get_locations(self.player):
             for world_id in range(len(location_hint_list)):
                 if self.location_name_to_id[location.name] in location_hint_list[world_id]:
-                    if not location.item.name in self.shine_items[world_id]:
-                        self.shine_items[world_id].append(f"{self.multiworld.get_player_name(location.item.player)}'s {location.item.name.replace('_', ' ')}")
+                    fixed_item_name = f"{self.multiworld.get_player_name(location.item.player)}'s {location.item.name.replace('_', ' ')}"
+                    if not fixed_item_name in self.shine_items[world_id]:
+                        self.shine_items[world_id].append(fixed_item_name)
 
         # Sort shine item lists
         for world_id in range(len(location_hint_list)):
@@ -797,7 +1051,7 @@ class SMOWorld(World):
 
         match self.options.colors.value:
             case self.options.colors.option_off:
-                self.color_list = [0, 0, 5, 7, 2, 0, 0, 1, 4, 8, 6, 0, 3, 9, -1, 9, 9, 27]
+                self.color_list = [0, 0, 5, 2, 7, 0, 0, 1, 8, 4, 6, 0, 3, 9, 64, 9, 9, 27]
                 for location in self.get_locations():
                     for kingdom in range(17):
                         if location.name in full_moon_locations_list[kingdom]:
@@ -813,7 +1067,7 @@ class SMOWorld(World):
                             self.shine_colors[self.location_name_to_id[location.name]] = self.color_list[kingdom]
 
             case self.options.colors.option_item:
-                self.color_list = [0, 15, 5, 2, 7, 11, 14, 1, 8, 4, 6, 13, 17, 9, -1, 9, 9, 10, 12, 16, 18, 19]
+                self.color_list = [0, 15, 5, 2, 7, 11, 14, 1, 8, 4, 6, 17, 3, 9, 64, 9, 9, 10, 12, 16, 18, 19]
                 for location in self.get_locations():
                     for kingdom in range(17):
                         if self.location_name_to_id[location.name] < 1168:
@@ -837,6 +1091,7 @@ class SMOWorld(World):
 
             case self.options.colors.option_item_random:
                 colors = list(range(30))
+                colors.append(64)
                 for i in range(22):
                     self.color_list.append(colors.pop(self.random.randint(0, len(colors) - 1)))
                 for location in self.get_locations():
@@ -865,6 +1120,9 @@ class SMOWorld(World):
                 for location in self.get_locations():
                     if self.location_name_to_id[location.name] < 1168:
                         self.shine_colors[self.location_name_to_id[location.name]] = self.random.randint(0,30)
+                        if self.random.randint(0,3) == 0:
+                            self.shine_colors[self.location_name_to_id[location.name]] += 64
+
 
         self.shop_replace_data["caps"] = {}
         self.shop_replace_data["clothes"] = {}
@@ -909,12 +1167,11 @@ class SMOWorld(World):
                     self.shop_players.index(self.multiworld.get_player_name(location.item.player)),
                     self.shop_ap_items.index(location.item.name.replace("_", " ")), location.item.classification.value]
 
-        return {**(self.options.as_dict("goal", "colors", "capture_sanity", "entrance_randomization", "death_link")), "counts" : self.moon_counts,
+        return {**(self.options.as_dict("goal", "colors", "regional_coins", "capture_sanity", "entrance_randomization", "death_link")), "counts" : self.moon_counts,
                 "shine_items" : self.shine_items, "shine_replace_data" : self.shine_replace_data, "shine_colors" : self.shine_colors,
                 "shop_games" : self.shop_games, "shop_players" : self.shop_players, "shop_ap_items" : self.shop_ap_items,
                 "shop_replace_data" : self.shop_replace_data, "coin_values" : self.coin_values,
-                "regionals" : False,
-                "entrances" : ""}
+                "entrances" : self.entrance_data}
 
 
     def write_spoiler_header(self, spoiler_handle: TextIO) -> None:
@@ -923,6 +1180,12 @@ class SMOWorld(World):
             for key in self.moon_counts.keys():
                 if world_list.index(key.capitalize()) <= self.options.goal:
                     text += f"\n{'':33}{(key.capitalize() + (' Kingdom: ' if world_list.index(key.capitalize()) < self.options.goal.option_dark else ' Side: '))}{str(self.moon_counts[key])}"
+            spoiler_handle.write(text)
+
+        if self.options.entrance_randomization > 0:
+            text = f"{'\nRandomized Entrances:':33}"
+            for er_from, er_to in self.randomized_entrances.pairings:
+                text += f"\n{'':5}{er_from} -> {er_to}"
             spoiler_handle.write(text)
 
     def generate_output(self, output_directory: str):
