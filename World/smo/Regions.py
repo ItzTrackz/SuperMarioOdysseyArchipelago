@@ -2,10 +2,10 @@ from types import NoneType
 from typing import Optional, Any
 from BaseClasses import Region, Entrance, EntranceType, CollectionState
 from . import world_list, capture_items
-from .Rules import SMORuleCondition, SMORuleOperation, create_access_rule
-from .Data.EntranceData import SMOEntrance
+from .Data.RuleData import SMORuleCondition, SMORuleOperation
+from .Data.EntranceData import SMOEntranceData
 from .Data.ItemData import SMOItemData
-from .Entrances import create_entrances, SMORandomizationGroup
+from .Entrances import create_entrances, SMORandomizationGroup, SMOEntrance
 from .Locations import SMOLocation, loc_Cap, loc_Cascade, loc_Cascade_Revisit, \
     loc_Sand, loc_Lake, loc_Wooded, loc_Cloud, loc_Lost, loc_Lost_Revisit, loc_Metro, \
     loc_Snow, loc_Seaside, loc_Luncheon, loc_Ruined, loc_Bowser, loc_Moon, \
@@ -56,9 +56,45 @@ from .Locations import SMOLocation, loc_Cap, loc_Cascade, loc_Cascade_Revisit, \
     loc_Cloud_Postgame, loc_Lost_Postgame, loc_Metro_Postgame, loc_Seaside_Postgame, loc_Snow_Postgame, \
     loc_Luncheon_Postgame, loc_Ruined_Postgame, loc_Bowser_Postgame, loc_Moon_Postgame, sub_area_church, \
     sub_area_shiveria, sub_area_shiveria_peace, sub_area_snowline, loc_Night_Sand, loc_Sand_Pyramid_Peace, \
-    loc_Sand_Pyramid_Mural
+    loc_Sand_Pyramid_Mural, \
+    cap_kingdom_regional_groups, cascade_kingdom_regional_groups, cascade_kingdom_peace_regional_groups, \
+    sand_kingdom_regional_groups, sand_kingdom_peace_regional_groups, sand_kingdom_pyramid_over_world_regional_groups, \
+    wooded_kingdom_regional_groups, lake_kingdom_regional_groups, lost_kingdom_regional_groups, \
+    metro_kingdom_regional_groups, night_metro_kingdom_regional_groups, seaside_kingdom_regional_groups, \
+    snow_kingdom_regional_groups, luncheon_kingdom_regional_groups, luncheon_kingdom_post_meat_regional_groups, \
+    bowsers_kingdom_regional_groups, bowsers_kingdom_peace_regional_groups, moon_kingdom_regional_groups, \
+    mushroom_kingdom_regional_groups, top_hat_tower_regional_groups, frog_pond_regional_groups, \
+    pushblocks_regional_groups, poison_tides_regional_groups, chasm_lifts_regional_groups, \
+    bullet_bill_maze_regional_groups, jaxi_ruins_regional_groups, strange_neighborhood_regional_groups, \
+    moeeye_invisible_maze_regional_groups, ice_cave_regional_groups, pyramid_upper_interior_regional_groups, \
+    underground_ruins_regional_groups, sky_garden_tower_regional_groups, flooded_pipes_regional_groups, \
+    deep_woods_regional_groups, walking_on_clouds_regional_groups, wooded_flower_road_regional_groups, \
+    sherm_elevator_regional_groups, bouncy_flowers_regional_groups, city_hall_regional_groups, \
+    sewers_regional_groups, bullet_billding_regional_groups, high_rise_regional_groups, \
+    trex_escape_regional_groups, sea_cave_regional_groups, shiveria_regional_groups, \
+    snowline_regional_groups, cascading_magma_regional_groups, magma_narrow_path_regional_groups, \
+    spinning_athletics_regional_groups, fork_flickin_regional_groups, moon_cave_regional_groups, \
+    peachs_castle_regional_groups, cap_kingdom_regional_coins, cascade_kingdom_regional_coins, \
+    cascade_kingdom_peace_regional_coins, sand_kingdom_regional_coins, sand_kingdom_peace_regional_coins, \
+    sand_kingdom_pyramid_over_world_regional_coins, wooded_kingdom_regional_coins, lake_kingdom_regional_coins, \
+    lost_kingdom_regional_coins, metro_kingdom_regional_coins, night_metro_kingdom_regional_coins, \
+    seaside_kingdom_regional_coins, snow_kingdom_regional_coins, luncheon_kingdom_regional_coins, \
+    luncheon_kingdom_post_meat_regional_coins, bowsers_kingdom_regional_coins, bowsers_kingdom_peace_regional_coins, \
+    moon_kingdom_regional_coins, mushroom_kingdom_regional_coins, top_hat_tower_regional_coins, \
+    frog_pond_regional_coins, pushblocks_regional_coins, poison_tides_regional_coins, \
+    chasm_lifts_regional_coins, bullet_bill_maze_regional_coins, jaxi_ruins_regional_coins, \
+    strange_neighborhood_regional_coins, moeeye_invisible_maze_regional_coins, ice_cave_regional_coins, \
+    pyramid_upper_interior_regional_coins, underground_ruins_regional_coins, sky_garden_tower_regional_coins, \
+    flooded_pipes_regional_coins, deep_woods_regional_coins, walking_on_clouds_regional_coins, \
+    wooded_flower_road_regional_coins, sherm_elevator_regional_coins, bouncy_flowers_regional_coins, \
+    city_hall_regional_coins, sewers_regional_coins, bullet_billding_regional_coins, \
+    high_rise_regional_coins, trex_escape_regional_coins, sea_cave_regional_coins, \
+    shiveria_regional_coins, snowline_regional_coins, cascading_magma_regional_coins, \
+    magma_narrow_path_regional_coins, spinning_athletics_regional_coins, fork_flickin_regional_coins, \
+    moon_cave_regional_coins, peachs_castle_regional_coins, sub_area_deep_woods
 from .Data.RegionData import SMORegion
 from .Data.LocationData import SMOLocationData
+from .Rules import create_access_rule
 from .Logic import count_moons, total_moons
 from entrance_rando import randomize_entrances, disconnect_entrance_for_randomization
 
@@ -97,106 +133,220 @@ def connect_region(self, connection_data : tuple):
                 else:
                     cur_region.connect(connecting_region, f"{cur_region.name} -> {connecting_region.name}")
 
-def create_two_way_entrance_rando_pair(cur_region: Region, enter_name: str, exit_name: str, cur_origin_region: Optional[Region] = None) -> tuple[Entrance, Entrance]:
+
+def create_two_way_entrance_rando(cur_region: Region, enter_name: str, exit_name: str, is_sub_area: bool = False,
+                                  has_alternate_entrance: bool = False, is_reverse: bool = False) -> tuple[SMOEntrance, SMOEntrance]:
+    """
+            :param cur_region: current Region.
+            :param enter_name: Name of Entrance pair.
+            :param exit_name: Name of Entrance pair.
+            :param is_sub_area: Is this entrance in a sub area.
+            :param has_alternate_entrance: Does this over world entrance have another loading zone that leads to the same place normally.
+            :return: Tuple containing the Entrance pair.
+    """
+
+    region_entry = SMOEntrance(player=cur_region.player, name=enter_name, randomization_type=EntranceType.TWO_WAY,
+                                   is_sub_area=is_sub_area, has_alternate_entrance=has_alternate_entrance, is_reverse=is_reverse)
+
+    region_exit = SMOEntrance(player=cur_region.player, name=exit_name, parent=cur_region, randomization_type=EntranceType.TWO_WAY,
+                              is_sub_area=is_sub_area, has_alternate_entrance=has_alternate_entrance, is_reverse=is_reverse)
+
+    cur_region.exits.append(region_exit)
+    cur_region.entrances.append(region_entry)
+
+    region_entry.connected_region = cur_region
+
+    return region_entry, region_exit
+
+def create_two_way_entrance_rando_pair(cur_region: Region, enter_name: str, exit_name: str, cur_origin_region: Optional[Region] = None,
+                                       is_sub_area: bool = False, has_alternate_entrance: bool = False) -> tuple[SMOEntrance, SMOEntrance]:
     """
             :param cur_region: current Region.
             :param enter_name: Name of Entrance pair.
             :param exit_name: Name of Entrance pair.
             :param cur_origin_region: The region the current region descends from.
+            :param is_sub_area: Is this entrance in a sub area.
+            :param has_alternate_entrance: Does this over world entrance have another loading zone that leads to the same place normally.
             :return: Tuple containing the Entrance pair.
     """
     if cur_origin_region:
         region_entry = cur_origin_region.create_er_target(enter_name)
     else:
-        region_entry = cur_region.create_er_target(enter_name)
-    region_exit = cur_region.create_exit(exit_name)
+        region_entry = SMOEntrance(player=cur_region.player, name=enter_name, randomization_type=EntranceType.TWO_WAY,
+                                   is_sub_area=is_sub_area, has_alternate_entrance=has_alternate_entrance)
+
+    region_exit = SMOEntrance(player=cur_region.player, name=exit_name, parent=cur_region, randomization_type=EntranceType.TWO_WAY,
+                              is_sub_area=is_sub_area, has_alternate_entrance=has_alternate_entrance)
+
+    cur_region.exits.append(region_exit)
+    cur_region.entrances.append(region_entry)
+
     region_entry.connected_region = cur_region
-    region_exit.parent_region = cur_region
-    region_entry.randomization_type = EntranceType.TWO_WAY
-    region_exit.randomization_type = EntranceType.TWO_WAY
 
     return region_entry, region_exit
 
-def create_two_way_entrance_pair(cur_region: Region, enter_name: str, exit_name: str, connecting_region: Region, cur_origin_region: Optional[Region] = None) -> tuple[Entrance, Entrance]:
-    """
+def create_two_way_entrance(cur_region: Region, connecting_region: Region, enter_name: str, exit_name: str,
+                                 is_sub_area: bool = False, has_alternate_entrance: bool = False) -> tuple[Entrance, Entrance]:
+    """ Creates a pair of Entrances: one exiting ``cur_region``, one entering ``cur_region``
                 :param cur_region: current Region.
                 :param enter_name: Name of Entrance pair.
                 :param exit_name: Name of Entrance pair.
                 :param connecting_region: Region this entrance/exit pair connects to.
-                :param cur_origin_region: The region the current region descends from.
+                :param is_sub_area: Is this entrance in a sub area.
+                :param has_alternate_entrance: Does this over world entrance have another loading zone that leads to the same place normally.
                 :return: Tuple containing the Entrance pair.
     """
     alternate_entrances = {
-        SMOEntrance.top_hat_tower_enter: SMORegion.top_hat_tower,
-        SMOEntrance.top_hat_tower_end: SMORegion.top_hat_tower,
-        SMOEntrance.deepest_underground_shortcut: SMORegion.deepest_underground,
+        SMOEntranceData.top_hat_tower_enter: SMORegion.top_hat_tower,
+        SMOEntranceData.top_hat_tower_end: SMORegion.top_hat_tower,
+        SMOEntranceData.deepest_underground_shortcut: SMORegion.deepest_underground,
     }
-    region_entry, region_exit = create_two_way_entrance_rando_pair(cur_region, enter_name, exit_name, cur_origin_region)
+    region_entry, region_exit = create_two_way_entrance_rando(cur_region, enter_name, exit_name, is_sub_area, has_alternate_entrance)
 
     region_entry.parent_region = connecting_region
     region_exit.connected_region = connecting_region
 
+    region_entry.parent_region.exits.append(region_entry)
+    region_entry.parent_region.entrances.append(region_exit)
+
     return region_entry, region_exit
 
-def create_one_way_entrance_for_entrance_rando(cur_region: Region, name: str) ->  Entrance:
+def create_two_way_entrance_pair(cur_region: Region, connecting_region: Region, enter_name: str, exit_name: str,
+                                 is_sub_area: bool = False, has_alternate_entrance: bool = False) -> tuple[Entrance, Entrance, Entrance, Entrance]:
+    """ Creates a pair of Entrances: one exiting ``cur_region``, one entering ``cur_region``
+                :param cur_region: current Region.
+                :param enter_name: Name of Entrance pair.
+                :param exit_name: Name of Entrance pair.
+                :param connecting_region: Region this entrance/exit pair connects to.
+                :param is_sub_area: Is this entrance in a sub area.
+                :param has_alternate_entrance: Does this over world entrance have another loading zone that leads to the same place normally.
+                :return: Tuple containing the Entrance pair.
+    """
+    alternate_entrances = {
+        SMOEntranceData.top_hat_tower_enter: SMORegion.top_hat_tower,
+        SMOEntranceData.top_hat_tower_end: SMORegion.top_hat_tower,
+        SMOEntranceData.deepest_underground_shortcut: SMORegion.deepest_underground,
+    }
+    region_entry, region_exit = create_two_way_entrance_rando(cur_region, exit_name, exit_name, is_sub_area, has_alternate_entrance)
+
+    other_entry, other_exit = create_two_way_entrance_rando(connecting_region, enter_name,
+                                                            enter_name, is_sub_area, has_alternate_entrance, True)
+
+    region_entry.parent_region = connecting_region
+    region_exit.connected_region = connecting_region
+
+    other_entry.parent_region = cur_region
+    other_exit.connected_region = cur_region
+
+    return region_entry, region_exit, other_entry, other_exit
+
+def create_one_way_entrance_for_entrance_rando(cur_region: Region, name: str,
+                                               is_sub_area: bool = False, has_alternate_entrance: bool = False) ->  Entrance:
     """
             :param cur_region: current Region.
             :param name: Name of Entrance pair.
+            :param is_sub_area: Is this entrance in a sub area.
+            :param has_alternate_entrance: Does this over world entrance have another loading zone that leads to the same place normally.
             :return: One-way Entrance.
     """
-    region_entry = cur_region.create_er_target(name)
-    region_entry.connected_region = cur_region
-    region_entry.randomization_type = EntranceType.ONE_WAY
+    region_entry = SMOEntrance(player=cur_region.player, name=name, parent=cur_region, is_sub_area=is_sub_area,
+                              has_alternate_entrance=has_alternate_entrance)
+
+    region_entry.connect(cur_region)
 
     return region_entry
 
-def create_one_way_exit_for_entrance_rando(cur_region: Region, name: str) ->  Entrance:
+def create_one_way_exit_for_entrance_rando(cur_region: Region, name: str,
+                                           is_sub_area: bool = False, has_alternate_entrance: bool = False) ->  Entrance:
     """
             :param cur_region: current Region.
             :param name: Name of Entrance pair.
+            :param is_sub_area: Is this entrance in a sub area.
+            :param has_alternate_entrance: Does this over world entrance have another loading zone that leads to the same place normally.
             :return: One-way Entrance.
     """
-    region_exit = cur_region.create_exit(name)
-    region_exit.parent_region = cur_region
-    region_exit.randomization_type = EntranceType.ONE_WAY
+    region_exit = SMOEntrance(player=cur_region.player, name=name, parent=cur_region, is_sub_area=is_sub_area,
+                              has_alternate_entrance=has_alternate_entrance)
+    cur_region.exits.append(region_exit)
 
     return region_exit
 
-def create_one_way_entrance(cur_region: Region, name: str, connecting_region: Region) -> Entrance:
+def create_one_way_entrance(cur_region: Region, name: str, connecting_region: Region,
+                            is_sub_area: bool = False, has_alternate_entrance: bool = False) -> Entrance:
     """
                 :param cur_region: current Region you are entering.
                 :param name: Name of Entrance pair.
                 :param connecting_region: Region this entrance/exit pair connects to.
+                :param is_sub_area: Is this entrance in a sub area.
+                :param has_alternate_entrance: Does this over world entrance have another loading zone that leads to the same place normally.
                 :return: One-way Entrance.
     """
     alternate_entrances = {
-        SMOEntrance.top_hat_tower_enter: SMORegion.top_hat_tower,
-        SMOEntrance.top_hat_tower_end: SMORegion.top_hat_tower,
-        SMOEntrance.deepest_underground_shortcut: SMORegion.deepest_underground,
+        SMOEntranceData.top_hat_tower_enter: SMORegion.top_hat_tower,
+        SMOEntranceData.top_hat_tower_end: SMORegion.top_hat_tower,
+        SMOEntranceData.deepest_underground_shortcut: SMORegion.deepest_underground,
     }
-    region_entrance = create_one_way_entrance_for_entrance_rando(cur_region, name)
+    region_entrance = create_one_way_entrance_for_entrance_rando(cur_region, name, is_sub_area, has_alternate_entrance)
 
     region_entrance.parent_region = connecting_region
 
     return region_entrance
 
-def create_one_way_exit(cur_region: Region, name: str, connecting_region: Region) -> Entrance:
+def create_one_way_exit(cur_region: Region, name: str, connecting_region: Region,
+                        is_sub_area: bool = False, has_alternate_entrance: bool = False) -> Entrance:
     """
                 :param cur_region: current Region being exited from.
                 :param name: Name of Entrance pair.
                 :param connecting_region: Region this entrance/exit pair connects to.
+                :param is_sub_area: Is this entrance in a sub area.
+                :param has_alternate_entrance: Does this over world entrance have another loading zone that leads to the same place normally.
                 :return: One-way Entrance.
     """
     alternate_entrances = {
-        SMOEntrance.top_hat_tower_enter: SMORegion.top_hat_tower,
-        SMOEntrance.top_hat_tower_end: SMORegion.top_hat_tower,
-        SMOEntrance.deepest_underground_shortcut: SMORegion.deepest_underground,
+        SMOEntranceData.top_hat_tower_enter: SMORegion.top_hat_tower,
+        SMOEntranceData.top_hat_tower_end: SMORegion.top_hat_tower,
+        SMOEntranceData.deepest_underground_shortcut: SMORegion.deepest_underground,
     }
-    region_exit = create_one_way_exit_for_entrance_rando(cur_region, name)
+    region_exit = create_one_way_exit_for_entrance_rando(cur_region, name, is_sub_area, has_alternate_entrance)
 
     region_exit.connected_region = connecting_region
 
     return region_exit
+
+def add_to_er(self, region_entry: Entrance, region_exit: Entrance, sub_area_entry: Entrance,
+                                    sub_area_exit: Entrance, is_add: list[bool]) -> None:
+
+    if region_entry and is_add[0]:
+        self.sub_area_entrances.append(region_entry)
+    # else:
+    #     region_entry.connected_region.entrances.remove(region_entry)
+    #     for other_target in region_entry.parent_region.exits:
+    #         if region_entry.name == other_target.name:
+    #             region_entry.parent_region.exits.remove(other_target)
+
+    if region_exit and is_add[1]:
+        self.sub_area_exits.append(region_exit)
+    # else:
+    #     region_exit.parent_region.exits.remove(region_exit)
+    #     for other_target in region_exit.connected_region.exits:
+    #         if region_exit.name == other_target.name:
+    #             region_exit.parent_region.exits.remove(other_target)
+
+    if sub_area_entry and is_add[2]:
+        self.sub_area_entrances.append(sub_area_entry)
+    # else:
+        # sub_area_entry.connected_region.entrances.remove(sub_area_entry)
+        # for other_target in sub_area_entry.parent_region.exits:
+        #     if sub_area_entry.name == other_target.name:
+        #         sub_area_entry.parent_region.exits.remove(other_target)
+
+    if sub_area_exit and is_add[3]:
+        self.sub_area_exits.append(sub_area_exit)
+    # else:
+        # sub_area_exit.parent_region.exits.remove(sub_area_exit)
+        # for other_target in sub_area_exit.connected_region.exits:
+        #     if sub_area_exit.name == other_target.name:
+        #         sub_area_exit.parent_region.exits.remove(other_target)
 
 def create_regions(self):
     """ Creates the regions for Super Mario Odyssey.
@@ -229,6 +379,7 @@ def create_regions(self):
         (SMORegion.restored_odyssey, {}, self.options.goal.option_sand),
         (SMORegion.odyssey_interior, {}, self.options.goal.option_sand),
         (SMORegion.odyssey_sail_sand, {}, self.options.goal.option_lake),
+        (SMORegion.odyssey_sails_branch_1, {}, self.options.goal.option_metro),
         (SMORegion.odyssey_broken_down, {}, self.options.goal.option_metro),
         (SMORegion.odyssey_repaired_lost, {}, self.options.goal.option_metro),
         (SMORegion.odyssey_sail_metro, {}, self.options.goal.option_luncheon),
@@ -386,7 +537,7 @@ def create_regions(self):
         (SMORegion.sand_sphynx_vault, sub_area_sand_sphinx),
         (SMORegion.sand_slots, sub_area_sand_slots),
         (SMORegion.inverted_pyramid_lower_interior, {}),
-        (SMORegion.inverted_pyramid_mural, loc_Sand_Pyramid_Mural),
+        # (SMORegion.inverted_pyramid_mural, loc_Sand_Pyramid_Mural),
         (SMORegion.inverted_pyramid_upper_interior, sub_area_inverted_pyramid),
         (SMORegion.underground_ruins, sub_area_sand_underground),
         (SMORegion.deepest_underground, sub_area_sand_arena),
@@ -409,7 +560,7 @@ def create_regions(self):
         (SMORegion.sky_garden_tower, {}), # Add locations
         (SMORegion.secret_flower_field, sub_area_flower_field),
         (SMORegion.secret_flower_field_peace, sub_area_flower_field_peace),
-        (SMORegion.deep_woods, {}), # Add Locations
+        (SMORegion.deep_woods, sub_area_deep_woods), # Add Locations
         (SMORegion.nut_room, sub_area_nut_room),
         (SMORegion.invisible_road, sub_area_wooded_invisible_road),
         (SMORegion.sheep_herding, sub_area_sheep),
@@ -486,11 +637,11 @@ def create_regions(self):
         (SMORegion.dashing_above_the_clouds, sub_area_bowser_clouds),
         (SMORegion.moon_cave, sub_area_moon_cave),
         (SMORegion.inside_the_church, sub_area_church),
-        (SMORegion.dot_galaxy, sub_area_galaxy),
-        (SMORegion.giant_swings, sub_area_swings),
-        (SMORegion.moon_sphynx_vault, sub_area_sphynx_moon),
-        (SMORegion.mushroom_picture_match, sub_area_mushroom_picture),
-        (SMORegion.peachs_castle, sub_area_castle),
+        (SMORegion.dot_galaxy, sub_area_galaxy, self.options.goal.option_dark),
+        (SMORegion.giant_swings, sub_area_swings, self.options.goal.option_dark),
+        (SMORegion.moon_sphynx_vault, sub_area_sphynx_moon, self.options.goal.option_dark),
+        (SMORegion.mushroom_picture_match, sub_area_mushroom_picture, self.options.goal.option_dark),
+        (SMORegion.peachs_castle, sub_area_castle, self.options.goal.option_dark),
         (SMORegion.castle_courtyard, sub_area_64, self.options.goal.option_dark),
         (SMORegion.mushroom_well, sub_area_mushroom_well, self.options.goal.option_dark),
         (SMORegion.yoshi_in_the_sea_of_clouds, sub_area_yoshi_clouds, self.options.goal.option_dark),
@@ -560,24 +711,150 @@ def create_regions(self):
         (SMORegion.shop_mushroom_coin, shop_post_game_coin, self.options.goal.option_darker),
     ]
 
+    regional_group_regions = [
+        (SMORegion.cap_kingdom_regional_groups, cap_kingdom_regional_groups, self.options.goal.option_sand),
+        (SMORegion.cascade_kingdom_regional_groups, cascade_kingdom_regional_groups, self.options.goal.option_sand),
+        (SMORegion.cascade_kingdom_peace_regional_groups, cascade_kingdom_peace_regional_groups, self.options.goal.option_sand),
+        (SMORegion.sand_kingdom_regional_groups, sand_kingdom_regional_groups, self.options.goal.option_sand),
+        (SMORegion.sand_kingdom_peace_regional_groups, sand_kingdom_peace_regional_groups, self.options.goal.option_metro),
+        (SMORegion.sand_kingdom_pyramid_over_world_regional_groups, sand_kingdom_pyramid_over_world_regional_groups,
+         self.options.goal.option_sand),
+        (SMORegion.wooded_kingdom_regional_groups, wooded_kingdom_regional_groups, self.options.goal.option_metro),
+        (SMORegion.lake_kingdom_regional_groups, lake_kingdom_regional_groups, self.options.goal.option_metro),
+        (SMORegion.lost_kingdom_regional_groups, lost_kingdom_regional_groups, self.options.goal.option_metro),
+        (SMORegion.metro_kingdom_regional_groups, metro_kingdom_regional_groups, self.options.goal.option_metro),
+        (SMORegion.night_metro_kingdom_regional_groups, night_metro_kingdom_regional_groups, self.options.goal.option_metro),
+        (SMORegion.seaside_kingdom_regional_groups, seaside_kingdom_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.snow_kingdom_regional_groups, snow_kingdom_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.luncheon_kingdom_regional_groups, luncheon_kingdom_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.luncheon_kingdom_post_meat_regional_groups, luncheon_kingdom_post_meat_regional_groups,
+         self.options.goal.option_luncheon),
+        (SMORegion.bowsers_kingdom_regional_groups, bowsers_kingdom_regional_groups, self.options.goal.option_moon),
+        (SMORegion.bowsers_kingdom_peace_regional_groups, bowsers_kingdom_peace_regional_groups, self.options.goal.option_moon),
+        (SMORegion.moon_kingdom_regional_groups, moon_kingdom_regional_groups, self.options.goal.option_moon),
+        (SMORegion.mushroom_kingdom_regional_groups, mushroom_kingdom_regional_groups, self.options.goal.option_dark),
+        (SMORegion.top_hat_tower_regional_groups, top_hat_tower_regional_groups, self.options.goal.option_sand),
+        (SMORegion.frog_pond_regional_groups, frog_pond_regional_groups, self.options.goal.option_sand),
+        (SMORegion.push_blocks_regional_groups, pushblocks_regional_groups, self.options.goal.option_sand),
+        (SMORegion.poison_tides_regional_groups, poison_tides_regional_groups, self.options.goal.option_sand),
+        (SMORegion.chasm_lifts_regional_groups, chasm_lifts_regional_groups, self.options.goal.option_sand),
+        (SMORegion.bullet_bill_maze_regional_groups, bullet_bill_maze_regional_groups, self.options.goal.option_sand),
+        (SMORegion.jaxi_ruins_regional_groups, jaxi_ruins_regional_groups, self.options.goal.option_sand),
+        (SMORegion.strange_neighborhood_regional_groups, strange_neighborhood_regional_groups, self.options.goal.option_sand),
+        (SMORegion.moe_eye_invisible_maze_regional_groups, moeeye_invisible_maze_regional_groups, self.options.goal.option_sand),
+        (SMORegion.ice_cave_regional_groups, ice_cave_regional_groups, self.options.goal.option_sand),
+        (SMORegion.pyramid_upper_interior_regional_groups, pyramid_upper_interior_regional_groups, self.options.goal.option_sand),
+        (SMORegion.underground_ruins_regional_groups, underground_ruins_regional_groups, self.options.goal.option_sand),
+        (SMORegion.sky_garden_tower_regional_groups, sky_garden_tower_regional_groups, self.options.goal.option_metro),
+        (SMORegion.flooded_pipes_regional_groups, flooded_pipes_regional_groups, self.options.goal.option_metro),
+        (SMORegion.deep_woods_regional_groups, deep_woods_regional_groups, self.options.goal.option_metro),
+        (SMORegion.walking_on_clouds_regional_groups, walking_on_clouds_regional_groups, self.options.goal.option_metro),
+        (SMORegion.wooded_flower_road_regional_groups, wooded_flower_road_regional_groups, self.options.goal.option_metro),
+        (SMORegion.sherm_elevator_regional_groups, sherm_elevator_regional_groups, self.options.goal.option_metro),
+        (SMORegion.bouncy_flowers_regional_groups, bouncy_flowers_regional_groups, self.options.goal.option_metro),
+        (SMORegion.city_hall_regional_groups, city_hall_regional_groups, self.options.goal.option_metro),
+        (SMORegion.sewers_regional_groups, sewers_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.bullet_billding_regional_groups, bullet_billding_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.high_rise_regional_groups, high_rise_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.trex_escape_regional_groups, trex_escape_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.sea_cave_regional_groups, sea_cave_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.shiveria_regional_groups, shiveria_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.snowline_regional_groups, snowline_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.cascading_magma_regional_groups, cascading_magma_regional_groups, self.options.goal.option_luncheon),
+        (SMORegion.magma_narrow_path_regional_groups, magma_narrow_path_regional_groups, self.options.goal.option_moon),
+        (SMORegion.spinning_athletics_regional_groups, spinning_athletics_regional_groups, self.options.goal.option_moon),
+        (SMORegion.fork_flickin_regional_groups, fork_flickin_regional_groups, self.options.goal.option_moon),
+        (SMORegion.moon_cave_regional_groups, moon_cave_regional_groups, self.options.goal.option_moon),
+        (SMORegion.peachs_castle_regional_groups, peachs_castle_regional_groups, self.options.goal.option_dark),
+        ]
+
+    regional_coin_regions = [
+        (SMORegion.cap_kingdom_regional_coins, cap_kingdom_regional_coins, self.options.goal.option_sand),
+        (SMORegion.cascade_kingdom_regional_coins, cascade_kingdom_regional_coins, self.options.goal.option_sand),
+        (SMORegion.cascade_kingdom_peace_regional_coins, cascade_kingdom_peace_regional_coins,
+         self.options.goal.option_sand),
+        (SMORegion.sand_kingdom_regional_coins, sand_kingdom_regional_coins, self.options.goal.option_sand),
+        (
+        SMORegion.sand_kingdom_peace_regional_coins, sand_kingdom_peace_regional_coins, self.options.goal.option_metro),
+        (SMORegion.sand_kingdom_pyramid_over_world_regional_coins, sand_kingdom_pyramid_over_world_regional_coins,
+         self.options.goal.option_sand),
+        (SMORegion.wooded_kingdom_regional_coins, wooded_kingdom_regional_coins, self.options.goal.option_metro),
+        (SMORegion.lake_kingdom_regional_coins, lake_kingdom_regional_coins, self.options.goal.option_metro),
+        (SMORegion.lost_kingdom_regional_coins, lost_kingdom_regional_coins, self.options.goal.option_metro),
+        (SMORegion.metro_kingdom_regional_coins, metro_kingdom_regional_coins, self.options.goal.option_metro),
+        (SMORegion.night_metro_kingdom_regional_coins, night_metro_kingdom_regional_coins,
+         self.options.goal.option_metro),
+        (SMORegion.seaside_kingdom_regional_coins, seaside_kingdom_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.snow_kingdom_regional_coins, snow_kingdom_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.luncheon_kingdom_regional_coins, luncheon_kingdom_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.luncheon_kingdom_post_meat_regional_coins, luncheon_kingdom_post_meat_regional_coins,
+         self.options.goal.option_luncheon),
+        (SMORegion.bowsers_kingdom_regional_coins, bowsers_kingdom_regional_coins, self.options.goal.option_moon),
+        (SMORegion.bowsers_kingdom_peace_regional_coins, bowsers_kingdom_peace_regional_coins,
+         self.options.goal.option_moon),
+        (SMORegion.moon_kingdom_regional_coins, moon_kingdom_regional_coins, self.options.goal.option_moon),
+        (SMORegion.mushroom_kingdom_regional_coins, mushroom_kingdom_regional_coins, self.options.goal.option_dark),
+        (SMORegion.top_hat_tower_regional_coins, top_hat_tower_regional_coins, self.options.goal.option_sand),
+        (SMORegion.frog_pond_regional_coins, frog_pond_regional_coins, self.options.goal.option_sand),
+        (SMORegion.push_blocks_regional_coins, pushblocks_regional_coins, self.options.goal.option_sand),
+        (SMORegion.poison_tides_regional_coins, poison_tides_regional_coins, self.options.goal.option_sand),
+        (SMORegion.chasm_lifts_regional_coins, chasm_lifts_regional_coins, self.options.goal.option_sand),
+        (SMORegion.bullet_bill_maze_regional_coins, bullet_bill_maze_regional_coins, self.options.goal.option_sand),
+        (SMORegion.jaxi_ruins_regional_coins, jaxi_ruins_regional_coins, self.options.goal.option_sand),
+        (SMORegion.strange_neighborhood_regional_coins, strange_neighborhood_regional_coins,
+         self.options.goal.option_sand),
+        (SMORegion.moe_eye_invisible_maze_regional_coins, moeeye_invisible_maze_regional_coins,
+         self.options.goal.option_sand),
+        (SMORegion.ice_cave_regional_coins, ice_cave_regional_coins, self.options.goal.option_sand),
+        (SMORegion.pyramid_upper_interior_regional_coins, pyramid_upper_interior_regional_coins,
+         self.options.goal.option_sand),
+        (SMORegion.underground_ruins_regional_coins, underground_ruins_regional_coins, self.options.goal.option_sand),
+        (SMORegion.sky_garden_tower_regional_coins, sky_garden_tower_regional_coins, self.options.goal.option_metro),
+        (SMORegion.flooded_pipes_regional_coins, flooded_pipes_regional_coins, self.options.goal.option_metro),
+        (SMORegion.deep_woods_regional_coins, deep_woods_regional_coins, self.options.goal.option_metro),
+        (SMORegion.walking_on_clouds_regional_coins, walking_on_clouds_regional_coins, self.options.goal.option_metro),
+        (
+        SMORegion.wooded_flower_road_regional_coins, wooded_flower_road_regional_coins, self.options.goal.option_metro),
+        (SMORegion.sherm_elevator_regional_coins, sherm_elevator_regional_coins, self.options.goal.option_metro),
+        (SMORegion.bouncy_flowers_regional_coins, bouncy_flowers_regional_coins, self.options.goal.option_metro),
+        (SMORegion.city_hall_regional_coins, city_hall_regional_coins, self.options.goal.option_metro),
+        (SMORegion.sewers_regional_coins, sewers_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.bullet_billding_regional_coins, bullet_billding_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.high_rise_regional_coins, high_rise_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.trex_escape_regional_coins, trex_escape_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.sea_cave_regional_coins, sea_cave_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.shiveria_regional_coins, shiveria_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.snowline_regional_coins, snowline_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.cascading_magma_regional_coins, cascading_magma_regional_coins, self.options.goal.option_luncheon),
+        (SMORegion.magma_narrow_path_regional_coins, magma_narrow_path_regional_coins, self.options.goal.option_moon),
+        (SMORegion.spinning_athletics_regional_coins, spinning_athletics_regional_coins, self.options.goal.option_moon),
+        (SMORegion.fork_flickin_regional_coins, fork_flickin_regional_coins, self.options.goal.option_moon),
+        (SMORegion.moon_cave_regional_coins, moon_cave_regional_coins, self.options.goal.option_moon),
+        (SMORegion.peachs_castle_regional_coins, peachs_castle_regional_coins, self.options.goal.option_dark),
+    ]
+
     #endregion
 
     # Sub areas which have two or more over world exits that lead into them
     alternate_entrances = {
-        SMOEntrance.deepest_underground_shortcut: SMORegion.deepest_underground,
-        SMOEntrance.metro_kingdom_shop: SMORegion.metro_kingdom_shop,
-        SMOEntrance.metro_kingdom_shop_regional: SMORegion.metro_kingdom_shop,
-        SMOEntrance.inverted_pyramid_upper_interior_reverse: SMORegion.inverted_pyramid_upper_interior,
-        #SMOEntrance.sky_garden_tower: SMORegion.metro_kingdom_shop,
+        SMOEntranceData.deepest_underground_shortcut: SMORegion.deepest_underground,
+        SMOEntranceData.metro_kingdom_shop: SMORegion.metro_kingdom_shop,
+        SMOEntranceData.metro_kingdom_shop_regional: SMORegion.metro_kingdom_shop,
+        SMOEntranceData.inverted_pyramid_upper_interior_reverse: SMORegion.inverted_pyramid_upper_interior,
+        #SMOEntranceData.sky_garden_tower: SMORegion.metro_kingdom_shop,
+        SMOEntranceData.deep_woods_1 : SMORegion.deep_woods,
+        SMOEntranceData.deep_woods_3 : SMORegion.deep_woods,
+        SMOEntranceData.deep_woods_2 : SMORegion.wooded_kingdom,
+        SMOEntranceData.deep_woods_4 : SMORegion.wooded_kingdom,
     }
 
     rocket_sub_areas = [
-        SMOEntrance.strange_neighborhood,
-        SMOEntrance.fog_wandering,
-        SMOEntrance.high_rise,
-        SMOEntrance.wading_in_the_cloud_sea,
-        SMOEntrance.roulette_tower,
-        SMOEntrance.mushroom_picture_match,
+        SMOEntranceData.strange_neighborhood,
+        SMOEntranceData.fog_wandering,
+        SMOEntranceData.high_rise,
+        SMOEntranceData.wading_in_the_cloud_sea,
+        SMOEntranceData.roulette_tower,
+        SMOEntranceData.mushroom_picture_match,
     ]
 
     access_requirement_sub_areas = [
@@ -606,75 +883,6 @@ def create_regions(self):
         "Freezing Room",
     ]
 
-    # Cannot go back through entrance or sub area cannot be done in reverse
-    one_way_enter_sub_area = [
-        SMOEntrance.spinning_platforms_treasure_vault,
-        #SMOEntrance.underground_ruins,
-        #SMOEntrance.ice_cave,
-        SMOEntrance.inverted_pyramid_upper_interior,
-        SMOEntrance.darker_side_main,
-        SMOEntrance.darker_side_pokio,
-        SMOEntrance.darker_side_bowser,
-        SMOEntrance.darker_side_end,
-        SMOEntrance.secret_flower_field,
-        # SMOEntrance.knucklotec_rematch,
-        # SMOEntrance.torkdrift_rematch,
-        # SMOEntrance.mecha_wiggler_rematch,
-        # SMOEntrance.mollusque_lanceur_rematch,
-        # SMOEntrance.cookatiel_rematch,
-        # SMOEntrance.lord_of_lightning_rematch,
-        SMOEntrance.deepest_underground_shortcut,
-        SMOEntrance.moe_eye_invisible_floor,
-        SMOEntrance.t_rex_escape,
-
-    ]
-
-    # The world entrance this connects to is normally one way
-    one_way_exit_sub_area = [
-        # SMOEntrance.darker_side_main,
-        # SMOEntrance.darker_side_pokio,
-        # SMOEntrance.darker_side_bowser,
-        # SMOEntrance.darker_side_end,
-        SMOEntrance.ice_cave,
-        SMOEntrance.inverted_pyramid_mural,
-        #SMOEntrance.darker_side_main,
-        SMOEntrance.darker_side_pokio,
-        SMOEntrance.darker_side_bowser,
-        SMOEntrance.darker_side_end,
-        #SMOEntrance.secret_flower_field,
-
-        SMOEntrance.deepest_underground_shortcut,
-        #SMOEntrance.bullet_bill_maze,
-    ]
-
-    locked_sub_area = [
-        SMOEntrance.inside_the_church,
-        # SMOEntrance.top_hat_tower,
-    ]
-
-    unique_exit_sub_area = {
-        SMOEntrance.top_hat_tower: SMORegion.cap_kingdom_topper,
-        SMOEntrance.inverted_pyramid_lower_interior: SMORegion.inverted_pyramid_mural,
-        SMOEntrance.inverted_pyramid_mural: SMORegion.inverted_pyramid_upper_interior,
-        SMOEntrance.inverted_pyramid_upper_interior: SMORegion.top_of_the_inverted_pyramid,
-        SMOEntrance.deepest_underground_shortcut: SMORegion.sand_kingdom,
-        SMOEntrance.bullet_bill_maze: SMORegion.sand_kingdom,
-        SMOEntrance.sky_garden_tower: SMORegion.wooded_kingdom,
-        #SMOEntrance.secret_flower_field: SMORegion.wooded_kingdom,
-        SMOEntrance.ice_cave: SMORegion.sand_kingdom,
-        SMOEntrance.moon_cave: SMORegion.moon_kingdom,
-        SMOEntrance.painting_room_knucklotec: SMORegion.knucklotec_rematch,
-        SMOEntrance.painting_room_torkdrift: SMORegion.torkdrift_rematch,
-        SMOEntrance.painting_room_mecha_wiggler: SMORegion.mecha_wiggler_rematch,
-        SMOEntrance.painting_room_mollusque_lanceur: SMORegion.mollosque_lanceur_rematch,
-        SMOEntrance.painting_room_cookatiel: SMORegion.cookatiel_rematch,
-        SMOEntrance.painting_room_lord_of_lightning: SMORegion.lord_of_lightning_rematch,
-        SMOEntrance.dark_side_topper: SMORegion.dark_side_2,
-        SMOEntrance.dark_side_hariet: SMORegion.dark_side_3,
-        SMOEntrance.dark_side_spewart: SMORegion.dark_side_4,
-        SMOEntrance.dark_side_rango: SMORegion.dark_side_5,
-    }
-
     can_reach_mushroom = lambda state: state.can_reach(self.get_region(SMORegion.mushroom_kingdom)) and state.can_reach(self.get_region(SMORegion.odyssey_complete))
 
     #region Connections
@@ -683,10 +891,11 @@ def create_regions(self):
         (SMORegion.defunct_odyssey, {
             SMORegion.restored_odyssey: lambda state: state.can_reach(self.multiworld.get_region(SMORegion.cascade_kingdom_peace, self.player)) and count_moons(state, "Cascade", self.player) >= self.moon_counts[
                 "cascade"],
-                                     }),
-        (SMORegion.restored_odyssey, {
             SMORegion.odyssey_interior: None,
             SMORegion.cap_kingdom: None,
+            SMORegion.cascade_kingdom: None,
+                                     }),
+        (SMORegion.restored_odyssey, {
             SMORegion.cascade_kingdom_revisit: None,
             SMORegion.sand_kingdom: None,
             SMORegion.odyssey_sail_sand: lambda state: count_moons(state, "Sand", self.player) >= self.moon_counts["sand"],
@@ -696,10 +905,14 @@ def create_regions(self):
             SMORegion.restored_odyssey: None
         }),
         (SMORegion.odyssey_sail_sand, {
-            SMORegion.wooded_kingdom: None,
             SMORegion.lake_kingdom: None,
+            SMORegion.odyssey_sails_branch_1: lambda state: count_moons(state, "Lake", self.player) >= self.moon_counts["lake"],
+        }),
+        (SMORegion.odyssey_sails_branch_1, {
             SMORegion.odyssey_broken_down: lambda state: count_moons(state, "Lake", self.player) >= self.moon_counts["lake"] and
-                                   count_moons(state, "Wooded", self.player) >= self.moon_counts["wooded"],
+                                                         count_moons(state, "Wooded", self.player) >= self.moon_counts[
+                                                             "wooded"],
+            SMORegion.wooded_kingdom: None,
         }),
         (SMORegion.odyssey_broken_down, {
             SMORegion.cloud_kingdom_boss_fight: None,
@@ -713,12 +926,12 @@ def create_regions(self):
             SMORegion.odyssey_sail_metro: lambda state: count_moons(state, "Metro", self.player) >= self.moon_counts["metro"],
         }),
         (SMORegion.odyssey_sail_metro, {
-            SMORegion.seaside_kingdom: None,
             SMORegion.snow_kingdom: None,
-            SMORegion.odyssey_sails_branch_2: lambda state: count_moons(state, "Snow", self.player) >= self.moon_counts["snow"] and count_moons(state, "Seaside", self.player) >= self.moon_counts["seaside"],
+            SMORegion.odyssey_sails_branch_2: lambda state: count_moons(state, "Snow", self.player) >= self.moon_counts["snow"],
         }),
         (SMORegion.odyssey_sails_branch_2, {
-            SMORegion.luncheon_kingdom: None,
+            SMORegion.seaside_kingdom: None,
+            SMORegion.luncheon_kingdom: lambda state: count_moons(state, "Snow", self.player) >= self.moon_counts["snow"] and count_moons(state, "Seaside", self.player) >= self.moon_counts["seaside"],
             SMORegion.odyssey_sail_luncheon: lambda state: count_moons(state, "Luncheon", self.player) >= self.moon_counts["luncheon"],
         }),
         (SMORegion.odyssey_sail_luncheon, {
@@ -747,6 +960,7 @@ def create_regions(self):
     world_connections = [
         (SMORegion.menu, {
             SMORegion.cap_kingdom_intro: None,
+            SMORegion.cap_kingdom: None,
         }),
         (SMORegion.cap_kingdom_intro, {
 
@@ -757,6 +971,8 @@ def create_regions(self):
         (SMORegion.cap_kingdom, {
             SMORegion.cap_kingdom_moon_rock: can_reach_mushroom,
             SMORegion.cap_kingdom_shop: None,
+            SMORegion.cap_kingdom_regional_coins: None,
+            SMORegion.cap_kingdom_regional_groups: None,
         }),
         (SMORegion.cascade_kingdom, {
             SMORegion.cascade_kingdom_peace: (lambda state: state.has(SMORegion.broodes_chain_chomp, self.player) and
@@ -766,8 +982,12 @@ def create_regions(self):
             SMORegion.chain_chomp: None,
             SMORegion.big_chain_chomp: (lambda state: state.has(SMORegion.chain_chomp, self.player)) if self.options.capture_sanity else None,
             SMORegion.broodes_chain_chomp: (lambda state: state.has_any([SMORegion.big_chain_chomp, SMORegion.t_rex], self.player)) if self.options.capture_sanity else None,
+            SMORegion.cascade_kingdom_regional_coins: None,
+            SMORegion.cascade_kingdom_regional_groups: None,
         }),
         (SMORegion.cascade_kingdom_peace, {
+            SMORegion.cascade_kingdom_peace_regional_coins: None,
+            SMORegion.cascade_kingdom_peace_regional_groups: None,
             SMORegion.cascade_kingdom_moon_rock: can_reach_mushroom,
         }),
         (SMORegion.cascade_kingdom_revisit, {
@@ -779,9 +999,13 @@ def create_regions(self):
             SMORegion.bullet_bill: None,
             SMORegion.moe_eye: None,
             SMORegion.cactus: None,
-            SMORegion.night_sand_kingdom: (lambda state: state.can_reach(SMORegion.top_of_the_inverted_pyramid, player=self.player))
+            SMORegion.night_sand_kingdom: (lambda state: state.can_reach(SMORegion.top_of_the_inverted_pyramid, player=self.player)),
+            SMORegion.sand_kingdom_regional_coins: None,
+            SMORegion.sand_kingdom_peace_regional_coins: None,
         }),
         (SMORegion.top_of_the_inverted_pyramid, {
+            SMORegion.sand_kingdom_pyramid_over_world_regional_coins: None,
+            SMORegion.sand_kingdom_pyramid_over_world_regional_groups: None,
         }),
         (SMORegion.night_sand_kingdom, {
             SMORegion.underground_ruins: None,
@@ -795,10 +1019,14 @@ def create_regions(self):
             SMORegion.sand_kingdom_moon_rock: can_reach_mushroom,
             SMORegion.top_of_the_inverted_pyramid: (lambda state: state.has(SMORegion.spark_pylon, self.player)) if self.options.capture_sanity else None,
             SMORegion.top_of_the_inverted_pyramid_peace: (lambda state: state.can_reach(SMORegion.top_of_the_inverted_pyramid,player=self.player)),
+            SMORegion.sand_kingdom_peace_regional_coins: None,
+            SMORegion.sand_kingdom_peace_regional_groups: None,
         }),
         (SMORegion.wooded_kingdom, {
             SMORegion.wooded_kingdom_post_broodals: None,
             SMORegion.wooded_kingdom_shop: None,
+            SMORegion.wooded_kingdom_regional_coins: None,
+            SMORegion.wooded_kingdom_regional_groups: None,
         }),
         (SMORegion.wooded_kingdom_post_broodals, {
             SMORegion.wooded_kingdom_peace: (lambda state: state.has_all([SMORegion.uproot, SMORegion.sherm], self.player)) if self.options.capture_sanity else None,
@@ -814,6 +1042,8 @@ def create_regions(self):
             SMORegion.lakitu: None,
             #SMORegion.lake_kingdom_shop: None,
             SMORegion.lake_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.lake_kingdom_regional_coins: None,
+            SMORegion.lake_kingdom_regional_groups: None,
         }),
         (SMORegion.cloud_kingdom_boss_fight, {
 
@@ -825,6 +1055,8 @@ def create_regions(self):
         (SMORegion.lost_kingdom, {
             #SMORegion.lost_kingdom_shop: None,
             SMORegion.tropical_wiggler: None,
+            SMORegion.lost_kingdom_regional_coins: None,
+            SMORegion.lost_kingdom_regional_groups: None,
         }),
         (SMORegion.lost_kingdom_revisit, {
             SMORegion.lost_kingdom_moon_rock: can_reach_mushroom,
@@ -832,11 +1064,15 @@ def create_regions(self):
         (SMORegion.night_metro_kingdom, {
             #SMORegion.metro_kingdom_shop: None,
             SMORegion.day_metro_kingdom: (lambda state: state.has_all([SMORegion.sherm, SMORegion.spark_pylon], self.player)) if self.options.capture_sanity else None,
+            SMORegion.night_metro_kingdom_regional_coins: None,
+            SMORegion.night_metro_kingdom_regional_groups: None,
         }),
         (SMORegion.day_metro_kingdom, {
             SMORegion.pole: None,
             SMORegion.manhole: None,
             SMORegion.taxi: None,
+            SMORegion.metro_kingdom_regional_coins: None,
+            SMORegion.metro_kingdom_regional_groups: None,
         }),
         (SMORegion.metro_kingdom_peace, {
             SMORegion.metro_kingdom_moon_rock: can_reach_mushroom,
@@ -845,6 +1081,8 @@ def create_regions(self):
             SMORegion.gushen: None,
             SMORegion.seaside_kingdom_shop: None,
             SMORegion.seaside_kingdom_peace: (lambda state: state.has(SMORegion.gushen, self.player)) if self.options.capture_sanity else None,
+            SMORegion.seaside_kingdom_regional_coins: None,
+            SMORegion.seaside_kingdom_regional_groups: None,
         }),
         (SMORegion.seaside_kingdom_peace, {
             SMORegion.seaside_kingdom_moon_rock: can_reach_mushroom,
@@ -852,7 +1090,9 @@ def create_regions(self):
         (SMORegion.snow_kingdom, {
             #SMORegion.snow_kingdom_shop: None,
             SMORegion.snow_kingdom_peace: (lambda state: state.can_reach(self.multiworld.get_region(SMORegion.snowline_circuit, self.player)) and state.has(SMORegion.shiverian_racer, self.player)) if self.options.capture_sanity
-                else (lambda state: state.can_reach(self.multiworld.get_region(SMORegion.snowline_circuit, self.player)))
+                else (lambda state: state.can_reach(self.multiworld.get_region(SMORegion.snowline_circuit, self.player))),
+            SMORegion.snow_kingdom_regional_coins: None,
+            SMORegion.snow_kingdom_regional_groups: None,
         }),
         (SMORegion.snow_kingdom_peace, {
             SMORegion.ty_foo: None,
@@ -862,6 +1102,8 @@ def create_regions(self):
         (SMORegion.luncheon_kingdom, {
             SMORegion.lava_bubble: None,
             SMORegion.luncheon_kingdom_post_broodals: None,
+            SMORegion.luncheon_kingdom_regional_coins: None,
+            SMORegion.luncheon_kingdom_regional_groups: None,
         }),
         (SMORegion.luncheon_kingdom_post_broodals, {
             SMORegion.hammer_bro: None,
@@ -873,6 +1115,10 @@ def create_regions(self):
             SMORegion.cascading_magma: lambda state: state.can_reach(self.multiworld.get_location("Luncheon Kingdom - Big Pot on the Volcano: Dive In!", self.player)),
         }),
         (SMORegion.cascading_magma, {
+            SMORegion.luncheon_kingdom_post_meat_regional_coins: None,
+            SMORegion.luncheon_kingdom_post_meat_regional_groups: None,
+            SMORegion.cascading_magma_regional_coins: None,
+            SMORegion.cascading_magma_regional_groups: None,
             SMORegion.lava_bubble: None,
             SMORegion.luncheon_kingdom_peace: (lambda state: state.has(SMORegion.lava_bubble, self.player)) if self.options.capture_sanity else None,
         }),
@@ -886,6 +1132,8 @@ def create_regions(self):
         }),
         (SMORegion.bowsers_kingdom, {
             SMORegion.infiltrate_bowsers_castle: (lambda state: state.has(SMORegion.spark_pylon, self.player)) if self.options.capture_sanity else None,
+            SMORegion.bowsers_kingdom_regional_coins: None,
+            SMORegion.bowsers_kingdom_regional_groups: None,
         }),
         (SMORegion.infiltrate_bowsers_castle, {
             SMORegion.bowser_kingdom_smart_bombing: None,
@@ -901,10 +1149,14 @@ def create_regions(self):
         }),
         (SMORegion.bowser_kingdom_peace, {
             SMORegion.bowser_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.bowsers_kingdom_peace_regional_coins: None,
+            SMORegion.bowsers_kingdom_peace_regional_groups: None,
         }),
         (SMORegion.moon_kingdom, {
             #SMORegion.moon_kingdom_shop: None,
             SMORegion.moon_kingdom_peace: can_reach_mushroom,
+            SMORegion.moon_kingdom_regional_coins: None,
+            SMORegion.moon_kingdom_regional_groups: None,
         }),
         (SMORegion.moon_kingdom_peace, {
             SMORegion.moon_kingdom_moon_rock: can_reach_mushroom,
@@ -912,6 +1164,8 @@ def create_regions(self):
         (SMORegion.mushroom_kingdom, {
             SMORegion.yoshi: None,
             #SMORegion.mushroom_kingdom_shop: None,
+            SMORegion.mushroom_kingdom_regional_coins: None,
+            SMORegion.mushroom_kingdom_regional_groups: None,
         }),
         (SMORegion.dark_side, {
         }),
@@ -933,15 +1187,23 @@ def create_regions(self):
         (SMORegion.top_hat_tower, {
             SMORegion.frog: None,
             #SMORegion.cap_kingdom_topper: (lambda state: state.has(SMORegion.frog, self.player)) if self.options.capture_sanity else None,
+            SMORegion.top_hat_tower_regional_coins: None,
+            SMORegion.top_hat_tower_regional_groups: None,
         }),
         (SMORegion.frog_pond, {
-            SMORegion.frog: None
+            SMORegion.frog: None,
+            SMORegion.frog_pond_regional_coins: None,
+            SMORegion.frog_pond_regional_groups: None,
         }),
         (SMORegion.poison_tides, {
-            SMORegion.paragoomba: None
+            SMORegion.paragoomba: None,
+            SMORegion.poison_tides_regional_coins: None,
+            SMORegion.poison_tides_regional_groups: None,
         }),
         (SMORegion.push_block, {
-            SMORegion.spark_pylon: None
+            SMORegion.spark_pylon: None,
+            SMORegion.push_blocks_regional_coins: None,
+            SMORegion.push_blocks_regional_groups: None,
         }),
         (SMORegion.rolling_lane, {
 
@@ -953,22 +1215,30 @@ def create_regions(self):
             SMORegion.t_rex: None
         }),
         (SMORegion.chasm_lifts, {
-
+            SMORegion.chasm_lifts_regional_coins: None,
+            SMORegion.chasm_lifts_regional_groups: None,
         }),
         (SMORegion.gusty_bridges, {
 
         }),
         (SMORegion.moe_eye_invisible_maze, {
-            SMORegion.moe_eye: None
+            SMORegion.moe_eye: None,
+            SMORegion.moe_eye_invisible_maze_regional_coins: None,
+            SMORegion.moe_eye_invisible_maze_regional_groups: None,
         }),
         (SMORegion.bullet_bill_maze, {
-            SMORegion.bullet_bill: None
+            SMORegion.bullet_bill: None,
+            SMORegion.bullet_bill_maze_regional_coins: None,
+            SMORegion.bullet_bill_maze_regional_groups: None,
         }),
         (SMORegion.jaxi_ruins, {
-
+            SMORegion.jaxi_ruins_regional_coins: None,
+            SMORegion.jaxi_ruins_regional_groups: None,
         }),
         (SMORegion.strange_neighborhood, {
-            SMORegion.goomba: None
+            SMORegion.goomba: None,
+            SMORegion.strange_neighborhood_regional_coins: None,
+            SMORegion.strange_neighborhood_regional_groups: None,
         }),
         (SMORegion.sand_outfit, {
 
@@ -981,7 +1251,8 @@ def create_regions(self):
         # }
         #  ),
         (SMORegion.ice_cave, {
-
+            SMORegion.ice_cave_regional_coins: None,
+            SMORegion.ice_cave_regional_groups: None,
         }),
         (SMORegion.sand_sphynx_vault, {
 
@@ -994,11 +1265,15 @@ def create_regions(self):
         }),
         (SMORegion.inverted_pyramid_upper_interior, {
             #SMORegion.top_of_the_inverted_pyramid: None
+            SMORegion.pyramid_upper_interior_regional_coins: None,
+            SMORegion.pyramid_upper_interior_regional_groups: None,
         }),
         (SMORegion.underground_ruins, {
             #SMORegion.deepest_underground: (lambda state: state.has(SMORegion.bullet_bill,self.player)) if self.options.capture_sanity else None,
             SMORegion.goomba: None,
             SMORegion.bullet_bill: None,
+            SMORegion.underground_ruins_regional_coins: None,
+            SMORegion.underground_ruins_regional_groups: None,
         }),
         (SMORegion.deepest_underground, {
             SMORegion.sand_kingdom_peace: create_access_rule(self,[(SMORuleCondition.CAPTURE, [SMOItemData.knucklotecs_fist], SMORuleOperation.NONE)]),
@@ -1028,10 +1303,15 @@ def create_regions(self):
             SMORegion.zipper: None
         }),
         (SMORegion.bouncy_flowers, {
-
+            SMORegion.bouncy_flowers_regional_coins: None,
+            SMORegion.bouncy_flowers_regional_groups: None,
         }),
         (SMORegion.poison_swamp, {
             SMORegion.frog: None
+        }),
+        (SMORegion.sky_garden_tower, {
+            SMORegion.sky_garden_tower_regional_coins: None,
+            SMORegion.sky_garden_tower_regional_groups: None,
         }),
         (SMORegion.deep_woods_treasure_trap, {
 
@@ -1040,20 +1320,27 @@ def create_regions(self):
 
         }),
         (SMORegion.flooding_pipeway, {
-
+            SMORegion.flooded_pipes_regional_coins: None,
+            SMORegion.flooded_pipes_regional_groups: None,
         }),
         (SMORegion.wooded_flower_road, {
-            SMORegion.goomba: None
+            SMORegion.goomba: None,
+            SMORegion.wooded_flower_road_regional_coins: None,
+            SMORegion.wooded_flower_road_regional_groups: None,
         }),
         (SMORegion.sherm_elevator, {
             SMORegion.sherm: None,
-            SMORegion.fire_bro: None
+            SMORegion.fire_bro: None,
+            SMORegion.sherm_elevator_regional_coins: None,
+            SMORegion.sherm_elevator_regional_groups: None,
         }),
         (SMORegion.fog_wandering, {
             SMORegion.paragoomba: None
         }),
         (SMORegion.walking_on_clouds, {
-            SMORegion.uproot: None
+            SMORegion.uproot: None,
+            SMORegion.walking_on_clouds_regional_coins: None,
+            SMORegion.walking_on_clouds_regional_groups: None,
         }),
         (SMORegion.secret_flower_field, {
             SMORegion.uproot: None,
@@ -1067,6 +1354,8 @@ def create_regions(self):
             SMORegion.coin_coffer: None,
             SMORegion.boulder: None,
             SMORegion.tree: None,
+            SMORegion.deep_woods_regional_coins: None,
+            SMORegion.deep_woods_regional_groups: None,
         }),
         (SMORegion.nut_room, {
 
@@ -1108,7 +1397,8 @@ def create_regions(self):
 
         }),
         (SMORegion.city_hall, {
-
+            SMORegion.city_hall_regional_coins: None,
+            SMORegion.city_hall_regional_groups: None,
         }),
         (SMORegion.crowded_street, {
             SMORegion.crowded_street_post_game: can_reach_mushroom
@@ -1123,13 +1413,17 @@ def create_regions(self):
 
         }),
         (SMORegion.high_rise, {
-
+            SMORegion.high_rise_regional_coins: None,
+            SMORegion.high_rise_regional_groups: None,
         }),
         (SMORegion.bullet_billding, {
-            SMORegion.bullet_bill: None
+            SMORegion.bullet_bill: None,
+            SMORegion.bullet_billding_regional_coins: None,
+            SMORegion.bullet_billding_regional_groups: None,
         }),
         (SMORegion.t_rex_escape, {
-
+            SMORegion.trex_escape_regional_coins: None,
+            SMORegion.trex_escape_regional_groups: None,
         }),
         (SMORegion.projection_room, {
 
@@ -1146,7 +1440,9 @@ def create_regions(self):
         (SMORegion.sewers, {
             SMORegion.metro_kingdom_peace: lambda state: state.can_reach(self.multiworld.get_region(SMORegion.day_metro_kingdom, self.player)),
             SMORegion.sewers_post_game: lambda state: state.can_reach(self.multiworld.get_region(SMORegion.day_metro_kingdom, self.player))
-                                                  and state.can_reach(self.multiworld.get_region(SMORegion.mushroom_kingdom, self.player))
+                                                  and state.can_reach(self.multiworld.get_region(SMORegion.mushroom_kingdom, self.player)),
+            SMORegion.sewers_regional_coins: None,
+            SMORegion.sewers_regional_groups: None,
         }),
         (SMORegion.sewers_post_game, {
             SMORegion.puzzle_part_metro_kingdom: None
@@ -1155,7 +1451,9 @@ def create_regions(self):
 
         }),
         (SMORegion.seaside_waterway, {
-            SMORegion.cheep_cheep: None
+            SMORegion.cheep_cheep: None,
+            SMORegion.sea_cave_regional_coins: None,
+            SMORegion.sea_cave_regional_groups: None,
         }),
         (SMORegion.seaside_sphynx_vault, {
 
@@ -1173,7 +1471,7 @@ def create_regions(self):
             SMORegion.gushen: None
         }),
         (SMORegion.sinking_island, {
-            SMORegion.uproot: None
+            SMORegion.uproot: None,
         }),
         (SMORegion.pokio_bomb_aiming, {
             SMORegion.pokio: None
@@ -1185,10 +1483,14 @@ def create_regions(self):
             SMORegion.goomba: None,
             SMORegion.ty_foo: None,
             SMORegion.shiveria_peace: lambda state: state.can_reach(self.multiworld.get_region(SMORegion.snow_kingdom_peace, self.player)),
+            SMORegion.shiveria_regional_coins: None,
+            SMORegion.shiveria_regional_groups: None,
         }),
         (SMORegion.snowline_circuit, {
             SMORegion.shiverian_racer: None,
             SMORegion.snow_kingdom_peace: (lambda state: state.has(SMORegion.shiverian_racer, self.player)) if self.options.capture_sanity else None,
+            SMORegion.snowline_regional_coins: None,
+            SMORegion.snowline_regional_groups: None,
          }),
         (SMORegion.shiveria_peace, {
             SMORegion.icicle_barrier_post_game: can_reach_mushroom,
@@ -1218,16 +1520,21 @@ def create_regions(self):
             SMORegion.lava_bubble: None
         }),
         (SMORegion.fork_flickin, {
-            SMORegion.volbonan: None
+            SMORegion.volbonan: None,
+            SMORegion.fork_flickin_regional_coins: None,
+            SMORegion.fork_flickin_regional_groups: None,
         }),
         (SMORegion.cheese_excavate, {
-            SMORegion.hammer_bro: None
+            SMORegion.hammer_bro: None,
         }),
         (SMORegion.magma_narrow_path, {
-            SMORegion.lava_bubble: None
+            SMORegion.lava_bubble: None,
+            SMORegion.magma_narrow_path_regional_coins: None,
+            SMORegion.magma_narrow_path_regional_groups: None,
         }),
         (SMORegion.spinning_athletics, {
-
+            SMORegion.spinning_athletics_regional_coins: None,
+            SMORegion.spinning_athletics_regional_groups: None,
         }),
         (SMORegion.luncheon_slots, {
 
@@ -1276,7 +1583,9 @@ def create_regions(self):
             SMORegion.bullet_bill: (lambda state: state.has_all([SMORegion.parabones, SMORegion.sherm, SMORegion.spark_pylon, SMORegion.banzai_bill], self.player)) if self.options.capture_sanity else None,
             SMORegion.moe_eye: (lambda state: state.has_all([SMORegion.parabones, SMORegion.sherm, SMORegion.spark_pylon, SMORegion.banzai_bill], self.player)) if self.options.capture_sanity else None,
             SMORegion.chargin_chuck: (lambda state: state.has_all([SMORegion.parabones, SMORegion.sherm, SMORegion.spark_pylon, SMORegion.banzai_bill], self.player)) if self.options.capture_sanity else None,
-            SMORegion.broodes_chain_chomp: (lambda state: state.has_all([SMORegion.parabones, SMORegion.sherm, SMORegion.spark_pylon, SMORegion.banzai_bill], self.player)) if self.options.capture_sanity else None
+            SMORegion.broodes_chain_chomp: (lambda state: state.has_all([SMORegion.parabones, SMORegion.sherm, SMORegion.spark_pylon, SMORegion.banzai_bill], self.player)) if self.options.capture_sanity else None,
+            SMORegion.moon_cave_regional_coins: None,
+            SMORegion.moon_cave_regional_groups: None,
         }),
         (SMORegion.inside_the_church, {
             SMORegion.bowser: None,
@@ -1294,7 +1603,8 @@ def create_regions(self):
             SMORegion.picture_match_part_mario: None
         }),
         (SMORegion.peachs_castle, {
-
+            SMORegion.peachs_castle_regional_coins: None,
+            SMORegion.peachs_castle_regional_groups: None,
         }),
         (SMORegion.castle_courtyard, {
 
@@ -1372,38 +1682,38 @@ def create_regions(self):
             SMORegion.spark_pylon: None
         }),
         # Shops
-        (SMOEntrance.sand_kingdom_shop, {
+        (SMOEntranceData.sand_kingdom_shop, {
             SMORegion.sand_kingdom_shop: None,
         }),
-        (SMOEntrance.lake_kingdom_shop, {
+        (SMOEntranceData.lake_kingdom_shop, {
             SMORegion.lake_kingdom_shop: None,
         }),
-        (SMOEntrance.lost_kingdom_shop, {
+        (SMOEntranceData.lost_kingdom_shop, {
             SMORegion.lost_kingdom_shop: None,
         }),
         (SMORegion.metro_kingdom_shop, {
             SMORegion.metro_kingdom_shop: None,
         }),
-        (SMOEntrance.snow_kingdom_shop, {
+        (SMOEntranceData.snow_kingdom_shop, {
             SMORegion.snow_kingdom_shop: None,
         }),
-        (SMOEntrance.luncheon_kingdom_shop, {
+        (SMOEntranceData.luncheon_kingdom_shop, {
             SMORegion.luncheon_kingdom_shop: None,
         }),
-        (SMOEntrance.bowsers_kingdom_shop, {
+        (SMOEntranceData.bowsers_kingdom_shop, {
             SMORegion.bowser_kingdom_shop: None,
         }),
-        (SMOEntrance.moon_kingdom_shop, {
+        (SMOEntranceData.moon_kingdom_shop, {
             SMORegion.moon_kingdom_shop: None,
         }),
-        (SMOEntrance.mushroom_kingdom_shop, {
+        (SMOEntranceData.mushroom_kingdom_shop, {
             SMORegion.mushroom_kingdom_shop: None,
         }),
     ]
 
     # non_entrance_rando_sub_area_connections = [
     #     (SMORegion.inverted_pyramid_lower_interior, {
-    #         SMOEntrance.inverted_pyramid_upper_interior: None,
+    #         SMOEntranceData.inverted_pyramid_upper_interior: None,
     #     }),
     #     (SMORegion.inverted_pyramid_upper_interior, {
     #         SMORegion.top_of_the_inverted_pyramid: None,
@@ -1424,6 +1734,13 @@ def create_regions(self):
 
     for region in shop_regions:
         create_region(self, region)
+
+    if self.options.regional_coins == self.options.regional_coins.option_groups:
+        for region in regional_group_regions:
+            create_region(self, region)
+    else:
+        for region in regional_coin_regions:
+            create_region(self, region)
 
     if self.options.capture_sanity:
         for region in capture_regions:
@@ -1468,124 +1785,172 @@ def create_regions(self):
     # One way sub area entrance: one exit no entrance from world region, one entrance no exit to sub area region
     # One way sub area exit: Exit no Entrance from sub area region, Entrance no Exit into world region
     mismatch = 0
+    # if self.options.entrance_randomization.value == self.options.entrance_randomization.option_chaos:
+    #     blank_enter, blank_exit = create_two_way_entrance(self.get_region("Menu"), self.get_region(SMORegion.cap_kingdom_intro),
+    #                                                       f"EMPTY Entrance", f"EMPTY Exit")
+    #
+    #
+    #
+    #     # blank_enter, blank_exit = create_two_way_entrance(self.get_region(SMORegion.cap_kingdom_intro), self.get_region("Menu"),
+    #     #                                                   f"EMPTY Exit", f"EMPTY Entrance")
+    #     self.sub_area_entrances.append(blank_enter)
+    #     self.sub_area_exits.append(blank_exit)
     for data in self.world_exits:
         region, exits = data
         for world_exit in exits.keys():
-            add_to_er: bool = True
+            is_add: bool = True
             cur_reg : Region = self.get_region(region)
-            origin_region = None
             # if "Kingdom" in region and region != region[:region.index("Kingdom") + 7] and region[:region.index("Kingdom") + 7] in world_regions and "Intro" not in region:
             #     origin_region = self.get_region(region[:region.index("Kingdom") + 7])
             cur_sub_area : Region = self.get_region(alternate_entrances[world_exit] if world_exit in alternate_entrances else world_exit)
             region_entry, region_exit = None, None
             sub_area_entry, sub_area_exit = None, None
 
-            # Over world Region connection
-            if origin_region:
-                if world_exit in one_way_enter_sub_area:
-                    region_exit = create_one_way_exit(cur_reg,f"{region} {world_exit} Entrance",cur_sub_area)
-                else:
-                    region_entry, region_exit = create_two_way_entrance_pair(cur_reg, f"{region} {world_exit} Entrance", f"{world_exit} Entrance", cur_sub_area, origin_region)
-            else:
-                if region not in unique_exit_sub_area.keys():
-                    if world_exit in one_way_enter_sub_area:
-                        region_exit = create_one_way_exit(cur_reg,f"{region} {world_exit} Entrance",cur_sub_area)
+            match self.options.entrance_randomization.value:
+                case self.options.entrance_randomization.option_chaos:
+
+                    if world_exit in locked_sub_area:
+                        is_add = False
+
+                    # Treat every over world sub area door as one two-way entrance
+
+                    region_entry, region_exit, sub_area_entry, sub_area_exit = create_two_way_entrance_pair(cur_reg, cur_sub_area,
+                                                                                                            f"{world_exit} Beginning",
+                                                                                                            f"{region} {world_exit} Entrance")
+
+                    # if "Darker Side" in world_exit:
+                    #     print()
+                    if "Rematch" in world_exit:
+                        add_override = [False, False, True, True]
                     else:
-                        region_entry, region_exit = create_two_way_entrance_pair(cur_reg, f"{region} {world_exit} Entrance",f"{world_exit} Entrance",cur_sub_area)
+                        add_override = [True, True, True, True]
 
-            # Sub Area
-            if world_exit not in unique_exit_sub_area.values():
-                if world_exit in one_way_enter_sub_area:
-                    sub_area_entry = create_one_way_entrance(cur_sub_area, f"{world_exit} Entrance", cur_reg)
-                else:
-                    sub_area_entry, sub_area_exit = create_two_way_entrance_pair(cur_sub_area, f"{world_exit} Entrance",f"{region} {world_exit} Entrance", cur_reg)
+                    region_exit.is_exit = True
+                    sub_area_exit.is_exit = True
+
+                    add_to_er(self, region_entry, region_exit, sub_area_entry, sub_area_exit, [False, False, False, False] if not is_add else add_override)
 
 
-            if world_exit in locked_sub_area:
-                add_to_er = False
-            # region_entry, region_exit = create_two_way_entrance_pair(cur_reg, f"{region} {world_exit} Entrance", cur_sub_area)
-            # sub_area_entry, sub_area_exit = create_two_way_entrance_pair(cur_sub_area, f"{world_exit}", cur_reg)
+                    # Make exception for sub areas with multiple unique entrances to different parts of an over world stage
+                    if world_exit in unique_exit_sub_area:
+                        cur_reg = self.get_region(unique_exit_sub_area[world_exit])
+                        region_entry, region_exit, sub_area_entry, sub_area_exit = create_two_way_entrance_pair(cur_reg, cur_sub_area,
+                                                                                                                f"{world_exit} Unique Exit End",
+                                                                                                                f"{region} {world_exit} Unique Exit End")
+                        # sub_area_entry, sub_area_exit = create_two_way_entrance(cur_sub_area, cur_reg,
+                        #                                                         f"{world_exit} Unique Exit End",
+                        #                                                         f"{region} {world_exit} Unique Exit End")
 
-            if add_to_er:
-                if region_entry:
-                    self.sub_area_entrances.append(region_entry)
-                if region_exit:
-                    self.sub_area_exits.append(region_exit)
-                if sub_area_entry:
-                    self.sub_area_entrances.append(sub_area_entry)
-                if sub_area_exit:
-                    self.sub_area_exits.append(sub_area_exit)
+                        add_override = [True, True, False, True]
 
-            if callable(exits[world_exit]):
-                # print(world_exit)
-                region_exit.access_rule = exits[world_exit]
-                if world_exit in rocket_sub_areas:
-                    sub_area_entry.access_rule = exits[world_exit]
-                    sub_area_exit.access_rule = exits[world_exit]
+                        region_exit.is_exit = True
+                        sub_area_exit.is_exit = True
 
-            if world_exit in self.non_dead_end_sub_areas:
-                unique_exit_region: Region = None
-                if world_exit in unique_exit_sub_area:
-                    unique_exit_region = self.get_region(unique_exit_sub_area[world_exit])
-
-                    region_entry, region_exit = None, None
-                    if world_exit in one_way_exit_sub_area:
-                        region_entry = create_one_way_entrance(unique_exit_region,f"{unique_exit_region.name} {world_exit} End", cur_sub_area)
-                    else:
-                        region_entry, region_exit = create_two_way_entrance_pair(unique_exit_region, f"{unique_exit_region.name} {world_exit} End",f"{world_exit} End", cur_sub_area)
-
-                    if region_entry:
-                        self.sub_area_entrances.append(region_entry)
-                    if region_exit:
-                        self.sub_area_exits.append(region_exit)
-
-                else:
-                    # sub area end to over world
-                    region_entry, region_exit = None, None
-                    if world_exit in one_way_exit_sub_area:
-                        region_entry = create_one_way_entrance(cur_reg,
-                                                               f"{region} {world_exit} End",
-                                                               cur_sub_area)
-                    else:
-                        region_entry, region_exit = create_two_way_entrance_pair(cur_reg,
-                                                                                 f"{region} {world_exit} End",
-                                                                                 f"{world_exit} End", cur_sub_area)
-
-                    if region_entry:
-                        self.sub_area_entrances.append(region_entry)
-                    if region_exit:
-                        self.sub_area_exits.append(region_exit)
-                sub_area_entry, sub_area_exit = None, None
-                if world_exit in one_way_exit_sub_area:
-                    sub_area_exit = create_one_way_exit(cur_sub_area, f"{world_exit} End", unique_exit_region if unique_exit_region else cur_reg)
-                    sub_area_entry = None
-                else:
-                    sub_area_entry, sub_area_exit = create_two_way_entrance_pair(cur_sub_area,
-                                                                                 f"{world_exit} End",
-                                                                                 f"{unique_exit_region.name} {world_exit} End" if unique_exit_region else f"{region} {world_exit} End",
-                                                                                 unique_exit_region if unique_exit_region else cur_reg)
-
-                if sub_area_entry and sub_area_entry.connected_region:
-                    self.sub_area_entrances.append(sub_area_entry)
-                if sub_area_exit:
-                    self.sub_area_exits.append(sub_area_exit)
+                        add_to_er(self, region_entry, region_exit, sub_area_entry, sub_area_exit, [False, False, False, False] if not is_add else [True, True, True, True])
 
 
-                if callable(exits[world_exit]):
-                    if world_exit in rocket_sub_areas:
+                    # Treat every sub area as a pair of two-way entrances
+                    #   One for entrance / beginning
+                    #   One for exit / ending
+                    elif world_exit in self.non_dead_end_sub_areas:
+                        # region_entry, region_exit, sub_area_entry, sub_area_exit = create_two_way_entrance_pair(cur_sub_area, cur_reg,
+                        #                                                                                         f"{world_exit} Sub Area Exit",
+                        #                                                                                       f"{world_exit} Sub Area End")
+
+                        region_entry, region_exit = create_two_way_entrance_rando(cur_sub_area, f"{world_exit} Sub Area End", f"{world_exit} Sub Area End")
+
+                        region_entry.parent_region = cur_reg
+                        region_exit.connected_region = cur_reg
+                        # region_exit = create_one_way_exit(cur_reg, f"{{}}")
+                        # sub_area_exit = create_one_way_exit(cur_sub_area, f"{world_exit} Sub Area Exit", cur_reg, True, False)
+                        # sub_area_entry.randomization_type = EntranceType.ONE_WAY
+                        # crea
+                        # sub_area_entry, sub_area_exit = create_two_way_entrance_rando(cur_sub_area,
+                        #                     f"{world_exit} Sub Area Exit Exit",
+                        #                     f"{world_exit} Sub Area End")
+                        #
+                        # sub_area_entry.parent_region = cur_reg
+                        # sub_area_exit.connected_region = cur_reg
+
+                        add_override = [True, True, False, False]
+
+                        region_exit.is_exit = True
+                        sub_area_exit.is_exit = True
+
+                        add_to_er(self, region_entry, region_exit, None, None, add_override)
+
+                        # region_entry.parent_region = connecting_region
+                        # region_exit.connected_region = connecting_region
+
+                        # Rocket sub area access rule
+                        if callable(exits[world_exit]):
+                            if world_exit in rocket_sub_areas:
+                                # print(world_exit)
+                                sub_area_entry.access_rule = exits[world_exit]
+                                sub_area_exit.access_rule = exits[world_exit]
+
+
+                    # Add entrance access rule
+                    if callable(exits[world_exit]):
                         # print(world_exit)
-                        sub_area_entry.access_rule = exits[world_exit]
-                        sub_area_exit.access_rule = exits[world_exit]
+                        access_rule = exits[world_exit]
+                        region_exit.access_rule = exits[world_exit]
+
+                    pass
+
+                # shuffle
+                case self.options.entrance_randomization.option_shuffle:
+                    region_entry, region_exit = create_two_way_entrance(cur_reg, cur_sub_area, f"{world_exit} Beginning",
+                                                                        f"{region} {world_exit} Entrance")
+
+                    if world_exit in locked_sub_area:
+                        is_add = False
+                    # region_entry, region_exit = create_two_way_entrance_pair(cur_reg, f"{region} {world_exit} Entrance", cur_sub_area)
+                    # sub_area_entry, sub_area_exit = create_two_way_entrance_pair(cur_sub_area, f"{world_exit}", cur_reg)
+
+                    if callable(exits[world_exit]):
+                        # print(world_exit)
+                        access_rule = exits[world_exit]
+                        region_exit.access_rule = exits[world_exit]
+
+                    if world_exit in unique_exit_sub_area:
+                        cur_reg = self.get_region(unique_exit_sub_area[world_exit])
+                        region_entry, region_exit = create_two_way_entrance(cur_reg, cur_sub_area, f"{world_exit} End",
+                                                                            f"{region} {world_exit} End")
+
+                    if add_to_er:
+                        if region_entry:
+                            self.sub_area_entrances.append(region_entry)
+                        if region_exit:
+                            self.sub_area_exits.append(region_exit)
+                        if sub_area_entry:
+                            self.sub_area_entrances.append(sub_area_entry)
+                        if sub_area_exit:
+                            self.sub_area_exits.append(sub_area_exit)
 
 
-            if len(self.sub_area_entrances) != len(self.sub_area_exits):
-                val = len(self.sub_area_entrances) - len(self.sub_area_exits)
-                if mismatch != val:
-                    mismatch = (len(self.sub_area_entrances) - len(self.sub_area_exits))
-                    print("Mismatch. ", f"Entrances: {len(self.sub_area_entrances)} ", f"Exits: {len(self.sub_area_exits)} ", f" {region} {world_exit}")
+                    if world_exit not in one_way_enter_sub_area and world_exit not in one_way_exit_sub_area and world_exit in self.non_dead_end_sub_areas:
+                        self.valid_top_hat_replacements.append(world_exit if world_exit not in alternate_entrances else alternate_entrances[world_exit])
 
-            if world_exit not in one_way_enter_sub_area and world_exit not in one_way_exit_sub_area and world_exit in self.non_dead_end_sub_areas:
-                self.valid_top_hat_replacements.append(world_exit)
+                case self.options.entrance_randomization.option_off:
+                    # Treat every sub area as a single two-way entrance to a dead end.
+                    # Except ones that have multiple unique entrances to different parts of an over world stage
+
+                    region_entry, region_exit = create_two_way_entrance(cur_reg, cur_sub_area, f"{world_exit} Beginning",
+                                                                        f"{region} {world_exit} Entrance")
+
+
+                    if callable(exits[world_exit]):
+                        # print(world_exit)
+                        access_rule = exits[world_exit]
+                        region_exit.access_rule = exits[world_exit]
+
+
+                    if world_exit in unique_exit_sub_area:
+                        cur_reg = self.get_region(unique_exit_sub_area[world_exit])
+                        region_entry, region_exit = create_two_way_entrance(cur_reg, cur_sub_area, f"{world_exit} Unique Exit End",
+                                                                            f"{region} {world_exit} Unique Exit End")
+                        #print("test")
 
 
 def create_locations(region: Region, *locations: str, location_table = locations_table):
@@ -1596,3 +1961,89 @@ def create_locations(region: Region, *locations: str, location_table = locations
     :return: None
     """
     region.locations += ([SMOLocation(region.player, location_name, location_table[location_name], region) for location_name in locations])
+
+# Cannot go back through entrance or sub area cannot be done in reverse
+one_way_enter_sub_area = [
+    SMOEntranceData.spinning_platforms_treasure_vault,
+    #SMOEntranceData.underground_ruins,
+    #SMOEntranceData.ice_cave,
+    SMOEntranceData.inverted_pyramid_upper_interior,
+    SMOEntranceData.darker_side_main,
+    SMOEntranceData.darker_side_pokio,
+    SMOEntranceData.darker_side_bowser,
+    SMOEntranceData.darker_side_end,
+    SMOEntranceData.secret_flower_field,
+    # SMOEntranceData.knucklotec_rematch,
+    # SMOEntranceData.torkdrift_rematch,
+    # SMOEntranceData.mecha_wiggler_rematch,
+    # SMOEntranceData.mollusque_lanceur_rematch,
+    # SMOEntranceData.cookatiel_rematch,
+    # SMOEntranceData.lord_of_lightning_rematch,
+    SMOEntranceData.deepest_underground_shortcut,
+    SMOEntranceData.moe_eye_invisible_floor,
+    SMOEntranceData.t_rex_escape,
+    # SMOEntranceData.knucklotec_rematch,
+    # SMOEntranceData.torkdrift_rematch,
+    # SMOEntranceData.mecha_wiggler_rematch,
+    # SMOEntranceData.mollusque_lanceur_rematch,
+    # SMOEntranceData.cookatiel_rematch,
+    # SMOEntranceData.lord_of_lightning_rematch,
+
+]
+
+# The world entrance this connects to is normally one way
+one_way_exit_sub_area = [
+    # SMOEntranceData.darker_side_main,
+    # SMOEntranceData.darker_side_pokio,
+    # SMOEntranceData.darker_side_bowser,
+    # SMOEntranceData.darker_side_end,
+    SMOEntranceData.ice_cave,
+    SMOEntranceData.inverted_pyramid_mural,
+    #SMOEntranceData.darker_side_main,
+    SMOEntranceData.darker_side_pokio,
+    SMOEntranceData.darker_side_bowser,
+    SMOEntranceData.darker_side_end,
+    #SMOEntranceData.secret_flower_field,
+
+    SMOEntranceData.deepest_underground_shortcut,
+    #SMOEntranceData.bullet_bill_maze,
+    SMOEntranceData.deep_woods_2,
+    SMOEntranceData.deep_woods_4,
+]
+
+locked_sub_area = [
+    SMOEntranceData.inside_the_church,
+    # SMOEntranceData.top_hat_tower,
+    # SMOEntranceData.ty_foo_sliding_puzzle, # To prevent hanging entrance during randomization, randomize/shuffle only two dead ends to prevent this...
+    # SMOEntranceData.deepest_underground_shortcut
+    ]
+
+unique_exit_sub_area = {
+    SMOEntranceData.top_hat_tower: SMORegion.cap_kingdom_topper,
+    SMOEntranceData.inverted_pyramid_lower_interior: SMORegion.sand_kingdom,
+    # SMOEntranceData.inverted_pyramid_mural: SMORegion.inverted_pyramid_upper_interior,
+    SMOEntranceData.inverted_pyramid_upper_interior: SMORegion.top_of_the_inverted_pyramid,
+    # SMOEntranceData.deepest_underground_shortcut: SMORegion.sand_kingdom,
+    SMOEntranceData.bullet_bill_maze: SMORegion.sand_kingdom,
+    SMOEntranceData.sky_garden_tower: SMORegion.wooded_kingdom,
+    SMOEntranceData.underwater_tunnel: SMORegion.seaside_kingdom,
+    #SMOEntranceData.secret_flower_field: SMORegion.wooded_kingdom,
+    SMOEntranceData.ice_cave: SMORegion.sand_kingdom,
+    SMOEntranceData.moon_cave: SMORegion.moon_kingdom,
+    # SMOEntranceData.painting_room_knucklotec: SMORegion.knucklotec_rematch,
+    # SMOEntranceData.painting_room_torkdrift: SMORegion.torkdrift_rematch,
+    # SMOEntranceData.painting_room_mecha_wiggler: SMORegion.mecha_wiggler_rematch,
+    # SMOEntranceData.painting_room_mollusque_lanceur: SMORegion.mollosque_lanceur_rematch,
+    # SMOEntranceData.painting_room_cookatiel: SMORegion.cookatiel_rematch,
+    # SMOEntranceData.painting_room_lord_of_lightning: SMORegion.lord_of_lightning_rematch,
+    SMOEntranceData.dark_side_topper: SMORegion.dark_side_2,
+    SMOEntranceData.dark_side_hariet: SMORegion.dark_side_3,
+    SMOEntranceData.dark_side_spewart: SMORegion.dark_side_4,
+    SMOEntranceData.dark_side_rango: SMORegion.dark_side_5,
+    SMOEntranceData.darker_side_main: SMORegion.darker_side_tower,
+    # SMOEntranceData.darker_side_pokio: SMORegion.darker_side_entrance,
+    # SMOEntranceData.darker_side_bowser: SMORegion.darker_side_entrance,
+    SMOEntranceData.darker_side_end: SMORegion.darker_side_entrance,
+
+
+}
