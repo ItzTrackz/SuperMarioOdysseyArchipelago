@@ -2,64 +2,15 @@ from enum import IntEnum, StrEnum
 from typing import Any
 
 from worlds.generic.Rules import set_rule
-from . import capture_items
 from .Data.RegionData import SMORegion
 from .Data.ItemData import SMOItemData
-from .Data.EntranceData import SMOEntrance
+from .Data.EntranceData import SMOEntranceData
 from .Data.LocationData import SMOLocationData
+from .Data.RuleData import SMORuleCondition, SMORuleOperation, SMOEntranceDataType, SMOKingdoms
+from .Locations import shop_location_costs
+from .Items import capture_items
 from .Options import SMOOptions
 from .Logic import total_moons, count_moons, count_regionals
-
-class SMORuleCondition(IntEnum):
-    """
-    Enumeration of Super Mario Odyssey access rule conditions.
-    """
-    REGION = 0
-    ITEM = 1
-    MOONS = 2
-    TOTAL_MOONS = 3
-    CAPTURE = 4
-    REGIONAL_COINS = 5
-    ENTRANCE = 6
-    TRICK_EASY = 7
-    TRICK_INTERMEDIATE = 8
-    TRICK_HARD = 9
-    GLITCH_EASY = 10
-    GLITCH_INTERMEDIATE = 11
-    GLITCH_HARD = 12
-    ABILITY = 13
-
-class SMORuleOperation(IntEnum):
-    NONE = -1
-    AND = 0
-    OR = 1
-    PARENTHESIS_NONE = 2
-    PARENTHESIS_AND = 3
-    PARENTHESIS_OR = 4
-
-class SMOKingdoms(StrEnum):
-    CAP = "Cap"
-    CASCADE = "Cascade"
-    SAND = "Sand"
-    WOODED = "Wooded"
-    LAKE = "Lake"
-    CLOUD = "Cloud"
-    LOST = "Lost"
-    METRO = "Metro"
-    SEASIDE = "Seaside"
-    SNOW = "Snow"
-    LUNCHEON = "Luncheon"
-    RUINED = "Ruined"
-    BOWSER = "Bowser"
-    MOON = "Moon"
-    MUSHROOM = "Mushroom"
-    DARK = "Dark Side"
-    DARKER = "Darker Side"
-
-class SMOEntranceType(StrEnum):
-    ENTER = "Entrance"
-    EXIT = "Exit"
-
 
 def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition, Any, SMORuleOperation]]) -> callable:
     """
@@ -86,25 +37,25 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
             #case SMORuleCondition.REGIONAL_COINS:
 
 
-            case SMORuleCondition.TRICK_EASY:
-                return options.trick_logic.value > options.trick_logic.option_off
-
-            case SMORuleCondition.TRICK_INTERMEDIATE:
-                return options.trick_logic.value > options.trick_logic.option_easy
-
-            case SMORuleCondition.TRICK_HARD:
-                return options.trick_logic.value > options.trick_logic.option_intermediate
-
-
-            case SMORuleCondition.GLITCH_EASY:
-                return options.glitch_logic.value > options.glitch_logic.option_off
-
-            case SMORuleCondition.GLITCH_INTERMEDIATE:
-                return options.glitch_logic.value > options.glitch_logic.option_easy
-
-            case SMORuleCondition.GLITCH_HARD:
-                return options.glitch_logic.value > options.glitch_logic.option_intermediate
-
+            # case SMORuleCondition.TRICK_EASY:
+            #     return options.trick_logic.value > options.trick_logic.option_off
+            #
+            # case SMORuleCondition.TRICK_INTERMEDIATE:
+            #     return options.trick_logic.value > options.trick_logic.option_easy
+            #
+            # case SMORuleCondition.TRICK_HARD:
+            #     return options.trick_logic.value > options.trick_logic.option_intermediate
+            #
+            #
+            # case SMORuleCondition.GLITCH_EASY:
+            #     return options.glitch_logic.value > options.glitch_logic.option_off
+            #
+            # case SMORuleCondition.GLITCH_INTERMEDIATE:
+            #     return options.glitch_logic.value > options.glitch_logic.option_easy
+            #
+            # case SMORuleCondition.GLITCH_HARD:
+            #     return options.glitch_logic.value > options.glitch_logic.option_intermediate
+            #
 
         return True
 
@@ -264,6 +215,17 @@ def set_rules(self, options : SMOOptions) -> None:
     #     set_rule(self.multiworld.get_location("Big Broodal Battle", self.player), lambda state: state.count("Bowser Story Moon", self.player) >= 2)
     #     set_rule(self.multiworld.get_location("Showdown at Bowser's Castle", self.player), lambda state: state.count("Bowser Story Moon", self.player) >= 3)
 
+
+    # Regional Coin Items
+    regional_totals = {}
+    for item, option, kingdom, cost in shop_location_costs:
+        if kingdom not in regional_totals:
+            regional_totals[kingdom] = 0
+        if self.options.goal.value >= option or self.options.entrance_randomization > 0:
+            regional_totals[kingdom] += cost
+            set_rule(self.get_location(item), create_access_rule(self,[
+                (SMORuleCondition.REGIONAL_COINS, [kingdom, regional_totals[kingdom]], SMORuleOperation.NONE)
+            ]))
 
     # Outfit Moons
     if self.options.goal > self.options.goal.option_lake:
@@ -522,7 +484,7 @@ def set_rules(self, options : SMOOptions) -> None:
         set_rule(self.get_location(SMOLocationData.our_first_power_moon),
                 create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.chain_chomp, SMORuleOperation.OR),
-                (SMORuleCondition.CAPTURE, SMOItemData.t_rex, SMORuleOperation.PARENTHESIS_OR),
+                (SMORuleCondition.CAPTURE, SMOItemData.t_rex, SMORuleOperation.PARENTHESIS_AND),
                 (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.PARENTHESIS_OR),
                 (SMORuleCondition.GLITCH_HARD, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
                 ]))
@@ -541,7 +503,7 @@ def set_rules(self, options : SMOOptions) -> None:
                      (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
                  ]))
         #set_rule(self.multiworld.get_location("Our First Power Moon", self.player),
-        #         lambda state: state.has("Chain Chomp", self.player) or state.has("T-Rex", self.player))
+        #         lambda state: state.has("Chain Chomp", self.player) or state.has(SMOItemData.t_rex, self.player))
         #set_rule(self.multiworld.get_location("Multi Moon Atop the Falls", self.player),
         #         lambda state: state.has("Broode's Chain Chomp", self.player))
         # Sand Story
@@ -594,7 +556,7 @@ def set_rules(self, options : SMOOptions) -> None:
                          (SMORuleCondition.CAPTURE, [SMOItemData.gushen],
                           SMORuleOperation.PARENTHESIS_AND),
                          (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_OR),
-                         (SMORuleCondition.ENTRANCE, [SMORegion.seaside_kingdom, SMOEntrance.underwater_tunnel, SMOEntranceType.EXIT], SMORuleOperation.NONE)
+                         (SMORuleCondition.ENTRANCE, [SMORegion.seaside_kingdom, f"{SMOEntranceData.underwater_tunnel} Unique Exit" , SMOEntranceDataType.EXIT], SMORuleOperation.NONE)
                      ]))
 
             set_rule(self.get_location(SMOLocationData.the_glass_is_half_full),
@@ -622,10 +584,10 @@ def set_rules(self, options : SMOOptions) -> None:
         if self.options.goal > self.options.goal.option_luncheon:
             # Ruined Story
             set_rule(self.multiworld.get_location("Ruined Kingdom - Battle with the Lord of Lightning!", self.player),
-                     lambda state: state.has("Spark Pylon", self.player))
+                     lambda state: state.has(SMOItemData.spark_pylon, self.player))
             # Bowser Story
             set_rule(self.multiworld.get_location("Bowser Kingdom - Infiltrate Bowser's Castle!", self.player),
-                     lambda state: state.has("Spark Pylon", self.player))
+                     lambda state: state.has(SMOItemData.spark_pylon, self.player))
             set_rule(self.multiworld.get_location("Bowser Kingdom - Smart Bombing", self.player),
                      lambda state: state.has("Pokio", self.player))
             # Moon Story
@@ -638,16 +600,16 @@ def set_rules(self, options : SMOOptions) -> None:
         set_rule(self.multiworld.get_location("Cap Kingdom - Frog-jumping from the Top Deck", self.player),
                  lambda state: state.has("Frog", self.player))
         set_rule(self.multiworld.get_location("Skimming the Poison Tide", self.player),
-                 lambda state: state.has("Paragoomba", self.player))
+                 lambda state: state.has(SMOItemData.paragoomba, self.player))
         set_rule(self.multiworld.get_location("Slipping through the Poison Tide", self.player),
-                 lambda state: state.has("Paragoomba", self.player))
+                 lambda state: state.has(SMOItemData.paragoomba, self.player))
         set_rule(self.multiworld.get_location("Push-Block Peril", self.player),
-                 lambda state: state.has("Spark Pylon", self.player))
+                 lambda state: state.has(SMOItemData.spark_pylon, self.player))
         set_rule(self.multiworld.get_location("Hidden Among the Push-Blocks", self.player),
-                 lambda state: state.has("Spark Pylon", self.player))
+                 lambda state: state.has(SMOItemData.spark_pylon, self.player))
         set_rule(self.multiworld.get_location("Bonneton Tower Model", self.player),
-                 lambda state: state.has("Spark Pylon", self.player) and
-                 state.has("Paragoomba" , self.player) and
+                 lambda state: state.has(SMOItemData.spark_pylon, self.player) and
+                 state.has(SMOItemData.paragoomba , self.player) and
                  state.can_reach(self.get_region(SMORegion.poison_tides), self.player) and
                  state.can_reach(self.get_region(SMORegion.frog_pond), self.player) and
                  state.can_reach(self.get_region(SMORegion.top_hat_tower), self.player) and
@@ -657,13 +619,13 @@ def set_rules(self, options : SMOOptions) -> None:
         set_rule(self.multiworld.get_location("Cascade Kingdom - Chomp Through the Rocks", self.player),
                  lambda state: state.has("Chain Chomp", self.player))
         set_rule(self.multiworld.get_location("Dinosaur Nest: Running Wild!", self.player),
-                 lambda state: state.has("T-Rex", self.player))
+                 lambda state: state.has(SMOItemData.t_rex, self.player))
         set_rule(self.multiworld.get_location("Nice Shot with the Chain Chomp!", self.player),
                  lambda state: state.has("Chain Chomp", self.player))
         set_rule(self.multiworld.get_location("Very Nice Shot with the Chain Chomp!", self.player),
                  lambda state: state.has("Chain Chomp", self.player))
         set_rule(self.multiworld.get_location("Cascade Kingdom - Behind the Waterfall", self.player),
-                 lambda state: state.has("Big Chain Chomp", self.player) or state.has("T-Rex", self.player))
+                 lambda state: state.has("Big Chain Chomp", self.player) or state.has(SMOItemData.t_rex, self.player))
         set_rule(self.multiworld.get_location("Triceratops Trophy", self.player),
                  lambda state: state.can_reach(self.get_region(SMORegion.chasm_lifts), self.player))
 
@@ -675,7 +637,7 @@ def set_rules(self, options : SMOOptions) -> None:
         set_rule(self.multiworld.get_location("Sand Kingdom - Fishing in the Oasis", self.player),
                  lambda state: state.has("Lakitu", self.player))
         set_rule(self.multiworld.get_location("Sand Kingdom - Love in the Heart of the Desert", self.player),
-                 lambda state: state.has("Goomba", self.player))
+                 lambda state: state.has(SMOItemData.goomba, self.player))
         set_rule(self.multiworld.get_location("Sand Kingdom - You're Quite a Catch, Captain Toad!", self.player),
                  lambda state: state.has("Lakitu", self.player))
         set_rule(self.multiworld.get_location("Sand Kingdom - On the Lone Pillar", self.player),
@@ -699,28 +661,28 @@ def set_rules(self, options : SMOOptions) -> None:
 
         if self.options.goal > self.options.goal.option_lake:
             # Wooded
-            set_rule(self.multiworld.get_location("Wooded Kingdom - By the Babbling Brook in the Deep Woods", self.player),
-                     lambda state: state.has("Coin Coffer", self.player) or state.has("T-Rex", self.player))
-            set_rule(self.multiworld.get_location("Wooded Kingdom - The Hard Rock in Deep Woods", self.player),
-                     lambda state: state.has("Coin Coffer", self.player) or state.has("T-Rex", self.player))
-            set_rule(self.multiworld.get_location("Wooded Kingdom - A Treasure Made of Coins", self.player),
-                     lambda state: state.has("Coin Coffer", self.player))
-            set_rule(self.multiworld.get_location("Wooded Kingdom - Beneath the Roots of a Moving Tree", self.player),
-                     lambda state: state.has("Tree", self.player))
-            set_rule(self.multiworld.get_location("Wooded Kingdom - Love in the Forest Ruins", self.player),
-                     lambda state: state.has("Goomba", self.player))
-            set_rule(self.multiworld.get_location("Elevator Blind Spot", self.player),
-                     lambda state: state.has("Sherm", self.player))
-            set_rule(self.multiworld.get_location("Wooded Kingdom - Inside the Rock in the Forest", self.player),
-                     lambda state: state.has("Coin Coffer", self.player) or state.has("Sherm", self.player))
-            set_rule(self.multiworld.get_location("Wooded Kingdom - Stretching Your Legs", self.player),
-                     lambda state: state.has("Uproot", self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.by_the_babbling_brook_in_the_deep_woods, self.player),
+                     lambda state: state.has(SMOItemData.coin_coffer, self.player) or state.has(SMOItemData.t_rex, self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.the_hard_rock_in_deep_woods, self.player),
+                     lambda state: state.has(SMOItemData.coin_coffer, self.player) or state.has(SMOItemData.t_rex, self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.a_treasure_made_of_coins, self.player),
+                     lambda state: state.has(SMOItemData.coin_coffer, self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.beneath_the_roots_of_a_moving_tree, self.player),
+                     lambda state: state.has(SMOItemData.tree, self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.love_in_the_forest_ruins, self.player),
+                     lambda state: state.has(SMOItemData.goomba, self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.elevator_blind_spot, self.player),
+                     lambda state: state.has(SMOItemData.sherm, self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.inside_the_rock_in_the_forest, self.player),
+                     lambda state: state.has(SMOItemData.coin_coffer, self.player) or state.has(SMOItemData.sherm, self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.stretching_your_legs, self.player),
+                     lambda state: state.has(SMOItemData.uproot, self.player))
             # Add vine sub area uproot req if trick jump not possible
             # Change when entrance rando implemented
             # set_rule(self.multiworld.get_location("Wandering in the Fog", self.player),
-            #          lambda state: state.has("Paragoomba", self.player) and state.has("Mini Rocket", self.player))
-            set_rule(self.multiworld.get_location("Wandering in the Fog", self.player),
-                     lambda state: state.has("Paragoomba", self.player))
+            #          lambda state: state.has(SMOItemData.paragoomba, self.player) and state.has("Mini Rocket", self.player))
+            set_rule(self.multiworld.get_location(SMOLocationData.wandering_in_the_fog, self.player),
+                     lambda state: state.has(SMOItemData.paragoomba, self.player))
             # set_rule(self.multiworld.get_location("Nut Hidden in the Fog", self.player),
             #          lambda state: state.has("Mini Rocket", self.player))
             set_rule(self.multiworld.get_location("Steam Gardener Watering Can", self.player),
@@ -765,18 +727,18 @@ def set_rules(self, options : SMOOptions) -> None:
             set_rule(self.multiworld.get_location("RC Car Pro!", self.player),
                      lambda state: state.has("RC Car", self.player))
             set_rule(self.multiworld.get_location("Rewiring the Neighborhood", self.player),
-                     lambda state: state.has("Spark Pylon", self.player))
+                     lambda state: state.has(SMOItemData.spark_pylon, self.player))
             set_rule(self.multiworld.get_location("Off the Beaten Wire", self.player),
-                     lambda state: state.has("Spark Pylon", self.player))
+                     lambda state: state.has(SMOItemData.spark_pylon, self.player))
             # Change when entrance rando implemented
             # set_rule(self.multiworld.get_location("Moon Shards Under Siege", self.player),
-            #          lambda state: state.has("Taxi", self.player) and state.has("Sherm", self.player))
+            #          lambda state: state.has("Taxi", self.player) and state.has(SMOItemData.sherm, self.player))
             # set_rule(self.multiworld.get_location("Sharpshooting Under Siege", self.player),
-            #          lambda state: state.has("Taxi", self.player) and state.has("Sherm", self.player))
+            #          lambda state: state.has("Taxi", self.player) and state.has(SMOItemData.sherm, self.player))
             set_rule(self.multiworld.get_location("Moon Shards Under Siege", self.player),
-                     lambda state: state.has("Sherm", self.player))
+                     lambda state: state.has(SMOItemData.sherm, self.player))
             set_rule(self.multiworld.get_location("Sharpshooting Under Siege", self.player),
-                     lambda state: state.has("Sherm", self.player))
+                     lambda state: state.has(SMOItemData.sherm, self.player))
             # set_rule(self.multiworld.get_location("Inside the Rotating Maze", self.player),
             #          lambda state: state.has("Manhole", self.player))
             # set_rule(self.multiworld.get_location("Outside the Rotating Maze", self.player),
@@ -795,7 +757,7 @@ def set_rules(self, options : SMOOptions) -> None:
         if self.options.goal > self.options.goal.option_metro:
             # Seaside
             set_rule(self.multiworld.get_location("Seaside Kingdom - Love by the Seaside", self.player),
-                     lambda state: state.has("Goomba", self.player))
+                     lambda state: state.has(SMOItemData.goomba, self.player))
             set_rule(self.multiworld.get_location("Fly Through the Narrow Valley", self.player),
                      lambda state: state.has("Gushen", self.player))
             set_rule(self.multiworld.get_location("Treasure Chest in the Narrow Valley", self.player),
@@ -814,7 +776,7 @@ def set_rules(self, options : SMOOptions) -> None:
 
             # Snow
             set_rule(self.multiworld.get_location("Ice-Dodging Goomba Stack", self.player),
-                     lambda state: state.has("Goomba", self.player))
+                     lambda state: state.has(SMOItemData.goomba, self.player))
             set_rule(self.multiworld.get_location("Snow Kingdom - Fishing in the Glacier!", self.player),
                      lambda state: state.has("Lakitu", self.player))
             set_rule(self.multiworld.get_location("Snowline Circuit Class S", self.player),
@@ -829,7 +791,7 @@ def set_rules(self, options : SMOOptions) -> None:
 
             # Luncheon
             set_rule(self.multiworld.get_location("Luncheon Kingdom - Love Above the Lava", self.player),
-                     lambda state: state.has("Goomba", self.player))
+                     lambda state: state.has(SMOItemData.goomba, self.player))
             set_rule(self.multiworld.get_location("A Strong Simmer", self.player),
                      lambda state: state.has("Lava Bubble", self.player))
             set_rule(self.multiworld.get_location("An Extreme Simmer", self.player),
@@ -870,7 +832,7 @@ def set_rules(self, options : SMOOptions) -> None:
         if self.options.goal > self.options.goal.option_luncheon:
             # Bowser
             set_rule(self.multiworld.get_location("Bowser Kingdom - Stack up above the wall", self.player),
-                     lambda state: state.has("Goomba", self.player))
+                     lambda state: state.has(SMOItemData.goomba, self.player))
             set_rule(self.multiworld.get_location("Bowser Kingdom - Poking Your Nose in the Plaster Wall", self.player),
                      lambda state: state.has("Pokio", self.player))
             set_rule(self.multiworld.get_location("Bowser Kingdom - Poking the Turret Wall", self.player),
@@ -886,9 +848,9 @@ def set_rules(self, options : SMOOptions) -> None:
             set_rule(self.multiworld.get_location("Jizo and the Hidden Room", self.player),
                      lambda state: state.has("Jizo", self.player))
             set_rule(self.multiworld.get_location("Bowser Kingdom - Behind the Big Wall", self.player),
-                     lambda state: state.has("Spark Pylon", self.player))
+                     lambda state: state.has(SMOItemData.spark_pylon, self.player))
             set_rule(self.multiworld.get_location("Bowser Kingdom - Taking notes: Between spinies", self.player),
-                     lambda state: state.has("Spark Pylon", self.player))
+                     lambda state: state.has(SMOItemData.spark_pylon, self.player))
 
             # Moon
             #if self.options.goal > self.options.goal.option_moon:
@@ -1087,9 +1049,11 @@ def set_rules(self, options : SMOOptions) -> None:
     set_rule(self.get_location(SMOLocationData.swinging_scaffolding_break), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.hammer_bro], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.powering_up_the_power_plant), create_access_rule(self, [
-        (SMORuleCondition.CAPTURE, [SMOItemData.puzzle_part_metro_kingdom], SMORuleOperation.NONE)
-    ]))
+
+    if self.options.goal.value > self.options.goal.option_dark:
+        set_rule(self.get_location(SMOLocationData.powering_up_the_power_plant), create_access_rule(self, [
+            (SMORuleCondition.CAPTURE, [SMOItemData.puzzle_part_metro_kingdom], SMORuleOperation.NONE)
+        ]))
     set_rule(self.get_location(SMOLocationData.looking_back_in_the_dark_waterway), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
@@ -1258,30 +1222,40 @@ def set_rules(self, options : SMOOptions) -> None:
          [SMOItemData.bowser_statue, SMOItemData.sherm, SMOItemData.spark_pylon, SMOItemData.hammer_bro,
           SMOItemData.tropical_wiggler, SMOItemData.banzai_bill, SMOItemData.bullet_bill], SMORuleOperation.NONE)
     ]))
+
+
+    # Inverted Mural Unique Sub Area access rule
+    set_rule(self.get_location(SMOLocationData.secret_of_the_inverted_mural), create_access_rule(self, [
+        (SMORuleCondition.ENTRANCE,
+         [SMORegion.sand_kingdom, f"{SMOEntranceData.inverted_pyramid_lower_interior} Unique Exit",
+          SMOEntranceDataType.EXIT], SMORuleOperation.OR),
+        (SMORuleCondition.ENTRANCE,
+         [SMORegion.sand_kingdom, f"{SMOEntranceData.inverted_pyramid_upper_interior} Unique Exit",
+          SMOEntranceDataType.EXIT], SMORuleOperation.NONE)
+    ]))
+
     set_rule(self.get_location(SMOLocationData.up_in_the_rafters), create_access_rule(self, [
         (SMORuleCondition.REGION, SMORegion.odyssey_complete, SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.picture_match_basically_mario), create_access_rule(self, [
-        (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_mario], SMORuleOperation.NONE)
-    ]))
-    set_rule(self.get_location(SMOLocationData.picture_match_a_stellar_mario), create_access_rule(self, [
-        (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_mario], SMORuleOperation.NONE)
+
+    set_rule(self.get_location(SMOLocationData.beat_the_game), create_access_rule(self, [
+        (SMORuleCondition.CAPTURE, [SMOItemData.bowser], SMORuleOperation.AND),
+        (SMORuleCondition.REGION, SMORegion.odyssey_complete, SMORuleOperation.NONE),
     ]))
 
-    if self.options.entrance_randomization > 0:
-        top_hat_region = self.get_region(self.top_hat_tower_bind)
-        for _exit in top_hat_region.get_exits():
-            if _exit.connected_region.name in capture_items:
-                self.get_location(_exit.connected_region.name).place_locked_item(self.create_item(_exit.connected_region.name))
-    elif self.options.capture_sanity:
-        top_hat = self.get_region(SMORegion.top_hat_tower)
-        for _exit in top_hat.get_exits():
-            if _exit.connected_region.name in capture_items:
-                self.get_location(_exit.connected_region.name).place_locked_item(
-                    self.create_item(_exit.connected_region.name))
+    if len(self.get_region(SMORegion.mushroom_picture_match).locations) > 0:
+        set_rule(self.get_location(SMOLocationData.picture_match_basically_mario), create_access_rule(self, [
+            (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_mario], SMORuleOperation.NONE)
+        ]))
+        set_rule(self.get_location(SMOLocationData.picture_match_a_stellar_mario), create_access_rule(self, [
+            (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_mario], SMORuleOperation.NONE)
+        ]))
+
+
 
     # for debugging purposes, you may want to visualize the layout of your world. Uncomment the following code to
 # write a PlantUML diagram to the file "my_world.puml" that can help you see whether your regions and locations
 # are connected and placed as desired
-    from Utils import visualize_regions
-    visualize_regions(self.get_region("Menu"), "my_world.puml")
+
+    # from Utils import visualize_regions
+    # visualize_regions(self.get_region("Menu"), "my_world.puml")
