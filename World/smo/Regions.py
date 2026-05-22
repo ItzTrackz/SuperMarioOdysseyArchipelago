@@ -1818,6 +1818,7 @@ def create_regions(self):
                                                                                                             f"{world_exit} Beginning",
                                                                                                             f"{region} {world_exit} Entrance")
 
+
                     # if "Darker Side" in world_exit:
                     #     print()
                     if "Rematch" in world_exit:
