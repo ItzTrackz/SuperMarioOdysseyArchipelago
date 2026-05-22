@@ -17,7 +17,8 @@ from .Locations import locations_table, SMOLocation, locations_list, post_game_l
     regional_coin_groups, regional_coins, regional_coin_groups_table, regional_sub_area_to_kingdom, shop_location_costs
 from .Regions import create_regions
 from .Entrances import display_name_to_internal_name, display_name_alias, stage_id_to_name, SMORandomizationGroup, \
-    internal_name_to_entrance, stage_names, stage_ids, get_entrance_pair, get_stage_ids, SMOEntrance
+    internal_name_to_entrance, stage_names, stage_ids, get_entrance_pair, get_stage_ids, SMOEntrance, \
+    get_randomization_group
 from BaseClasses import Item, ItemClassification, Entrance, Region, EntranceType, MultiWorld
 from worlds.AutoWorld import World
 from worlds.LauncherComponents import (Component, components, Type as component_type, SuffixIdentifier, launch as launch_component)
@@ -52,7 +53,7 @@ class SMOWorld(World):
     # The following two dicts are required for the generation to know which
     # items exist. They could be generated from json or something else. They can
     # include events, but don't have to since events will be placed manually.
-    item_name_to_id = {**item_table, **moon_types, **regional_coin_types}
+    item_name_to_id = {**item_table, **moon_types, **regional_coin_types, **{f"{amount} Coins" : 9999 for amount in range(50,1000)}}
 
     location_name_to_id = locations_table
     # Number of Power Moons required to leave each kingdom
@@ -152,23 +153,23 @@ class SMOWorld(World):
     # Items can be grouped using their names to allow easy checking if any item
     # from that group has been collected. Group names can also be used for !hint
     item_name_groups = {
-        "Cap": ["Cap Power Moon"],
-        "Cascade": ["Cascade Power Moon","Cascade Story Moon", "Cascade Multi-Moon"],
-        "Sand": ["Sand Power Moon","Sand Story Moon", "Sand Multi-Moon"],
-        "Lake": ["Lake Power Moon", "Lake Multi-Moon"],
-        "Wooded": ["Wooded Power Moon","Wooded Story Moon", "Wooded Multi-Moon"],
-        "Cloud": ["Cloud Power Moon"],
-        "Lost": ["Lost Power Moon"],
-        "Metro": ["Metro Power Moon","Metro Story Moon", "Metro Multi-Moon"],
-        "Snow": ["Snow Power Moon","Snow Story Moon", "Snow Multi-Moon"],
-        "Seaside": ["Seaside Power Moon","Seaside Story Moon", "Seaside Multi-Moon"],
-        "Luncheon": ["Luncheon Power Moon","Luncheon Story Moon", "Luncheon Multi-Moon"],
-        "Ruined": ["Ruined Power Moon", "Ruined Multi-Moon"],
-        "Bowser": ["Bowser Power Moon","Bowser Story Moon", "Bowser Multi-Moon"],
-        "Moon": ["Moon Power Moon"],
-        "Mushroom": ["Power Star", "Mushroom Multi-Moon"],
-        "Dark": ["Dark Side Power Moon", "Dark Side Multi-Moon"],
-        "Darker": ["Darker Side Multi-Moon"]
+        "Cap Moons": [SMOItemData.cap_power_moon],
+        "Cascade Moons": [SMOItemData.cascade_power_moon, SMOItemData.cascade_story_moon, SMOItemData.cascade_multi_moon],
+        "Sand Moons": [SMOItemData.sand_power_moon, SMOItemData.sand_story_moon, SMOItemData.sand_multi_moon],
+        "Lake Moons": [SMOItemData.lake_power_moon, SMOItemData.lake_multi_moon],
+        "Wooded Moons": [SMOItemData.wooded_power_moon, SMOItemData.wooded_story_moon, SMOItemData.wooded_multi_moon],
+        "Cloud Moons": [SMOItemData.cloud_power_moon],
+        "Lost Moons": [SMOItemData.lost_power_moon],
+        "Metro Moons": [SMOItemData.metro_power_moon, SMOItemData.metro_story_moon, SMOItemData.metro_multi_moon],
+        "Snow Moons": [SMOItemData.snow_power_moon, SMOItemData.snow_story_moon, SMOItemData.snow_multi_moon],
+        "Seaside Moons": [SMOItemData.seaside_power_moon, SMOItemData.seaside_story_moon, SMOItemData.seaside_multi_moon],
+        "Luncheon Moons": [SMOItemData.luncheon_power_moon, SMOItemData.luncheon_story_moon, SMOItemData.luncheon_multi_moon],
+        "Ruined Moons": [SMOItemData.ruined_power_moon, SMOItemData.ruined_multi_moon],
+        "Bowser Moons": [SMOItemData.bowser_power_moon, SMOItemData.bowser_story_moon, SMOItemData.bowser_multi_moon],
+        "Moon Moons": [SMOItemData.moon_power_moon],
+        "Mushroom Moons": [SMOItemData.power_star, SMOItemData.mushroom_multi_moon],
+        "Dark Moons": [SMOItemData.dark_side_power_moon, SMOItemData.dark_side_multi_moon],
+        "Darker Moons": [SMOItemData.darker_side_multi_moon]
     }
 
 
@@ -627,13 +628,15 @@ class SMOWorld(World):
                 if entrance.name in self.original_entrance_bindings:
                     raise "Duplicate entrance name"
                 self.original_entrance_bindings[entrance.name] = entrance.parent_region.name if entrance.parent_region else "None"
+                randomization_group = get_randomization_group(entrance)
                 if entrance.randomization_type == EntranceType.ONE_WAY:
-                    disconnect_entrance_for_randomization(entrance, SMORandomizationGroup.DOOR,
+                    disconnect_entrance_for_randomization(entrance, randomization_group,
                                                           f"{entrance.name}")
                     if entrance not in self.get_entrances():
                         raise Exception(f"Attempted to disconnect entrance '{entrance.name}' not in entrance cache")
                     pass
                 else:
+                    entrance.randomization_group = randomization_group
                     # if " Entrance" in entrance.name and entrance.parent_region == bind_region:
                     #     disconnect_entrance_for_randomization(entrance,  SMORandomizationGroup.TOP_HAT_ENTER)
                     #
@@ -681,7 +684,9 @@ class SMOWorld(World):
                 pass
 
             no_target_group = {
-            SMORandomizationGroup.DOOR: [SMORandomizationGroup.DOOR, SMORandomizationGroup.PIPE],
+                SMORandomizationGroup.DOOR: [SMORandomizationGroup.DOOR, SMORandomizationGroup.PIPE, SMORandomizationGroup.SAND_SHOP_SUB_AREA, SMORandomizationGroup.SAND_EMPLOYEE_SUB_AREA],
+                SMORandomizationGroup.SAND_SHOP_SUB_AREA: [SMORandomizationGroup.DOOR, SMORandomizationGroup.PIPE],
+                SMORandomizationGroup.SAND_EMPLOYEE_SUB_AREA: [SMORandomizationGroup.DOOR, SMORandomizationGroup.PIPE],
                 SMORandomizationGroup.TOP_HAT_ENTER: [SMORandomizationGroup.TOP_HAT_EXIT],
                 SMORandomizationGroup.TOP_HAT_EXIT: [SMORandomizationGroup.TOP_HAT_ENTER],
                 # SMORandomizationGroup.TOP_HAT_SUB_AREA_ENTER: [SMORandomizationGroup.TOP_HAT_ENTER],
@@ -950,7 +955,10 @@ class SMOWorld(World):
     def fill_slot_data(self) -> Mapping[str, Any]:
         # Entrance Rando
         if self.options.entrance_randomization:
+            for stage_id in sorted(stage_ids):
+                print(f'"{stage_id}",')
             self.bind_game_entrances()
+
             # print(len(self.original_entrance_bindings))
             # print(len(self.original_exit_bindings))
             # print(len(stage_ids))
@@ -958,6 +966,17 @@ class SMOWorld(World):
             # print(len(self.entrance_data))
             #
             # print("Finished entrance rando slot data")
+            for entry in self.entrance_data["over_world"]:
+                enter_stage_id_index, entry_index, nothing = self.entrance_data["over_world"][entry]
+                prefix = "PictureBoss"
+                if prefix in stage_ids[enter_stage_id_index] or prefix in stage_ids[entry]:
+                    print(f"{stage_ids[entry]}: {stage_ids[enter_stage_id_index]}, {stage_names[entry_index]}")
+
+            for entry in self.entrance_data["sub_area"]:
+                enter_stage_id_index, entry_index, nothing = self.entrance_data["sub_area"][entry]
+                prefix = "PictureBoss"
+                if prefix in stage_ids[enter_stage_id_index] or prefix in stage_ids[entry]:
+                    print(f"{stage_ids[entry]}: {stage_ids[enter_stage_id_index]}, {stage_names[entry_index]}")
 
         for player in range(1, self.multiworld.players + 1):
             if not player in self.coin_values:
@@ -989,10 +1008,10 @@ class SMOWorld(World):
                             self.coin_values[location.player][location.address] = coin_amount
 
                         # Fixes item_name_to_id calls with coins
-                        start_id = self.item_name_to_id[SMOItemData.coins]
-                        if location.item.name not in self.item_name_to_id:
-                            start_id += 1
-                            self.item_name_to_id[location.item.name] = start_id
+                        # start_id = self.item_name_to_id[SMOItemData.coins]
+                        # if location.item.name not in self.item_name_to_id:
+                        #     start_id += 1
+                        #     self.item_name_to_id[location.item.name] = start_id
 
                     #endregion
 
