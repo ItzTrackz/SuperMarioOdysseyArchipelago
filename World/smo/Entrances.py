@@ -2,6 +2,7 @@ from enum import IntEnum
 from typing import Any, Optional
 from BaseClasses import Entrance, EntranceType, Region
 from .Data.ItemData import SMOItemData
+from .Data.LocationData import SMOLocationData
 from .Data.RuleData import SMORuleCondition, SMORuleOperation, SMOEntranceDataType
 from .Data.EntranceData import SMOEntranceData
 from .Data.RegionData import SMORegion
@@ -171,6 +172,17 @@ class SMORandomizationGroup(IntEnum):
         TOP_HAT_EXIT = 7
         TOP_HAT_SUB_AREA_ENTER = 8
         TOP_HAT_SUB_AREA_EXIT = 9
+        SAND_SHOP_SUB_AREA = 10
+        SAND_EMPLOYEE_SUB_AREA = 11
+
+
+def get_randomization_group(entrance: Entrance) -> SMORandomizationGroup:
+    if "Employee" in entrance.name:
+        return SMORandomizationGroup.SAND_EMPLOYEE_SUB_AREA
+    elif "Sand Kingdom Shop" in entrance.name:
+        return SMORandomizationGroup.SAND_SHOP_SUB_AREA
+
+    return SMORandomizationGroup.DOOR
 
 class SMOEntrance(Entrance):
     """
@@ -1916,6 +1928,15 @@ stage_ids = [
 ]
 
 def create_entrances(self):
+    # can_reach_cascade_peace = create_access_rule(self, [
+    #             (SMORuleCondition.CAPTURE, [SMOItemData.broodes_chain_chomp], SMORuleOperation.AND),
+    #             (SMORuleCondition.PARENTHESIS_OPEN, None, SMORuleOperation.NONE),
+    #             (SMORuleCondition.CAPTURE, [SMOItemData.big_chain_chomp], SMORuleOperation.PARENTHESIS_OR),
+    #             (SMORuleCondition.PARENTHESIS_OPEN, None, SMORuleOperation.OR),
+    #             (SMORuleCondition.CAPTURE, [SMOItemData.t_rex], SMORuleOperation.AND),
+    #             (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
+    #             (SMORuleCondition.CAPTURE, SMOItemData.chain_chomp, SMORuleOperation.PARENTHESIS_NONE),
+    #             ])
     world_sub_area_exits = [
         (SMORegion.cap_kingdom_intro, {
             SMOEntranceData.top_hat_tower: None,
@@ -1924,8 +1945,16 @@ def create_entrances(self):
         #     SMOEntranceData.top_hat_tower_end: None,
         # }),
         (SMORegion.cap_kingdom, {
-            SMOEntranceData.push_blocks: None,
-            SMOEntranceData.poison_tides: None,
+            SMOEntranceData.push_blocks: (create_access_rule(self, [
+                (SMORuleCondition.ENTRANCE, [SMORegion.cap_kingdom_intro, SMOEntranceData.top_hat_tower, SMOEntranceDataType.UNIQUE_EXIT], SMORuleOperation.NONE)
+            ])),
+            SMOEntranceData.poison_tides: (create_access_rule(self, [
+                (SMORuleCondition.CAPTURE, SMOItemData.paragoomba, SMORuleOperation.OR),
+                (SMORuleCondition.ENTRANCE,
+                 [SMORegion.cap_kingdom_intro, SMOEntranceData.top_hat_tower, SMOEntranceDataType.UNIQUE_EXIT],
+                 SMORuleOperation.NONE)
+
+            ])),
             SMOEntranceData.frog_pond: None,
             SMOEntranceData.rolling_lane: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.cap_kingdom_moon_rock, SMORuleOperation.NONE)
@@ -1935,9 +1964,18 @@ def create_entrances(self):
         #
         # , SMORuleOperation.NONE)
         (SMORegion.cascade_kingdom_peace, {
-            SMOEntranceData.chasm_lifts: None,
-            SMOEntranceData.t_rex_nest: None,
-            SMOEntranceData.chain_chomp_cave: None,
+            SMOEntranceData.chasm_lifts: (create_access_rule(self, [
+                (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp, SMOItemData.broodes_chain_chomp], SMORuleOperation.NONE)
+
+                ])),
+            SMOEntranceData.t_rex_nest: (create_access_rule(self, [
+                (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp, SMOItemData.broodes_chain_chomp], SMORuleOperation.NONE)
+
+                ])),
+            SMOEntranceData.chain_chomp_cave: (create_access_rule(self, [
+                (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp, SMOItemData.broodes_chain_chomp], SMORuleOperation.NONE)
+
+                ])),
             SMOEntranceData.gusty_bridges: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.cascade_kingdom_moon_rock, SMORuleOperation.NONE)
                 ])),
