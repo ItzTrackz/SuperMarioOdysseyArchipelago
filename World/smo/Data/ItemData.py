@@ -279,6 +279,7 @@ class SMOItemData:
 
     # Filler
     coins = "Coins"
+    coins_placed = "Coins "
     life_heart = "Life Heart"
     life_up_heart = "Life-Up Heart"
 
