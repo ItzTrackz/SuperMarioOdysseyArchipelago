@@ -1,7 +1,8 @@
+from collections.abc import Callable
 from enum import IntEnum, StrEnum
 from typing import Any
 
-from worlds.generic.Rules import set_rule
+from worlds.generic.Rules import set_rule, add_rule
 from .Data.RegionData import SMORegion
 from .Data.ItemData import SMOItemData
 from .Data.EntranceData import SMOEntranceData
@@ -11,6 +12,8 @@ from .Locations import shop_location_costs
 from .Items import capture_items
 from .Options import SMOOptions
 from .Logic import total_moons, count_moons, count_regionals
+
+all_access_rules : set = set()
 
 def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition, Any, SMORuleOperation]]) -> callable:
     """
@@ -64,78 +67,138 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
     num_conditions = len(conditions)
     condition_index = 0
     parenthesis_open = False
+    rules_list : list[callable] = []
+    parenthesis_groups : list[list[int]] = []
+    starting_parenthesis : list[int] = []
+    in_parenthesis = []
     parenthesis_operators = [SMORuleOperation.PARENTHESIS_NONE, SMORuleOperation.PARENTHESIS_AND, SMORuleOperation.PARENTHESIS_OR]
     for condition, data, operation in conditions:
         if operation in parenthesis_operators:
             if not parenthesis_open and is_active(self.options, condition):
                 access_rule += f"("
+                parenthesis_groups.append([])
+                starting_parenthesis.append(condition_index)
             parenthesis_open = not parenthesis_open
+            # if parenthesis_open:
+            #     in_parenthesis.append(condition_index)
+            #     parenthesis_groups[-1].append(condition_index)
 
         match condition:
+            # case SMORuleCondition.PARENTHESIS_OPEN:
+            #     access_rule += " ("
+            #
+            # case SMORuleCondition.PARENTHESIS_CLOSE:
+            #     access_rule += ") "
+
             case "origin":
                 pass
             case SMORuleCondition.REGION:
                 access_rule += f'state.can_reach_region("{data}", {self.player})'
+                all_access_rules.add(f'state.can_reach_region("{data}", {self.player})')
+                rules_list.append(lambda state: state.can_reach_region(data, self.player))
 
             case SMORuleCondition.ENTRANCE:
                 access_rule += f'state.can_reach_entrance("{data[0]} {data[1]} {data[2]}", {self.player})'
+                all_access_rules.add(f'state.can_reach_entrance("{data[0]} {data[1]} {data[2]}", {self.player})')
+                rules_list.append(lambda state: state.can_reach_entrance(f"{data[0]} {data[1]} {data[2]}", self.player))
 
             case SMORuleCondition.CAPTURE:
                 if is_active(self.options, condition):
                     if isinstance(data, str):
                         access_rule += f'state.has_all(["{data}"], {self.player})'
+                        all_access_rules.add(f'state.has_all(["{data}"], {self.player})')
+                        rules_list.append(lambda state : state.has_all([data], self.player))
 
                     else:
                         access_rule += f'state.has_all({data}, {self.player})'
+                        all_access_rules.add(f'state.has_all({data}, {self.player})')
+                        rules_list.append(lambda state : state.has_all(data, self.player))
 
             case SMORuleCondition.ITEM:
                 if isinstance(data, str):
                     access_rule += f'state.has_all(["{data}"], {self.player})'
+                    all_access_rules.add(f'state.has_all(["{data}"], {self.player})')
+                    rules_list.append(lambda state: state.has_all([data], self.player))
+
                 else:
                     access_rule += f'state.has_all({data}, {self.player})'
+                    all_access_rules.add(f'state.has_all({data}, {self.player})')
+                    rules_list.append(lambda state: state.has_all(data, self.player))
+
+            case SMORuleCondition.LOCATION:
+                access_rule += f'state.can_reach(state, "{data}", "Location", {self.player})'
+                all_access_rules.add(f'state.can_reach(state, "{data}", "Location", {self.player})')
 
             case SMORuleCondition.MOONS:
                 access_rule += f'count_moons(state, "{data[0]}", {self.player}) >= {data[1]}'
+                all_access_rules.add(f'count_moons(state, "{data[0]}", {self.player}) >= {data[1]}')
+                rules_list.append(lambda state: count_moons(state, data[0], self.player) >= data[1])
 
             case SMORuleCondition.TOTAL_MOONS:
                 access_rule += f'total_moons(state, {self.player}) >= {data}'
+                all_access_rules.add(f'total_moons(state, {self.player}) >= {data}')
+                rules_list.append(lambda state: total_moons(state, self.player) >= data)
 
             case SMORuleCondition.REGIONAL_COINS:
                 access_rule += f'count_regionals(state, "{data[0]}", {self.player}) >= {data[1]}'
+                all_access_rules.add(f'count_regionals(state, "{data[0]}", {self.player}) >= {data[1]}')
+                rules_list.append(lambda state: count_regionals(state, data[0], self.player) >= data[1])
 
             case SMORuleCondition.TRICK_EASY:
+                rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_off)
                 if is_active(self.options, condition):
                     if not data or data and is_active(self.options, data):
                         access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_off'
+                        all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_off')
 
                     else:
                         operation = SMORuleOperation.NONE
 
             case SMORuleCondition.TRICK_INTERMEDIATE:
+                rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_easy)
                 if is_active(self.options, condition):
                     if not data or data and is_active(self.options, data):
                         access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_easy'
+                        all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_easy')
                     else:
                         operation = SMORuleOperation.NONE
 
             case SMORuleCondition.TRICK_HARD:
+                rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_intermediate)
                 if is_active(self.options, condition):
                     if not data or data and is_active(self.options, data):
                         access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_intermediate'
+                        all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_intermediate')
+
                     else:
                         operation = SMORuleOperation.NONE
 
             case SMORuleCondition.GLITCH_EASY:
+                rules_list.append(
+                    lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value > state.multiworld.worlds[
+                        self.player].options.glitch_logic.option_off)
                 if is_active(self.options, condition):
                     access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_off'
+                    all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_off')
 
             case SMORuleCondition.GLITCH_INTERMEDIATE:
+                rules_list.append(
+                    lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value >
+                                  state.multiworld.worlds[
+                                      self.player].options.glitch_logic.option_easy)
                 if is_active(self.options, condition):
                     access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_easy'
+                    all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_easy')
 
             case SMORuleCondition.GLITCH_HARD:
+                rules_list.append(
+                    lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value >
+                                  state.multiworld.worlds[
+                                      self.player].options.glitch_logic.option_intermediate)
                 if is_active(self.options, condition):
                     access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_intermediate'
+                    all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_intermediate')
+
 
         condition_index += 1
         if operation in parenthesis_operators and (not parenthesis_open or not is_active(self.options, condition)):
@@ -149,18 +212,73 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
             operation = SMORuleOperation.NONE if operation not in parenthesis_operators else SMORuleOperation.PARENTHESIS_NONE
 
         access_rule += "" if operation == SMORuleOperation.NONE else f" {
-            "and" if operation == SMORuleOperation.AND else 
-            "or" if operation == SMORuleOperation.OR else 
-            ")" if operation == SMORuleOperation.PARENTHESIS_NONE else 
-            ") and" if operation == SMORuleOperation.PARENTHESIS_AND else 
+            "and" if operation == SMORuleOperation.AND else
+            "or" if operation == SMORuleOperation.OR else
+            ")" if operation == SMORuleOperation.PARENTHESIS_NONE else
+            ") and" if operation == SMORuleOperation.PARENTHESIS_AND else
             ") or" if operation == SMORuleOperation.PARENTHESIS_OR else ""} "
+
+    # parenthesis_rules : list[Callable] = []
+    # for group in parenthesis_groups:
+    #     for condition in group:
+    #         if condition == group[0]:
+    #             parenthesis_rules.append(rules_list[condition])
+    #             continue
+    #         if conditions[condition][-1] == SMORuleOperation.AND:
+    #             parenthesis_rules[-1] = lambda state: parenthesis_rules[-1](state) and rules_list[condition](state)
+    #         if conditions[condition][-1] == SMORuleOperation.OR:
+    #             parenthesis_rules[-1] = lambda state: parenthesis_rules[-1](state) or rules_list[condition](state)
+    #
+    # other_rule = None
+    # final_rules = []
+    # for condition in range(len(conditions)):
+    #     if condition == 0:
+    #         final_rules.append(rules_list[condition])
+    #         continue
+    #     if condition in in_parenthesis:
+    #         if condition not in starting_parenthesis:
+    #             continue
+    #         other_rule = parenthesis_rules[starting_parenthesis.index(condition)]
+    #     else:
+    #         other_rule = rules_list[condition]
+    #
+    #
+    #     if conditions[condition - 1][2] in [SMORuleOperation.AND, SMORuleOperation.PARENTHESIS_AND]:
+    #         final_rules.append(lambda state: final_rules[-1](state) and other_rule(state))
+    #     if conditions[condition - 1][2] in [SMORuleOperation.OR, SMORuleOperation.PARENTHESIS_OR]:
+    #         final_rules.append(lambda state: final_rules[-1](state) or other_rule(state))
+    #
+    # for i in rules_list:
+    #     all_statics.append(i)
+    #
+    # for i in parenthesis_rules:
+    #     all_statics.append(i)
 
     if access_rule == 'lambda state: ':
         # No rule generated return default access rule
         return staticmethod(lambda state: True)
     else:
+        all_access_rules.add(access_rule)
         return eval(access_rule)
+        # all_statics.append(final_rules[-1])
+        # return final_rules[-1]
 
+
+class SMOProgressionSkip:
+
+    def __init__(self):
+        self.name = ""
+        # Lists of possible item combinations to perform the trick
+        self.conditions : list[list[str]] = []
+        self.required_options : list[SMORuleCondition] = []
+
+
+    def make_rule(self):
+        rule_conditions : list[tuple[SMORuleCondition, Any, SMORuleOperation]] = []
+        for condition in self.conditions:
+            rule_conditions.append((SMORuleCondition.ITEM, condition, SMORuleOperation.OR))
+        rule_conditions[-1][-1] = SMORuleOperation.NONE
+        return create_access_rule(self, rule_conditions)
 
 def set_rules(self, options : SMOOptions) -> None:
     """ Sets the placement rules for Super Mario Odyssey.
@@ -1251,7 +1369,9 @@ def set_rules(self, options : SMOOptions) -> None:
             (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_mario], SMORuleOperation.NONE)
         ]))
 
+    for i in all_access_rules:
 
+        print(i)
 
     # for debugging purposes, you may want to visualize the layout of your world. Uncomment the following code to
 # write a PlantUML diagram to the file "my_world.puml" that can help you see whether your regions and locations
