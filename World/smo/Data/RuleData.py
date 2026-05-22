@@ -18,6 +18,9 @@ class SMORuleCondition(IntEnum):
     GLITCH_INTERMEDIATE = 11
     GLITCH_HARD = 12
     ABILITY = 13
+    LOCATION = 14
+    PARENTHESIS_OPEN = 98
+    PARENTHESIS_CLOSE = 99
 
 class SMORuleOperation(IntEnum):
     NONE = -1
@@ -30,6 +33,7 @@ class SMORuleOperation(IntEnum):
 class SMOEntranceDataType(StrEnum):
     ENTER = "Entrance"
     EXIT = "End"
+    UNIQUE_EXIT = "Unique Exit End"
     START = "Beginning"
 
 class SMOKingdoms(StrEnum):
