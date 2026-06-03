@@ -5086,12 +5086,12 @@ regional_coins = {
                 "obj6366": 3672,
                 "obj6367": 3673,
                 "obj6368": 3674,
-                "obj185": 3676,
-                "obj208": 3677,
-                "obj209": 3678,
-                "obj187": 3680,
-                "obj206": 3681,
-                "obj207": 3682,
+                "obj185(LavaWorldCaveZone[obj3426])": 3676,
+                "obj208(LavaWorldCaveZone[obj3426])": 3677,
+                "obj209(LavaWorldCaveZone[obj3426])": 3678,
+                "obj187(LavaWorldCaveZone[obj3426])": 3680,
+                "obj206(LavaWorldCaveZone[obj3426])": 3681,
+                "obj207(LavaWorldCaveZone[obj3426])": 3682,
         },
 
         "LavaWorldBubbleLaneExStage": {
