@@ -44,6 +44,9 @@ def get_stage_id(entrance : Entrance, original_bindings: dict[str,str], is_exit:
 
     stage_id = ""
 
+    # if "WorldHome" in entrance_name and "SandWorldShop" in stage_name:
+    #     print()
+
     # print(entrance_name, stage_name)
     is_sub_area = "WorldHomeStage" not in entrance_name
 
@@ -54,6 +57,8 @@ def get_stage_id(entrance : Entrance, original_bindings: dict[str,str], is_exit:
             if is_exit and "WorldHomeStage" in entrance_name and "Unique" not in entrance.name:
                 stage_id = internal_name_to_entrance[stage_name]["entrance"]
             else:
+                if "WorldTownStage" in entrance_name and "Lobby" in stage_name and not is_exit:
+                    load_zone = "exit"
                 stage_id = internal_name_to_entrance[entrance_name][stage_name][load_zone]
         else:
             if "SandWorldShop" in stage_name:
@@ -88,6 +93,9 @@ def get_stage_id(entrance : Entrance, original_bindings: dict[str,str], is_exit:
                 elif "SnowWorldTown" in entrance_name and " Beginning" in entrance.name and is_exit:
                     load_zone = "exit"
 
+                elif "SnowWorldTown" in entrance_name and "Lobby" in stage_name and not is_exit:
+                    load_zone = "exit"
+
                 elif ("Underground001" in entrance_name and "Shortcut" not in entrance.name or
                       "Press" in entrance_name and "Beginning" in entrance.name and is_exit
                       ):
@@ -108,8 +116,8 @@ def get_stage_id(entrance : Entrance, original_bindings: dict[str,str], is_exit:
             elif "Lobby000Stage" in entrance_name and is_exit:
                 load_zone = "exit"
 
-            elif "SnowWorldTown" in stage_name and "SnowWorldHome" in entrance_name and is_exit:
-                load_zone = "exit"
+            # elif "SnowWorldTown" in stage_name and "SnowWorldHome" in entrance_name and is_exit:
+            #     load_zone = "exit"
 
             elif "ForestWorldBonusStage" in entrance_name and is_exit:
                 load_zone = "exit"
@@ -743,9 +751,9 @@ internal_name_to_entrance = {
     },
     "ForestWorldWoodsStage": {
         "ForestWorldHomeStage": {
-            "entrance1": "Jyukai001v",
+            "entrance1": "Jyukai001",
             "entrance2": "Jyukai002",
-            "entrance3": "Jyukai003v",
+            "entrance3": "Jyukai003",
             "entrance4": "Jyukai004",
         },
         "ForestWorldWoodsCostumeStage": "Explorer_Bonus",
@@ -1329,8 +1337,8 @@ internal_name_to_entrance = {
             },
         'ForestWorldBossStage': 'boss002',
         'ForestWorldWoodsStage':{
-            'entrance1': 'Jyukai001',
-            'entrance3': 'Jyukai003',
+            'entrance1': 'Jyukai001v',
+            'entrance3': 'Jyukai003v',
         },
 
         'FogMountainExStage': 'EX_Mist',
@@ -1928,15 +1936,6 @@ stage_ids = [
 ]
 
 def create_entrances(self):
-    # can_reach_cascade_peace = create_access_rule(self, [
-    #             (SMORuleCondition.CAPTURE, [SMOItemData.broodes_chain_chomp], SMORuleOperation.AND),
-    #             (SMORuleCondition.PARENTHESIS_OPEN, None, SMORuleOperation.NONE),
-    #             (SMORuleCondition.CAPTURE, [SMOItemData.big_chain_chomp], SMORuleOperation.PARENTHESIS_OR),
-    #             (SMORuleCondition.PARENTHESIS_OPEN, None, SMORuleOperation.OR),
-    #             (SMORuleCondition.CAPTURE, [SMOItemData.t_rex], SMORuleOperation.AND),
-    #             (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
-    #             (SMORuleCondition.CAPTURE, SMOItemData.chain_chomp, SMORuleOperation.PARENTHESIS_NONE),
-    #             ])
     world_sub_area_exits = [
         (SMORegion.cap_kingdom_intro, {
             SMOEntranceData.top_hat_tower: None,
@@ -1963,18 +1962,15 @@ def create_entrances(self):
         # (SMORegion.cap_kingdom_moon_rock, {}
         #
         # , SMORuleOperation.NONE)
-        (SMORegion.cascade_kingdom_peace, {
+        (SMORegion.cascade_kingdom, {
             SMOEntranceData.chasm_lifts: (create_access_rule(self, [
-                (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp, SMOItemData.broodes_chain_chomp], SMORuleOperation.NONE)
-
+                (SMORuleCondition.REGION, SMORegion.cascade_kingdom_peace, SMORuleOperation.NONE)
                 ])),
             SMOEntranceData.t_rex_nest: (create_access_rule(self, [
-                (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp, SMOItemData.broodes_chain_chomp], SMORuleOperation.NONE)
-
+                (SMORuleCondition.REGION, SMORegion.cascade_kingdom_peace, SMORuleOperation.NONE)
                 ])),
             SMOEntranceData.chain_chomp_cave: (create_access_rule(self, [
-                (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp, SMOItemData.broodes_chain_chomp], SMORuleOperation.NONE)
-
+                (SMORuleCondition.REGION, SMORegion.cascade_kingdom_peace, SMORuleOperation.NONE)
                 ])),
             SMOEntranceData.gusty_bridges: (create_access_rule(self, [
                 (SMORuleCondition.REGION, SMORegion.cascade_kingdom_moon_rock, SMORuleOperation.NONE)
@@ -2121,9 +2117,18 @@ def create_entrances(self):
         #
         # }),
         (SMORegion.night_metro_kingdom, {
-            SMOEntranceData.city_hall: None,
-            SMOEntranceData.metro_kingdom_shop: None,
-            SMOEntranceData.metro_kingdom_shop_regional: None,
+            SMOEntranceData.city_hall: (create_access_rule(self, [
+                (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.OR),
+                (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE)
+            ])),
+            SMOEntranceData.metro_kingdom_shop: (create_access_rule(self, [
+                (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.OR),
+                (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE)
+            ])),
+            SMOEntranceData.metro_kingdom_shop_regional: (create_access_rule(self, [
+                (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.OR),
+                (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE)
+            ])),
             SMOEntranceData.private_room: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
                 ])),
