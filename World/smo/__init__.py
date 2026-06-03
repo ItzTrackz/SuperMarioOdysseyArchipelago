@@ -28,7 +28,7 @@ from entrance_rando import ERPlacementState, randomize_entrances, disconnect_ent
 
 def launch_client(*args: str):
     from .Connector.Client import launch
-    print(len(args))
+    # print(len(args))
     launch_component(launch, name="SMOClient", args=args)
 
 component = Component("Super Mario Odyssey Client", component_type=component_type.CLIENT,
@@ -692,7 +692,7 @@ class SMOWorld(World):
                 # SMORandomizationGroup.TOP_HAT_SUB_AREA_ENTER: [SMORandomizationGroup.TOP_HAT_ENTER],
                 # SMORandomizationGroup.TOP_HAT_SUB_AREA_EXIT: [SMORandomizationGroup.TOP_HAT_EXIT],
             }
-            print(f"Entrances: {len(self.sub_area_entrances)}, Exits: {len(self.sub_area_exits)}")
+            # print(f"Entrances: {len(self.sub_area_entrances)}, Exits: {len(self.sub_area_exits)}")
             self.randomized_entrances = randomize_entrances(self, coupled=True, target_group_lookup=no_target_group,
                                                             exits=self.sub_area_exits, er_targets=self.sub_area_entrances)
             #print(self.randomized_entrances.entrance_lookup)
@@ -808,9 +808,9 @@ class SMOWorld(World):
 
         #set_stage_ids = set(stage_ids)
 
-        for i in range(len(stage_ids)):
-            if stage_ids.index(stage_ids[i]) != i:
-                print(i, stage_ids[i])
+        # for i in range(len(stage_ids)):
+        #     if stage_ids.index(stage_ids[i]) != i:
+        #         print(i, stage_ids[i])
 
         # for i in set_stage_ids:
         #     print(f"'{i}',")
@@ -832,11 +832,11 @@ class SMOWorld(World):
                     if internal_name_to_entrance[i][j] not in stage_ids and internal_name_to_entrance[i][j] not in missing_stage_ids:
                         missing_stage_ids.append(internal_name_to_entrance[i][j])
 
-        for i in missing_maps:
-            print(f"'{i}',")
-
-        for i in missing_stage_ids:
-            print(f"'{i}',")
+        # for i in missing_maps:
+        #     print(f"'{i}',")
+        #
+        # for i in missing_stage_ids:
+        #     print(f"'{i}',")
 
         repeats = {}
         repeat_entrances = {}
@@ -920,33 +920,33 @@ class SMOWorld(World):
                     if is_all_reverse:
                         is_all_reverse = entry.is_reverse
 
-        for i in repeats:
-            if repeats[i] > 2:
-                print(i, repeats[i])
+        # for i in repeats:
+        #     if repeats[i] > 2:
+        #         print(i, repeats[i])
+        #
+        # if is_all_reverse:
+        #     print("All incorrect repeats were reverse entrances/exits.")
+        #
+        # count = 0
+        # for i in repeat_entrances:
+        #     if len(repeat_entrances[i]) > 1:
+        #         count += 1
+        #         for k in repeat_entrances[i]:
+        #             print(k)
+        #
+        # print("Repeated Entrances: ", count)
 
-        if is_all_reverse:
-            print("All incorrect repeats were reverse entrances/exits.")
-
-        count = 0
-        for i in repeat_entrances:
-            if len(repeat_entrances[i]) > 1:
-                count += 1
-                for k in repeat_entrances[i]:
-                    print(k)
-
-        print("Repeated Entrances: ", count)
-
-        for index in range(len(stage_ids)):
-            cur_id = stage_ids[index]
-            if (index not in self.entrance_data["over_world"] and index in self.entrance_data["sub_area"]
-                    and not "exdokan" in cur_id.lower() and not "exit" in cur_id.lower() and not "goal" in cur_id.lower()
-                    and not "return" in cur_id.lower() and not "2" == cur_id[-1] and not "b" == cur_id.lower()[-1]
-                    and not "out" in cur_id.lower()):
-                print(f"Over world missing: {cur_id}")
-            elif index not in self.entrance_data["sub_area"] and index in self.entrance_data["over_world"]:
-                print(f"Sub area missing: {cur_id}")
-            elif index not in self.entrance_data["over_world"] and index not in self.entrance_data["sub_area"]:
-                print(f"Stage Id missing: {cur_id}")
+        # for index in range(len(stage_ids)):
+        #     cur_id = stage_ids[index]
+        #     if (index not in self.entrance_data["over_world"] and index in self.entrance_data["sub_area"]
+        #             and not "exdokan" in cur_id.lower() and not "exit" in cur_id.lower() and not "goal" in cur_id.lower()
+        #             and not "return" in cur_id.lower() and not "2" == cur_id[-1] and not "b" == cur_id.lower()[-1]
+        #             and not "out" in cur_id.lower()):
+        #         print(f"Over world missing: {cur_id}")
+        #     elif index not in self.entrance_data["sub_area"] and index in self.entrance_data["over_world"]:
+        #         print(f"Sub area missing: {cur_id}")
+        #     elif index not in self.entrance_data["over_world"] and index not in self.entrance_data["sub_area"]:
+        #         print(f"Stage Id missing: {cur_id}")
             # if index == stage_ids.index("SnowUGEnt"):
             #     print(f"{self.entrance_data["sub_area"][index]}, {self.entrance_data["over_world"][index]}")
 
@@ -956,7 +956,8 @@ class SMOWorld(World):
         # Entrance Rando
         if self.options.entrance_randomization:
             for stage_id in sorted(stage_ids):
-                print(f'"{stage_id}",')
+                pass
+                # print(f'"{stage_id}",')
             self.bind_game_entrances()
 
             # print(len(self.original_entrance_bindings))
@@ -968,15 +969,18 @@ class SMOWorld(World):
             # print("Finished entrance rando slot data")
             for entry in self.entrance_data["over_world"]:
                 enter_stage_id_index, entry_index, nothing = self.entrance_data["over_world"][entry]
-                prefix = "PictureBoss"
-                if prefix in stage_ids[enter_stage_id_index] or prefix in stage_ids[entry]:
-                    print(f"{stage_ids[entry]}: {stage_ids[enter_stage_id_index]}, {stage_names[entry_index]}")
-
+                prefixes = ["PictureBoss", "bar1", "Jyukai", "bar2", "taxi", "Race"]
+                for prefix in prefixes:
+                    if prefix in stage_ids[enter_stage_id_index] or prefix in stage_ids[entry]:
+                        # print(f"{stage_ids[entry]}: {stage_ids[enter_stage_id_index]}, {stage_names[entry_index]}")
+                        pass
             for entry in self.entrance_data["sub_area"]:
                 enter_stage_id_index, entry_index, nothing = self.entrance_data["sub_area"][entry]
-                prefix = "PictureBoss"
-                if prefix in stage_ids[enter_stage_id_index] or prefix in stage_ids[entry]:
-                    print(f"{stage_ids[entry]}: {stage_ids[enter_stage_id_index]}, {stage_names[entry_index]}")
+                prefixes = ["PictureBoss" "bar1", "Jyukai", "bar2", "taxi", "Race"]
+                for prefix in prefixes:
+                    if prefix in stage_ids[enter_stage_id_index] or prefix in stage_ids[entry]:
+                        # print(f"{stage_ids[entry]}: {stage_ids[enter_stage_id_index]}, {stage_names[entry_index]}")
+                        pass
 
         for player in range(1, self.multiworld.players + 1):
             if not player in self.coin_values:
