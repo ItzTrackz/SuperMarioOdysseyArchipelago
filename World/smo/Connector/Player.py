@@ -5,7 +5,7 @@ from ..Locations import regional_coins, regional_coin_groups, regional_sub_area_
 from ..Data.ItemData import SMOItemData
 
 class SMOPlayer:
-    MAX_MOONS = {
+    MAX_MOONS: dict[str,int] = {
         "Cascade Story Moon": 1,
         "Sand Story Moon": 2,
         "Wooded Story Moon": 2,
@@ -29,7 +29,7 @@ class SMOPlayer:
         "Darker Side Multi-Moon": 1
     }
 
-    MAX_REGIONAL_COINS = {
+    MAX_REGIONAL_COINS: dict[str,int] = {
         "Cap Kingdom Regional Coin" : 50,
         "Cascade Kingdom Regional Coin" : 50,
         "Sand Kingdom Regional Coin" : 100,
@@ -44,8 +44,10 @@ class SMOPlayer:
         "Moon Kingdom Regional Coin" : 50,
         "Mushroom Kingdom Regional Coin" : 100,
     }
+
+
     def __init__(self):
-        self.moons = {
+        self.moons: dict[str,int] = {
         "Cap Power Moon": 0,
         "Cascade Power Moon": 2,
         "Sand Power Moon": 4,
@@ -86,7 +88,7 @@ class SMOPlayer:
         "Beat the Game": -1
         }
 
-        self.regional_coins = {
+        self.regional_coins: dict[str,int] = {
             "Cap Kingdom Regional Coin": 0,
             "Cascade Kingdom Regional Coin": 0,
             "Sand Kingdom Regional Coin": 0,
@@ -128,6 +130,10 @@ class SMOPlayer:
         }
         self.goal : int
         self.current_home_stage : str = ""
+
+        self.game_names: dict[int, str] = {}
+        self.slot_names: dict[int, str] = {}
+        self.item_names: dict[int, str] = {}
 
     def reset_moons(self):
         self.moons = {
