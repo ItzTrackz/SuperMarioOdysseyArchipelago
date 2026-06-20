@@ -50,7 +50,7 @@ from .Locations import SMOLocation, loc_Cap, loc_Cascade, loc_Cascade_Revisit, \
     sub_area_darker_vanishing, sub_area_darker_yoshi_siege, sub_area_darker_yoshi_sinking, sub_area_darker_yoshi_magma, \
     sub_area_inverted_pyramid, loc_odyssey_outfit, sub_area_mysterious_clouds, sub_area_moon_cave, sub_area_snow_outfit, \
     sub_area_snow_koopa, sub_area_snow_dashing, sub_area_snow_freezing_water, sub_area_blowing, sub_area_snow_spinning, \
-    sub_area_snow_flower_road, sub_area_iceburn, sub_area_bowser_clouds, shop_sand_coin, shop_wooded_coin, \
+    sub_area_snow_flower_road, sub_area_iceburn, sub_area_bowser_clouds, shop_wooded_coin, \
     shop_lake_coin, shop_metro_coin, shop_seaside_coin, shop_luncheon_coin, shop_moon_coin, shop_post_game_coin, \
     loc_Cap_Postgame, loc_Cascade_Postgame, loc_Sand_Postgame, loc_Wooded_Postgame, loc_Lake_Postgame, \
     loc_Cloud_Postgame, loc_Lost_Postgame, loc_Metro_Postgame, loc_Seaside_Postgame, loc_Snow_Postgame, \
@@ -91,7 +91,7 @@ from .Locations import SMOLocation, loc_Cap, loc_Cascade, loc_Cascade_Revisit, \
     high_rise_regional_coins, trex_escape_regional_coins, sea_cave_regional_coins, \
     shiveria_regional_coins, snowline_regional_coins, cascading_magma_regional_coins, \
     magma_narrow_path_regional_coins, spinning_athletics_regional_coins, fork_flickin_regional_coins, \
-    moon_cave_regional_coins, peachs_castle_regional_coins, sub_area_deep_woods
+    moon_cave_regional_coins, peachs_castle_regional_coins, sub_area_deep_woods, shop_cap_coin
 from .Data.RegionData import SMORegion
 from .Data.LocationData import SMOLocationData
 from .Rules import create_access_rule
@@ -355,8 +355,11 @@ def create_regions(self):
     """
 
     def connect_coin_shops(region_connections : dict):
-        region_connections[SMORegion.shop_sand_coin] = lambda state: state.can_reach(
-            self.multiworld.get_region(SMORegion.restored_odyssey, self.player))
+        region_connections[SMORegion.shop_cap_coin] = None
+        # region_connections[SMORegion.shop_cascade_coin] = lambda state: state.can_reach(
+        #     self.multiworld.get_region(SMORegion.restored_odyssey, self.player))
+        # region_connections[SMORegion.shop_sand_coin] = lambda state: state.can_reach(
+        #     self.multiworld.get_region(SMORegion.restored_odyssey, self.player))
         region_connections[SMORegion.shop_lake_coin] = lambda state: state.can_reach(
             self.multiworld.get_region(SMORegion.odyssey_broken_down, self.player))
         region_connections[SMORegion.shop_wooded_coin] = lambda state: state.can_reach(
@@ -701,7 +704,7 @@ def create_regions(self):
         (SMORegion.post_game_coin_outfits, loc_Postgame_Shop, self.options.goal.option_dark),
         (SMORegion.dark_side_outfit, loc_Dark_Outfit, self.options.goal.option_darker),
         (SMORegion.darker_side_outfit, loc_Darker_Outfit, self.options.goal.option_darker),
-        (SMORegion.shop_sand_coin, shop_sand_coin, self.options.goal.option_sand),
+        (SMORegion.shop_cap_coin, shop_cap_coin, self.options.goal.option_sand),
         (SMORegion.shop_wooded_coin, shop_wooded_coin, self.options.goal.option_metro),
         (SMORegion.shop_lake_coin, shop_lake_coin, self.options.goal.option_metro),
         (SMORegion.shop_metro_coin, shop_metro_coin, self.options.goal.option_metro),
@@ -1001,7 +1004,7 @@ def create_regions(self):
             SMORegion.cactus: None,
             SMORegion.night_sand_kingdom: (lambda state: state.can_reach(SMORegion.top_of_the_inverted_pyramid, player=self.player)),
             SMORegion.sand_kingdom_regional_coins: None,
-            SMORegion.sand_kingdom_peace_regional_coins: None,
+            SMORegion.sand_kingdom_regional_groups: None,
         }),
         (SMORegion.top_of_the_inverted_pyramid, {
             SMORegion.sand_kingdom_pyramid_over_world_regional_coins: None,

@@ -3,7 +3,15 @@ from .Data.LocationData import SMOLocationData
 from .Data.RuleData import SMOKingdoms
 from .Data.RegionData import SMORegion
 from .Options import Goal
-from enum import StrEnum
+from enum import StrEnum, IntEnum
+
+class TextDataOffset(IntEnum):
+        Common = 0
+        Regional = 37
+        Shop_Moon = 46
+        Moons = 47
+        Moon_Rock = 147
+        Cappy = 148
 
 
 class SMOLocation(Location):
@@ -15,7 +23,7 @@ loc_Cap = {
         SMOLocationData.frog_jumping_from_the_top_deck: 815,
         SMOLocationData.cap_kingdom_timer_challenge_1: 861,
         SMOLocationData.good_evening_captain_toad: 227,
-        SMOLocationData.shopping_in_bonneton: 230,
+        # SMOLocationData.shopping_in_bonneton: 230,
 }
 
 
@@ -40,7 +48,7 @@ loc_Cascade_Peace = {
 
 loc_Cascade_Revisit = {
         SMOLocationData.rolling_rock_by_the_falls: 1004,
-        SMOLocationData.shopping_in_fossil_falls: 211,
+        # SMOLocationData.shopping_in_fossil_falls: 211,
 }
 
 
@@ -77,7 +85,6 @@ loc_Sand = {
         SMOLocationData.among_the_five_cactuses: 893,
         SMOLocationData.wandering_cactus: 509,
         SMOLocationData.sand_quiz_wonderful: 498,
-        SMOLocationData.shopping_in_tostarena: 565,
         SMOLocationData.secret_of_the_inverted_mural: 504,
 }
 
@@ -145,9 +152,9 @@ loc_Lake = {
         SMOLocationData.i_met_a_lake_cheep_cheep: 409,
         SMOLocationData.our_secret_little_room: 414,
         SMOLocationData.lets_go_swimming_captain_toad: 403,
-        SMOLocationData.shopping_in_lake_lamode: 430,
         SMOLocationData.i_feel_underdressed: 406,
         SMOLocationData.found_with_lake_kingdom_art: 1094,
+
 }
 
 
@@ -167,7 +174,6 @@ loc_Wooded = {
         SMOLocationData.the_nut_in_the_red_maze: 141,
         SMOLocationData.the_nut_at_the_dead_end: 142,
         SMOLocationData.fire_in_the_cave: 136,
-        SMOLocationData.shopping_in_steam_gardens: 138,
         SMOLocationData.nut_planted_in_the_tower: 180,
         SMOLocationData.stretching_your_legs: 179,
 }
@@ -224,7 +230,8 @@ loc_Lost = {
         SMOLocationData.soaring_over_the_forgotten_isle: 381,
         SMOLocationData.the_caged_gold: 383,
         SMOLocationData.get_some_rest_captain_toad: 372,
-        SMOLocationData.shopping_on_forgotten_isle: 398,
+        # SMOLocationData.shopping_on_forgotten_isle: 398,
+
 }
 
 
@@ -259,7 +266,6 @@ loc_Metro = {
         SMOLocationData.how_you_doin_captain_toad: 46,
         SMOLocationData.free_parking_rooftop_hop: 809,
         SMOLocationData.bench_friends: 50,
-        SMOLocationData.shopping_in_new_donk_city: 101,
         SMOLocationData.jump_rope_hero: 60,
         SMOLocationData.jump_rope_genius: 51,
         SMOLocationData.remotely_captured_car: 53,
@@ -288,7 +294,6 @@ loc_Metro_Peace = {
 
 loc_Snow = {
         SMOLocationData.captain_toad_is_chilly: 694,
-        SMOLocationData.shopping_in_shiveria: 868,
 }
 
 
@@ -332,7 +337,6 @@ loc_Seaside = {
         SMOLocationData.love_by_the_seaside: 446,
         SMOLocationData.good_job_captain_toad: 443,
         SMOLocationData.ocean_quiz_good: 457,
-        SMOLocationData.shopping_in_bubblaine: 460,
         SMOLocationData.found_with_seaside_kingdom_art: 1095,
 }
 
@@ -371,7 +375,7 @@ loc_Luncheon_Post_Spewart = {
         SMOLocationData.island_of_salt_floating_in_the_lava: 245,
         SMOLocationData.golden_turnip_recipe_1: 242,
         SMOLocationData.golden_turnip_recipe_2: 241,
-        SMOLocationData.shopping_in_mount_volbono: 294,
+
 }
 
 
@@ -430,7 +434,7 @@ loc_Bowser_Post_Bombing = {
         SMOLocationData.exterminate_the_ogres: 320,
         SMOLocationData.jizo_all_in_a_row: 316,
         SMOLocationData.underground_jizo: 317,
-        SMOLocationData.shopping_at_bowsers_castle: 360,
+
 }
 
 
@@ -717,7 +721,6 @@ loc_Moon_Postgame = {
         SMOLocationData.moon_shards_on_the_moon: 671,
         SMOLocationData.moon_quiz_amazing: 580,
         SMOLocationData.thanks_captain_toad: 1000,
-        SMOLocationData.shopping_in_honeylune_ridge: 1157,
         SMOLocationData.walking_on_the_moon: 578,
         SMOLocationData.moon_kingdom_regular_cup: 707,
         SMOLocationData.doctor_in_the_house: 1164,
@@ -755,12 +758,12 @@ loc_Mushroom = {
         SMOLocationData.toad_defender: 984,
         SMOLocationData.forever_onward_captain_toad: 605,
         SMOLocationData.jammin_in_the_mushroom_kingdom: 913,
-        SMOLocationData.shopping_near_peachs_castle: 933,
         SMOLocationData.mushroom_kingdom_regular_cup: 967,
         SMOLocationData.mushroom_kingdom_master_cup: 968,
         SMOLocationData.found_with_mushroom_kingdom_art: 1152,
         SMOLocationData.hat_and_seek_mushroom_kingdom: 978,
         SMOLocationData.princess_peach_home_again: 1119,
+
 }
 
 
@@ -786,6 +789,7 @@ loc_Darker = {
 
 
 loc_Cap_Shop = {
+        SMOLocationData.shopping_in_bonneton: 230,
         SMOLocationData.cap_kingdom_sticker: 2582,
         SMOLocationData.plush_frog: 2599,
         SMOLocationData.bonneton_tower_model: 2600,
@@ -795,6 +799,7 @@ loc_Cap_Shop = {
 
 
 loc_Cascade_Shop = {
+        SMOLocationData.shopping_in_fossil_falls: 211,
         SMOLocationData.caveman_headwear: 2502,
         SMOLocationData.caveman_outfit: 2540,
         SMOLocationData.cascade_kingdom_sticker: 2583,
@@ -804,6 +809,7 @@ loc_Cascade_Shop = {
 
 
 loc_Sand_Shop = {
+        SMOLocationData.shopping_in_tostarena: 565,
         SMOLocationData.sombrero: 2503,
         SMOLocationData.poncho: 2541,
         SMOLocationData.cowboy_hat: 2504,
@@ -815,6 +821,7 @@ loc_Sand_Shop = {
 
 
 loc_Wooded_Shop = {
+        SMOLocationData.shopping_in_steam_gardens: 138,
         SMOLocationData.explorer_hat: 2506,
         SMOLocationData.explorer_outfit: 2544,
         SMOLocationData.scientist_visor: 2507,
@@ -826,6 +833,7 @@ loc_Wooded_Shop = {
 
 
 loc_Lake_Shop = {
+        SMOLocationData.shopping_in_lake_lamode: 430,
         SMOLocationData.swim_goggles: 2505,
         SMOLocationData.swimwear: 2543,
         SMOLocationData.lake_kingdom_sticker: 2585,
@@ -835,6 +843,7 @@ loc_Lake_Shop = {
 
 
 loc_Lost_Shop = {
+        SMOLocationData.shopping_on_forgotten_isle: 398,
         SMOLocationData.aviator_cap: 2508,
         SMOLocationData.aviator_outfit: 2546,
         SMOLocationData.lost_kingdom_sticker: 2587,
@@ -844,6 +853,7 @@ loc_Lost_Shop = {
 
 
 loc_Metro_Shop = {
+        SMOLocationData.shopping_in_new_donk_city: 101,
         SMOLocationData.builder_helmet: 2509,
         SMOLocationData.builder_outfit: 2547,
         SMOLocationData.golf_cap: 2510,
@@ -855,6 +865,7 @@ loc_Metro_Shop = {
 
 
 loc_Seaside_Shop = {
+        SMOLocationData.shopping_in_bubblaine: 460,
         SMOLocationData.resort_hat: 2512,
         SMOLocationData.resort_outfit: 2550,
         SMOLocationData.sailor_hat: 2513,
@@ -866,6 +877,7 @@ loc_Seaside_Shop = {
 
 
 loc_Snow_Shop = {
+        SMOLocationData.shopping_in_shiveria: 868,
         SMOLocationData.snow_hood: 2511,
         SMOLocationData.snow_suit: 2549,
         SMOLocationData.snow_kingdom_sticker: 2589,
@@ -875,6 +887,7 @@ loc_Snow_Shop = {
 
 
 loc_Luncheon_Shop = {
+        SMOLocationData.shopping_in_mount_volbono: 294,
         SMOLocationData.chef_hat: 2514,
         SMOLocationData.chef_suit: 2552,
         SMOLocationData.painters_cap: 2515,
@@ -886,6 +899,7 @@ loc_Luncheon_Shop = {
 
 
 loc_Bowser_Shop = {
+        SMOLocationData.shopping_at_bowsers_castle: 360,
         SMOLocationData.samurai_helmet: 2516,
         SMOLocationData.samurai_armor: 2554,
         SMOLocationData.happi_headband: 2517,
@@ -903,6 +917,7 @@ loc_Moon_Outfit = {
 
 
 loc_Moon_Shop = {
+        SMOLocationData.shopping_in_honeylune_ridge: 1157,
         SMOLocationData.space_helmet: 2518,
         SMOLocationData.space_suit: 2556,
         SMOLocationData.moon_kingdom_sticker: 2593,
@@ -912,6 +927,7 @@ loc_Moon_Shop = {
 
 
 loc_Mushroom_Shop = {
+        SMOLocationData.shopping_near_peachs_castle: 933,
         SMOLocationData.mario_64_cap: 2519,
         SMOLocationData.mario_64_suit: 2557,
         SMOLocationData.mushroom_cushion_set: 2623,
@@ -921,6 +937,7 @@ loc_Mushroom_Shop = {
         SMOLocationData.block_sticker: 2596,
         SMOLocationData.question_block_sticker: 2597,
         SMOLocationData.mushroom_kingdom_sticker: 2598,
+
 }
 
 
@@ -962,56 +979,48 @@ loc_odyssey_outfit = {
         SMOLocationData.captains_hat: 2577,
 }
 
-
-shop_sand_coin = {
+shop_cap_coin = {
         SMOLocationData.employee_cap: 2520,
         SMOLocationData.employee_uniform: 2558,
         SMOLocationData.boxer_shorts: 2578,
 }
-
 
 shop_lake_coin = {
         SMOLocationData.fashionable_cap: 2521,
         SMOLocationData.fashionable_outfit: 2559,
 }
 
-
 shop_wooded_coin = {
         SMOLocationData.mechanic_cap: 2522,
         SMOLocationData.mechanic_outfit: 2560,
 }
 
-
 shop_metro_coin = {
         SMOLocationData.black_fedora: 2523,
         SMOLocationData.black_suit: 2561,
-}
 
+}
 
 shop_seaside_coin = {
         SMOLocationData.pirate_hat: 2524,
         SMOLocationData.pirate_outfit: 2562,
 }
 
-
 shop_luncheon_coin = {
         SMOLocationData.clown_hat: 2525,
         SMOLocationData.clown_suit: 2563,
 }
-
 
 shop_moon_coin = {
         SMOLocationData.football_helmet: 2526,
         SMOLocationData.football_uniform: 2564,
 }
 
-
 shop_post_game_coin = {
         SMOLocationData.classic_cap: 2527,
         SMOLocationData.classic_suit: 2565,
         SMOLocationData.skeleton_suit: 2580,
 }
-
 
 loc_Post_Cloud = {
         SMOLocationData.beat_bowser_in_cloud: 2500,
@@ -1788,7 +1797,7 @@ base_locations_table = {
         **loc_Mushroom_Post_Luncheon
 }
 
-shop_locations_table = {
+regional_shop_locations_table = {
         **loc_Cap_Shop,
         **loc_Cascade_Shop,
         **loc_Sand_Shop,
@@ -1800,21 +1809,29 @@ shop_locations_table = {
         **loc_Snow_Shop,
         **loc_Luncheon_Shop,
         **loc_Bowser_Shop,
-        **loc_Moon_Outfit,
         **loc_Moon_Shop,
         **loc_Mushroom_Shop,
-        **loc_Postgame_Shop,
-        **loc_Dark_Outfit,
-        **loc_Darker_Outfit,
-        **loc_odyssey_outfit,
-        **shop_sand_coin,
+}
+
+coin_shop_locations_table = {
+        **shop_cap_coin,
         **shop_lake_coin,
         **shop_wooded_coin,
         **shop_metro_coin,
         **shop_seaside_coin,
         **shop_luncheon_coin,
         **shop_moon_coin,
-        **shop_post_game_coin
+        **shop_post_game_coin,
+        **loc_Postgame_Shop,
+}
+
+shop_locations_table = {
+        **regional_shop_locations_table,
+        **loc_Moon_Outfit,
+        **loc_Dark_Outfit,
+        **loc_Darker_Outfit,
+        **loc_odyssey_outfit,
+        **coin_shop_locations_table,
 }
 
 post_game_locations_table = {
@@ -3513,7 +3530,7 @@ mushroom_kingdom_regional_groups = {
 }
 
 peachs_castle_regional_groups = {
-        SMOLocationData.mushroom_kingdom_regional_coin_group_1: 3892,
+        SMOLocationData.peachs_castle_regional_coin_group_1: 3892,
 }
 
 mushroom_kingdom_regional_coins = {
@@ -4064,6 +4081,8 @@ regional_coin_groups = {
                 3542: [3543, 3544, 3545],
                 3546: [3547, 3548, 3549, 3550],
                 3551: [3552, 3553, 3554],
+        },
+        "SnowWorldLobby000Stage": {
                 3555: [3556, 3557, 3558, 3559],
                 3560: [3561, 3562, 3563],
         },
@@ -5255,24 +5274,24 @@ regional_coins = {
         },
 
         "MoonWorldCaptureParadeStage": {
-                "obj6104": 3869,
-                "obj6105": 3870,
-                "obj6106": 3871,
-                "obj239": 3873,
-                "obj240": 3874,
-                "obj412": 3875,
-                "obj430": 3877,
-                "obj461": 3878,
-                "obj462": 3879,
-                "obj405": 3881,
-                "obj406": 3882,
-                "obj407": 3883,
-                "obj21": 3885,
-                "obj22": 3886,
-                "obj23": 3887,
-                "obj193": 3889,
-                "obj194": 3890,
-                "obj195": 3891,
+                "obj6104(MoonWorldCaptureParadeBullZone[obj81])": 3869,
+                "obj6105(MoonWorldCaptureParadeBullZone[obj81])": 3870,
+                "obj6106(MoonWorldCaptureParadeBullZone[obj81])": 3871,
+                "obj239(MoonWorldCaptureParadeLavaPillarZone[obj80])": 3873,
+                "obj240(MoonWorldCaptureParadeLavaPillarZone[obj80])": 3874,
+                "obj412(MoonWorldCaptureParadeLavaPillarZone[obj80])": 3875,
+                "obj430(MoonWorldCaptureParadeLavaPillarZone[obj80])": 3877,
+                "obj461(MoonWorldCaptureParadeLavaPillarZone[obj80])": 3878,
+                "obj462(MoonWorldCaptureParadeLavaPillarZone[obj80])": 3879,
+                "obj405(MoonWorldCaptureParadeLiftZone[obj243])": 3881,
+                "obj406(MoonWorldCaptureParadeLiftZone[obj243])": 3882,
+                "obj407(MoonWorldCaptureParadeLiftZone[obj243])": 3883,
+                "obj21(MoonWorldCaptureParadeMeganeZone[obj317])": 3885,
+                "obj22(MoonWorldCaptureParadeMeganeZone[obj317])": 3886,
+                "obj23(MoonWorldCaptureParadeMeganeZone[obj317])": 3887,
+                "obj193(MoonWorldCaptureParadeKillerZone[obj304])": 3889,
+                "obj194(MoonWorldCaptureParadeKillerZone[obj304])": 3890,
+                "obj195(MoonWorldCaptureParadeKillerZone[obj304])": 3891,
         },
         #endregion
 
@@ -5483,45 +5502,45 @@ regional_sub_area_to_kingdom = {
 shop_location_costs = [
         (SMOLocationData.black_top_hat, Goal.option_sand, SMOKingdoms.CAP, 5),
         (SMOLocationData.black_tuxedo, Goal.option_sand,SMOKingdoms.CAP, 10),
+        (SMOLocationData.cap_kingdom_sticker, Goal.option_sand,SMOKingdoms.CAP, 5),
         (SMOLocationData.plush_frog, Goal.option_sand,SMOKingdoms.CAP, 5),
         (SMOLocationData.bonneton_tower_model, Goal.option_sand,SMOKingdoms.CAP, 25),
-        (SMOLocationData.cap_kingdom_sticker, Goal.option_sand,SMOKingdoms.CAP, 5),
         (SMOLocationData.caveman_headwear, Goal.option_sand,SMOKingdoms.CASCADE, 5),
         (SMOLocationData.caveman_outfit, Goal.option_sand,SMOKingdoms.CASCADE, 10),
+        (SMOLocationData.cascade_kingdom_sticker, Goal.option_sand,SMOKingdoms.CASCADE, 5),
         (SMOLocationData.t_rex_model, Goal.option_sand,SMOKingdoms.CASCADE, 5),
         (SMOLocationData.triceratops_trophy, Goal.option_sand,SMOKingdoms.CASCADE, 25),
-        (SMOLocationData.cascade_kingdom_sticker, Goal.option_sand,SMOKingdoms.CASCADE, 5),
         (SMOLocationData.sombrero, Goal.option_sand,SMOKingdoms.SAND, 5),
         (SMOLocationData.poncho, Goal.option_sand,SMOKingdoms.SAND, 10),
         (SMOLocationData.cowboy_hat, Goal.option_sand,SMOKingdoms.SAND, 20),
         (SMOLocationData.cowboy_outfit, Goal.option_sand,SMOKingdoms.SAND, 25),
+        (SMOLocationData.sand_kingdom_sticker, Goal.option_sand,SMOKingdoms.SAND, 10),
         (SMOLocationData.inverted_pyramid_model, Goal.option_sand,SMOKingdoms.SAND, 25),
         (SMOLocationData.jaxi_statue, Goal.option_sand,SMOKingdoms.SAND, 5),
-        (SMOLocationData.sand_kingdom_sticker, Goal.option_sand,SMOKingdoms.SAND, 10),
         (SMOLocationData.swim_goggles, Goal.option_metro,SMOKingdoms.LAKE, 5),
         (SMOLocationData.swimwear, Goal.option_metro,SMOKingdoms.LAKE, 10),
+        (SMOLocationData.lake_kingdom_sticker, Goal.option_metro,SMOKingdoms.LAKE, 5),
         (SMOLocationData.underwater_dome, Goal.option_metro,SMOKingdoms.LAKE, 25),
         (SMOLocationData.rubber_dorrie, Goal.option_metro,SMOKingdoms.LAKE, 5),
-        (SMOLocationData.lake_kingdom_sticker, Goal.option_metro,SMOKingdoms.LAKE, 5),
         (SMOLocationData.explorer_hat, Goal.option_metro,SMOKingdoms.WOODED, 5),
         (SMOLocationData.explorer_outfit, Goal.option_metro,SMOKingdoms.WOODED, 10),
         (SMOLocationData.scientist_visor, Goal.option_metro,SMOKingdoms.WOODED, 20),
         (SMOLocationData.scientist_outfit, Goal.option_metro,SMOKingdoms.WOODED, 25),
+        (SMOLocationData.wooded_kingdom_sticker, Goal.option_metro,SMOKingdoms.WOODED, 10),
         (SMOLocationData.flowers_from_steam_gardens, Goal.option_metro,SMOKingdoms.WOODED, 5),
         (SMOLocationData.steam_gardener_watering_can, Goal.option_metro,SMOKingdoms.WOODED, 25),
-        (SMOLocationData.wooded_kingdom_sticker, Goal.option_metro,SMOKingdoms.WOODED, 10),
         (SMOLocationData.aviator_cap, Goal.option_metro,SMOKingdoms.LOST, 5),
         (SMOLocationData.aviator_outfit, Goal.option_metro,SMOKingdoms.LOST, 10),
+        (SMOLocationData.lost_kingdom_sticker, Goal.option_metro,SMOKingdoms.LOST, 5),
         (SMOLocationData.potted_palm_tree, Goal.option_metro,SMOKingdoms.LOST, 5),
         (SMOLocationData.butterfly_mobile, Goal.option_metro,SMOKingdoms.LOST, 25),
-        (SMOLocationData.lost_kingdom_sticker, Goal.option_metro,SMOKingdoms.LOST, 5),
         (SMOLocationData.builder_helmet, Goal.option_metro,SMOKingdoms.METRO, 5),
         (SMOLocationData.builder_outfit, Goal.option_metro,SMOKingdoms.METRO, 10),
         (SMOLocationData.golf_cap, Goal.option_metro,SMOKingdoms.METRO, 20),
         (SMOLocationData.golf_outfit, Goal.option_metro,SMOKingdoms.METRO, 25),
+        (SMOLocationData.metro_kingdom_sticker, Goal.option_metro,SMOKingdoms.METRO, 10),
         (SMOLocationData.pauline_statue, Goal.option_metro,SMOKingdoms.METRO, 25),
         (SMOLocationData.new_donk_city_hall_model, Goal.option_metro,SMOKingdoms.METRO, 5),
-        (SMOLocationData.metro_kingdom_sticker, Goal.option_metro,SMOKingdoms.METRO, 10),
         (SMOLocationData.snow_hood, Goal.option_luncheon,SMOKingdoms.SNOW, 5),
         (SMOLocationData.snow_suit, Goal.option_luncheon,SMOKingdoms.SNOW, 10),
         (SMOLocationData.snow_kingdom_sticker, Goal.option_luncheon,SMOKingdoms.SNOW, 5),
@@ -5555,17 +5574,32 @@ shop_location_costs = [
         (SMOLocationData.moon_lamp, Goal.option_moon,SMOKingdoms.MOON, 25),
         (SMOLocationData.mario_64_cap, Goal.option_dark,SMOKingdoms.MUSHROOM, 15),
         (SMOLocationData.mario_64_suit, Goal.option_dark,SMOKingdoms.MUSHROOM, 20),
-        (SMOLocationData.mushroom_cushion_set, Goal.option_dark,SMOKingdoms.MUSHROOM, 10),
-        (SMOLocationData.peachs_castle_model, Goal.option_dark,SMOKingdoms.MUSHROOM, 25),
         (SMOLocationData.pipe_sticker, Goal.option_dark,SMOKingdoms.MUSHROOM, 5),
         (SMOLocationData.coin_sticker, Goal.option_dark,SMOKingdoms.MUSHROOM, 5),
         (SMOLocationData.block_sticker, Goal.option_dark,SMOKingdoms.MUSHROOM, 5),
         (SMOLocationData.question_block_sticker, Goal.option_dark,SMOKingdoms.MUSHROOM, 5),
         (SMOLocationData.mushroom_kingdom_sticker, Goal.option_dark,SMOKingdoms.MUSHROOM, 10),
+        (SMOLocationData.mushroom_cushion_set, Goal.option_dark,SMOKingdoms.MUSHROOM, 10),
+        (SMOLocationData.peachs_castle_model, Goal.option_dark,SMOKingdoms.MUSHROOM, 25),
 ]
 # possibly add coin outfits
 # might need to reorder if purple coin amounts don't match in game (YES)
 
+coin_shop_moon_locations = [
+        (SMOLocationData.shopping_in_bonneton, SMOKingdoms.CAP),
+        (SMOLocationData.shopping_in_fossil_falls, SMOKingdoms.CASCADE),
+        (SMOLocationData.shopping_in_tostarena, SMOKingdoms.SAND),
+        (SMOLocationData.shopping_in_steam_gardens, SMOKingdoms.WOODED),
+        (SMOLocationData.shopping_in_lake_lamode, SMOKingdoms.LAKE),
+        (SMOLocationData.shopping_on_forgotten_isle, SMOKingdoms.LOST),
+        (SMOLocationData.shopping_in_new_donk_city, SMOKingdoms.METRO),
+        (SMOLocationData.shopping_in_bubblaine, SMOKingdoms.SEASIDE),
+        (SMOLocationData.shopping_in_shiveria, SMOKingdoms.SNOW),
+        (SMOLocationData.shopping_in_mount_volbono, SMOKingdoms.LUNCHEON),
+        (SMOLocationData.shopping_at_bowsers_castle, SMOKingdoms.BOWSER),
+        (SMOLocationData.shopping_in_honeylune_ridge, SMOKingdoms.MOON),
+        (SMOLocationData.shopping_near_peachs_castle, SMOKingdoms.MUSHROOM),
+]
 
 locations_table = {
         **base_locations_table,
