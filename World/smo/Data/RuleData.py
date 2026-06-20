@@ -196,7 +196,7 @@ moon_rule_data : dict[str, list] = {
          SMORuleOperation.NONE),
     ],
     SMOLocationData.shopping_in_fossil_falls: [
-        (SMORuleCondition.REGION, [SMORegion.restored_odyssey], SMORuleOperation.NONE),
+        (SMORuleCondition.REGION, SMORegion.restored_odyssey, SMORuleOperation.NONE),
     ],
     SMOLocationData.sphynx_traveling_to_the_waterfall: [
         (SMORuleCondition.CAPTURE, [SMOItemData.binoculars], SMORuleOperation.NONE),
@@ -282,9 +282,9 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE),
     ],
     SMOLocationData.among_the_five_cactuses: [
-        (SMORuleCondition.REGION, [SMORegion.night_sand_kingdom], SMORuleOperation.OR),
+        (SMORuleCondition.REGION, SMORegion.night_sand_kingdom, SMORuleOperation.OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.OR),
-        (SMORuleCondition.ENTRANCE, [SMOEntranceData.jaxi_ruins, SMOEntranceDataType.UNIQUE_EXIT], SMORuleOperation.NONE),
+        (SMORuleCondition.ENTRANCE, [SMORegion.sand_kingdom, SMOEntranceData.jaxi_ruins, SMOEntranceDataType.UNIQUE_EXIT], SMORuleOperation.NONE),
     ],
     SMOLocationData.youre_quite_a_catch_captain_toad: [
         (SMORuleCondition.CAPTURE, [SMOItemData.lakitu], SMORuleOperation.NONE),
@@ -434,10 +434,14 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.glowing_in_the_deep_woods: [],
     SMOLocationData.past_the_peculiar_pipes: [],
     SMOLocationData.by_the_babbling_brook_in_the_deep_woods: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.t_rex, SMOItemData.coin_coffer], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.t_rex], SMORuleOperation.OR),
+        (SMORuleCondition.CAPTURE, [SMOItemData.coin_coffer], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.the_hard_rock_in_deep_woods: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.t_rex, SMOItemData.coin_coffer], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.t_rex], SMORuleOperation.OR),
+        (SMORuleCondition.CAPTURE, [SMOItemData.coin_coffer], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.a_treasure_made_of_coins: [
         (SMORuleCondition.CAPTURE, [SMOItemData.coin_coffer], SMORuleOperation.NONE),
@@ -452,23 +456,30 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.flooding_pipeway: [],
     SMOLocationData.flooding_pipeway_ceiling_secret: [],
     SMOLocationData.wandering_in_the_fog: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba, SMOItemData.mini_rocket], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
     ],
     SMOLocationData.nut_hidden_in_the_fog: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba, SMOItemData.mini_rocket], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.flower_road_run: [],
     SMOLocationData.flower_road_reach: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE),
+        # (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE),
     ],
     SMOLocationData.elevator_escalation: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.elevator_blind_spot: [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.NONE),
     ],
-    SMOLocationData.walking_on_clouds: [],
-    SMOLocationData.above_the_clouds: [],
+    SMOLocationData.walking_on_clouds: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
+    ],
+    SMOLocationData.above_the_clouds: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.NONE),
+    ],
     SMOLocationData.secret_path_to_the_steam_gardens: [
 
     ],
@@ -548,7 +559,8 @@ moon_rule_data : dict[str, list] = {
     ],
     SMOLocationData.our_secret_little_room: [],
     SMOLocationData.lets_go_swimming_captain_toad: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.shopping_in_lake_lamode: [],
     SMOLocationData.a_successful_repair_job: [
@@ -559,29 +571,38 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.ITEM, SMOItemData.boxer_shorts, SMORuleOperation.NONE)
     ],
     SMOLocationData.unzip_the_chasm: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.super_secret_zipper: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.jump_grab_cling_and_climb: [],
     SMOLocationData.jump_grab_and_climb_some_more: [],
     SMOLocationData.secret_path_to_lake_lamode: [
-
+        # lake clip
     ],
     SMOLocationData.found_with_lake_kingdom_art: [],
     SMOLocationData.taxi_flying_through_lake_lamode: [
         (SMORuleCondition.CAPTURE, [SMOItemData.binoculars], SMORuleOperation.NONE),
     ],
-    SMOLocationData.that_trendy_pirate_look: [],
-    SMOLocationData.space_is_in_right_now: [],
-    SMOLocationData.that_old_west_style: [],
+    SMOLocationData.that_trendy_pirate_look: [
+        (SMORuleCondition.ITEM, [SMOItemData.pirate_hat, SMOItemData.pirate_outfit], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.space_is_in_right_now: [
+        (SMORuleCondition.ITEM, [SMOItemData.space_helmet, SMOItemData.space_suit], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.that_old_west_style: [
+        (SMORuleCondition.ITEM, [SMOItemData.cowboy_hat, SMOItemData.cowboy_outfit], SMORuleOperation.NONE),
+    ],
     SMOLocationData.lake_kingdom_regular_cup: [],
     SMOLocationData.peach_in_the_lake_kingdom: [],
     SMOLocationData.behind_the_floodgate: [],
     SMOLocationData.high_flying_leap: [],
     SMOLocationData.deep_deep_down: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.rooftop_of_the_water_plaza: [],
     SMOLocationData.bird_traveling_over_the_lake: [],
@@ -590,10 +611,12 @@ moon_rule_data : dict[str, list] = {
     ],
     SMOLocationData.lake_kingdom_master_cup: [],
     SMOLocationData.waves_of_poison_hoppin_over: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.waves_of_poison_hop_to_it: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
 
     SMOLocationData.picture_match_basically_a_goomba: [
@@ -605,6 +628,7 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.crossing_the_cloud_sea: [],
     SMOLocationData.taking_notes_up_and_down: [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
+        # maybe
     ],
     SMOLocationData.picture_match_a_stellar_goomba: [
         (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_goomba], SMORuleOperation.NONE),
@@ -618,7 +642,8 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.below_the_cliffs_edge: [],
     SMOLocationData.inside_the_stone_cage: [],
     SMOLocationData.on_a_tree_in_the_swamp: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.over_the_fuzzies_above_the_swamp: [],
     SMOLocationData.avoiding_fuzzies_inside_the_wall: [],
@@ -634,16 +659,23 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.NONE),
     ],
     SMOLocationData.peeking_out_from_under_the_bridge: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.twist_n_turn_up_treasure: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.PARENTHESIS_AND),
+        (SMORuleCondition.CAPTURE, [SMOItemData.glydon], SMORuleOperation.PARENTHESIS_NONE),
     ],
     SMOLocationData.soaring_over_the_forgotten_isle: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.glydon], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.glydon], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.the_caged_gold: [],
-    SMOLocationData.get_some_rest_captain_toad: [],
+    SMOLocationData.get_some_rest_captain_toad: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
+    ],
     SMOLocationData.shopping_on_forgotten_isle: [],
     SMOLocationData.taxi_flying_through_forgotten_isle: [
         (SMORuleCondition.CAPTURE, [SMOItemData.binoculars], SMORuleOperation.NONE),
@@ -656,7 +688,10 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.the_shining_fruit: [],
     SMOLocationData.jump_down_to_the_top_of_a_tree: [],
     SMOLocationData.line_it_up_blow_it_up: [],
-    SMOLocationData.taking_notes_stretch_and_shrink: [],
+    SMOLocationData.taking_notes_stretch_and_shrink: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
+    ],
     SMOLocationData.lost_kingdom_master_cup: [],
     SMOLocationData.lost_kingdom_timer_challenge: [],
     SMOLocationData.stretch_and_traverse_the_jungle: [
@@ -666,7 +701,10 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.NONE),
     ],
     SMOLocationData.chasing_klepto: [],
-    SMOLocationData.extremely_hot_bath: [],
+    SMOLocationData.extremely_hot_bath: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
+    ],
     #endregion
 
     #region Metro
@@ -706,6 +744,7 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.jump_rope_genius: [],
     SMOLocationData.remotely_captured_car: [
         (SMORuleCondition.CAPTURE, [SMOItemData.rc_car], SMORuleOperation.NONE),
+        #scooter clip
     ],
     SMOLocationData.rc_car_pro: [
         (SMORuleCondition.CAPTURE, [SMOItemData.rc_car], SMORuleOperation.NONE),
@@ -723,10 +762,10 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.spark_pylon], SMORuleOperation.NONE),
     ],
     SMOLocationData.moon_shards_under_siege: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.taxi, SMOItemData.sherm], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.NONE),
     ],
     SMOLocationData.sharpshooting_under_siege: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.taxi, SMOItemData.sherm], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.NONE),
     ],
     SMOLocationData.inside_the_rotating_maze: [
         (SMORuleCondition.CAPTURE, [SMOItemData.manhole], SMORuleOperation.NONE),
@@ -873,16 +912,17 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.beach_volleyball_champ: [],
     SMOLocationData.beach_volleyball_hero_of_the_beach: [],
     SMOLocationData.looking_back_in_the_dark_waterway: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.the_sphynxs_underwater_vault: [],
     SMOLocationData.a_rumble_on_the_seaside_floor: [],
     SMOLocationData.a_relaxing_dance: [],
     SMOLocationData.wading_in_the_cloud_sea: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.mini_rocket], SMORuleOperation.NONE),
+        # (SMORuleCondition.CAPTURE, [SMOItemData.mini_rocket], SMORuleOperation.NONE),
     ],
     SMOLocationData.sunken_treasure_in_the_cloud_sea: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.mini_rocket], SMORuleOperation.NONE),
+        # (SMORuleCondition.CAPTURE, [SMOItemData.mini_rocket], SMORuleOperation.NONE),
     ],
     SMOLocationData.fly_through_the_narrow_valley: [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE),
@@ -892,9 +932,11 @@ moon_rule_data : dict[str, list] = {
     ],
     SMOLocationData.hurry_and_stretch: [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.NONE),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.stretch_on_the_side_path: [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.NONE),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.secret_path_to_bubblaine: [],
     SMOLocationData.found_with_seaside_kingdom_art: [],
@@ -907,12 +949,14 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.underwater_highway_east_explore: [],
     SMOLocationData.rapid_ascent_on_hot_spring_island: [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE),
+        # maybe skip
     ],
     SMOLocationData.a_light_next_to_the_lighthouse: [],
     SMOLocationData.the_tall_rock_shell_in_the_deep_ocean: [],
     SMOLocationData.at_the_base_of_the_lighthouse: [],
     SMOLocationData.bird_traveling_over_the_ocean: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.glydon], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.glydon], SMORuleOperation.OR),
+        (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE),
     ],
     SMOLocationData.caught_hopping_at_glass_palace: [],
     SMOLocationData.seaside_kingdom_timer_challenge_3: [],
@@ -1068,7 +1112,7 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE),
     ],
     SMOLocationData.love_above_the_lava: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE),
     ],
     SMOLocationData.shopping_in_mount_volbono: [],
     SMOLocationData.luncheon_kingdom_slots: [],
@@ -1144,7 +1188,10 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.from_a_crack_in_the_hard_ground: [],
     SMOLocationData.by_the_cannon_pointed_at_the_big_pot: [],
     SMOLocationData.luncheon_kingdom_master_cup: [],
-    SMOLocationData.stepping_over_the_gears_and_lanterns_on_the_gear_steps: [],
+    SMOLocationData.stepping_over_the_gears_and_lanterns_on_the_gear_steps: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.fire_bro], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
+    ],
     SMOLocationData.lanterns_on_the_gear_steps: [
         (SMORuleCondition.CAPTURE, [SMOItemData.fire_bro], SMORuleOperation.NONE),
     ],
@@ -1206,7 +1253,8 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE),
     ],
     SMOLocationData.hidden_corridor_under_the_floor: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.pokio], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.pokio], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
     ],
     SMOLocationData.poking_your_nose_in_the_plaster_wall: [
         (SMORuleCondition.CAPTURE, [SMOItemData.pokio], SMORuleOperation.NONE),
@@ -1420,7 +1468,10 @@ regional_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.OR),
         (SMORuleCondition.TRICK_EASY, [SMORuleCondition.CAPTURE], SMORuleOperation.NONE),
     ],
-    SMOLocationData.cap_kingdom_regional_coin_group_3: [],
+    SMOLocationData.cap_kingdom_regional_coin_group_3: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMORuleCondition.CAPTURE], SMORuleOperation.NONE),
+    ],
     SMOLocationData.cap_kingdom_regional_coin_group_4: [],
     SMOLocationData.cap_kingdom_regional_coin_group_5: [],
     SMOLocationData.cap_kingdom_regional_coin_group_6: [],
@@ -1439,6 +1490,8 @@ regional_rule_data : dict[str, list] = {
     #endregion
 
     #region Sand
+    # 6 and 7 require Jaxi
+
 
     #endregion
 
@@ -1479,6 +1532,13 @@ regional_rule_data : dict[str, list] = {
     #endregion
 
     #region Moon
+    # capture parade 1 near chargin chuck
+    # group 2 on top of pillar
+    # group 3 under bridge/catwalk
+    # group 4 at end of floating platform
+    # group 5 near moeeye
+    # group 6 next to banzai launcher
+
 
     #endregion
 
