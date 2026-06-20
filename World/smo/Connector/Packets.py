@@ -34,6 +34,14 @@ class ConnectionType(Enum):
     Reconnect = 1
 
 class ItemType(Enum):
+    ShopMoonScout = -10
+    MoonRockScout = -9
+    StickerScout = -8
+    SouvenirScout = -7
+    CapScout = -6
+    ClothesScout = -5
+    LifeUpHeart = -4
+    LifeHeart = -3
     Coins = -2
     Moon = -1
     Clothes = 0
@@ -42,6 +50,9 @@ class ItemType(Enum):
     Sticker = 3
     RegionalCoin = 4
     Capture = 5
+    MoonRock = 6
+    HealthUpgrade = 7
+    WalletUpgrade = 8
 
 class MessageType(Enum):
     Chat = 0
@@ -212,76 +223,66 @@ class ChatMessagePacket:
 
 
 class SlotDataPacket:
-    cascade : ushort
-    sand : ushort
-    wooded : ushort
-    lake : ushort
-    lost : ushort
-    metro : ushort
-    seaside : ushort
-    snow : ushort
-    luncheon : ushort
-    ruined : ushort
-    bowser : ushort
-    dark : ushort
-    darker : ushort
+    cascade : int
+    sand : int
+    wooded : int
+    lake : int
+    lost : int
+    metro : int
+    seaside : int
+    snow : int
+    luncheon : int
+    ruined : int
+    bowser : int
+    dark : int
+    darker : int
+    goal : int
     regionals : bool
     captures : bool
     entrance_randomization : bool
-    SIZE : short = 29
+    SIZE : short = 30
 
     def __init__(self, packet_bytes : bytearray = None, cascade : int = None, sand : int = None, wooded : int = None,
                  lake : int = None, lost : int = None, metro : int = None, seaside : int = None, snow : int = None,
                  luncheon : int = None, ruined : int = None, bowser : int = None, dark : int = None, darker : int = None,
-                 regionals : bool = None, captures : bool = None, entrance_randomization : bool = None):
+                 goal: int = None, regionals : bool = None, captures : bool = None, entrance_randomization : bool = None):
         if packet_bytes:
             self.deserialize(packet_bytes)
         else:
-            self.cascade = short(cascade)
-            self.sand = short(sand)
-            self.wooded = short(wooded)
-            self.lake = short(lake)
-            self.lost = short(lost)
-            self.metro = short(metro)
-            self.seaside = short(seaside)
-            self.snow = short(snow)
-            self.luncheon = short(luncheon)
-            self.ruined = short(ruined)
-            self.bowser = short(bowser)
-            self.dark = short(dark)
-            self.darker = short(darker)
+            self.cascade = cascade
+            self.sand = sand
+            self.wooded = wooded
+            self.lake = lake
+            self.lost = lost
+            self.metro = metro
+            self.seaside = seaside
+            self.snow = snow
+            self.luncheon = luncheon
+            self.ruined = ruined
+            self.bowser = bowser
+            self.dark = dark
+            self.darker = darker
+            self.goal = goal
             self.regionals = regionals
             self.captures = captures
             self.entrance_randomization = entrance_randomization
 
     def serialize(self) -> bytearray:
         data : bytearray = bytearray()
-        int_value : int = self.cascade.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.sand.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.wooded.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.lake.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.lost.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.metro.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.seaside.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.snow.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.luncheon.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.ruined.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.bowser.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.dark.value
-        data += int_value.to_bytes(2, "little")
-        int_value = self.darker.value
-        data += int_value.to_bytes(2, "little")
+        data += self.cascade.to_bytes(2, "little")
+        data += self.sand.to_bytes(2, "little")
+        data += self.wooded.to_bytes(2, "little")
+        data += self.lake.to_bytes(2, "little")
+        data += self.lost.to_bytes(2, "little")
+        data += self.metro.to_bytes(2, "little")
+        data += self.seaside.to_bytes(2, "little")
+        data += self.snow.to_bytes(2, "little")
+        data += self.luncheon.to_bytes(2, "little")
+        data += self.ruined.to_bytes(2, "little")
+        data += self.bowser.to_bytes(2, "little")
+        data += self.dark.to_bytes(2, "little")
+        data += self.darker.to_bytes(2, "little")
+        data += self.goal.to_bytes(1, "little")
         data += self.regionals.to_bytes(1, "little")
         data += self.captures.to_bytes(1, "little")
         data += self.entrance_randomization.to_bytes(1, "little")
@@ -293,32 +294,34 @@ class SlotDataPacket:
         if data is bytes:
             data = bytearray(data)
         offset = 0
-        self.cascade = ushort(int.from_bytes(data[offset:2], "little"))
+        self.cascade = int.from_bytes(data[offset:2], "little")
         offset += 2
-        self.sand = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.sand = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.wooded = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.wooded = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.lake = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.lake = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.lost = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.lost = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.metro = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.metro = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.seaside = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.seaside = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.snow = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.snow = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.luncheon = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.luncheon = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.ruined = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.ruined = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.bowser = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.bowser = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.dark = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.dark = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
-        self.darker = ushort(int.from_bytes(data[offset:offset + 2], "little"))
+        self.darker = int.from_bytes(data[offset:offset + 2], "little")
         offset += 2
+        self.goal = int.from_bytes(data[offset:offset + 1], "little")
+        offset += 1
         self.regionals = bool.from_bytes(data[offset:offset + 1], "little")
         offset += 1
         self.captures = bool.from_bytes(data[offset:offset + 1], "little")
@@ -487,7 +490,7 @@ class ShineReplace:
 
         for i in range(100):
             if i < len(self.info):
-                data += self.info[str(i)][0].to_bytes(1,"little", signed=True)
+                data += self.info[str(i)][0].to_bytes(1,"little", signed=False)
                 data += self.info[str(i)][1].to_bytes(1,"little", signed=False)
 
             else:
@@ -702,9 +705,16 @@ class PacketHeader:
         offset = 0
         self.guid = data[offset:self.GUID_SIZE]
         offset += self.GUID_SIZE
-        self.packet_type = PacketType(int.from_bytes(data[offset:offset + 2], "little"))
+        packet_type = int.from_bytes(data[offset:offset + 2], "little")
+
         offset += 2
         self.packet_size = short(int.from_bytes(data[offset:offset + 2], "little"))
+
+        if packet_type <= PacketType.ArchipelagoConnect.value:
+            self.packet_type = PacketType(packet_type)
+        else:
+            self.packet_type = PacketType(0)
+
 
 class Packet:
     header : PacketHeader
@@ -727,8 +737,8 @@ class Packet:
                     self.packet = SlotDataPacket(cascade=packet_data[0], sand=packet_data[1], wooded=packet_data[2],
                         lake=packet_data[3], lost =packet_data[4], metro=packet_data[5], seaside=packet_data[6],
                         snow=packet_data[7], luncheon=packet_data[8], ruined=packet_data[9], bowser=packet_data[10],
-                        dark=packet_data[11], darker=packet_data[12], regionals=packet_data[13], captures=packet_data[14],
-                                                 entrance_randomization=packet_data[15])
+                        dark=packet_data[11], darker=packet_data[12], goal=packet_data[13], regionals=packet_data[14], captures=packet_data[15],
+                                                 entrance_randomization=packet_data[16])
                 case PacketType.ArchipelagoChat:
                     self.packet = ChatMessagePacket(guid=packet_data[0], message_type=packet_data[1], message=packet_data[2])
                 case PacketType.Check:
