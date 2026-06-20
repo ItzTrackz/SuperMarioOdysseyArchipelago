@@ -1341,6 +1341,19 @@ inverse_regional_coin_items = {
     49: SMOItemData.bowsers_kingdom_regional_coin,
     50: SMOItemData.moon_kingdom_regional_coin,
     51: SMOItemData.mushroom_kingdom_regional_coin,
+    52: SMOItemData.cap_kingdom_regional_coin,
+    53: SMOItemData.cascade_kingdom_regional_coin,
+    54: SMOItemData.sand_kingdom_regional_coin,
+    55: SMOItemData.wooded_kingdom_regional_coin,
+    56: SMOItemData.lake_kingdom_regional_coin,
+    57: SMOItemData.lost_kingdom_regional_coin,
+    58: SMOItemData.metro_kingdom_regional_coin,
+    59: SMOItemData.seaside_kingdom_regional_coin,
+    60: SMOItemData.snow_kingdom_regional_coin,
+    61: SMOItemData.luncheon_kingdom_regional_coin,
+    62: SMOItemData.bowsers_kingdom_regional_coin,
+    63: SMOItemData.moon_kingdom_regional_coin,
+    64: SMOItemData.mushroom_kingdom_regional_coin,
 }
 
 inverse_capture_items = {
