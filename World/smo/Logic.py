@@ -65,6 +65,8 @@ def count_regionals(state: CollectionState, kingdom: str, player: int) -> int:
                   regional_sub_area_to_kingdom[kingdom.lower()]) if kingdom.lower() in regional_sub_area_to_kingdom else []
 
         for stage in stages:
+            if " Regional" in stage:
+                stage = stage[0:stage.index(" Regional")]
             internal_stage = SMOEntranceData.display_name_to_internal_name[stage]
             for group in regional_coin_groups[internal_stage]:
                 if num_groups > 0:
