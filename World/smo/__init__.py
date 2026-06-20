@@ -14,7 +14,8 @@ from .Items import item_table, SMOItem, filler_item_table, outfits, shop_items, 
     location_hint_list, regional_coin_types
 from .Locations import locations_table, SMOLocation, locations_list, post_game_locations_list, \
     special_locations_table, full_moon_locations_list, story_moons, multi_moons, goals_table, regional_coin_table, \
-    regional_coin_groups, regional_coins, regional_coin_groups_table, regional_sub_area_to_kingdom, shop_location_costs
+    regional_coin_groups, regional_coins, regional_coin_groups_table, regional_sub_area_to_kingdom, shop_location_costs, \
+    coin_shop_locations_table, regional_shop_locations_table, TextDataOffset
 from .Regions import create_regions
 from .Entrances import display_name_to_internal_name, display_name_alias, stage_id_to_name, SMORandomizationGroup, \
     internal_name_to_entrance, stage_names, stage_ids, get_entrance_pair, get_stage_ids, SMOEntrance, \
@@ -233,14 +234,22 @@ class SMOWorld(World):
             0,
             0
         ]
-
+        # list of item names for shine locations by hint list index
         self.shine_items: dict[int, list[str]] = {}
+        # list of slot names for shine locations by hint list index
+        self.shine_slots: dict[int, list[str]] = {}
+        # look up data to replace shine names in game
         self.shine_replace_data = {}
+        # shine id to color change
         self.shine_colors: dict[int, int] = {}
         self.color_list: list[int] = []
+        self.shine_games: list[str] = []
         self.shop_games: list[str] = []
         self.shop_players: list[str] = []
         self.shop_ap_items: list[str] = []
+        self.regional_shop_games: list[str] = []
+        self.regional_shop_players: list[str] = []
+        self.regional_shop_ap_items: list[str] = []
         self.shop_replace_data = {}
         self.coin_values = {}
         self.world_exits: list[tuple[str, dict]] = []
@@ -1044,34 +1053,7 @@ class SMOWorld(World):
         #     for location in sphere:
         #         if
 
-
-        for world_id in range(len(location_hint_list)):
-            self.shine_replace_data[world_id] = {}
-            self.shine_items[world_id] = []
-
-        for location in self.multiworld.get_locations(self.player):
-            for world_id in range(len(location_hint_list)):
-                if self.location_name_to_id[location.name] in location_hint_list[world_id]:
-                    fixed_item_name = f"{self.multiworld.get_player_name(location.item.player)}'s {location.item.name.replace('_', ' ')}"
-                    if not fixed_item_name in self.shine_items[world_id]:
-                        self.shine_items[world_id].append(fixed_item_name)
-
-        # Sort shine item lists
-        for world_id in range(len(location_hint_list)):
-            self.shine_items[world_id] = sorted(self.shine_items[world_id])
-
-        for world_id in range(len(location_hint_list)):
-            for hint_id in range(len(location_hint_list[world_id])):
-                for key in list(location_hint_list[world_id].keys()):
-                    if location_hint_list[world_id][key] == hint_id:
-                        loc_name = self.location_id_to_name[key]
-                        if loc_name in self.multiworld.regions.location_cache[self.player]:
-                            location = self.multiworld.get_location(loc_name, self.player)
-                            name_index : int = self.shine_items[world_id].index(f"{self.multiworld.get_player_name(location.item.player)}'s {location.item.name.replace('_', ' ')}")
-                            self.shine_replace_data[world_id][hint_id] = [-1, name_index]
-                        else:
-                            self.shine_replace_data[world_id][hint_id] = [-1, 255]
-
+        # Color handling
         match self.options.colors.value:
             case self.options.colors.option_off:
                 self.color_list = [0, 0, 5, 2, 7, 0, 0, 1, 8, 4, 6, 0, 3, 9, 64, 9, 9, 27]
@@ -1155,44 +1137,178 @@ class SMOWorld(World):
         self.shop_games = []
         self.shop_players = []
         self.shop_ap_items = []
+        self.regional_shop_games = []
+        self.regional_shop_players = []
+        self.regional_shop_ap_items = []
+        self.shine_games = []
+        self.shine_slots[-1] = []
+        self.shine_items[-1] = []
         for location in self.multiworld.get_locations(self.player):
-            if location.name in shop_items or location.name in outfits or "Shopping" in location.name:
-                if not self.multiworld.get_player_name(location.item.player) in self.shop_players:
-                    self.shop_players.append(self.multiworld.get_player_name(location.item.player))
-                if not location.item.name in self.shop_ap_items:
-                    self.shop_ap_items.append(location.item.name.replace("_", " "))
-                if not location.item.game in self.shop_games:
-                    self.shop_games.append(location.item.game.replace("_", " "))
+            is_coin_item = location.name in coin_shop_locations_table
+            is_regional_item = location.name in regional_shop_locations_table
+            is_moon_item = "Shopping" in location.name
+            if is_coin_item or is_regional_item or is_moon_item:
+                game = location.item.game.replace("_", " ")
+                player_name = self.multiworld.get_player_name(location.item.player)
+                item_name = location.item.name.replace("_", " ")
+                if is_coin_item:
+                    if not player_name in self.shop_players:
+                        self.shop_players.append(player_name)
+                    if not item_name in self.shop_ap_items:
+                        self.shop_ap_items.append(item_name)
+                    if not game in self.shop_games:
+                        self.shop_games.append(game)
+                if is_regional_item and not is_moon_item:
+                    if not player_name  in self.regional_shop_players and not player_name in self.shop_players:
+                        self.regional_shop_players.append(player_name)
+                    if not item_name in self.regional_shop_ap_items and not item_name in self.shop_ap_items:
+                        self.regional_shop_ap_items.append(item_name)
+                    if not game in self.regional_shop_games and not game in self.shop_games:
+                        self.regional_shop_games.append(game)
+                if is_moon_item:
+                    if not player_name in self.shine_slots[-1] and not player_name in self.shop_players:
+                        self.shine_slots[-1].append(player_name)
+                    if not item_name in self.shine_items[-1] and not location.item.name in self.shop_ap_items:
+                        self.shine_items[-1].append(item_name)
+                    if not game in self.shine_games and not game in self.shop_games:
+                        self.shine_games.append(game)
+
+        # Fill extra common slot names
+        for i in range(1, self.multiworld.players):
+            player_name = self.multiworld.get_player_name(i)
+            if player_name not in self.shop_players:
+                self.shop_players.append(player_name)
+                if not len(self.shop_players) < 37:
+                    break
+
         self.shop_games = sorted(self.shop_games)
         self.shop_players = sorted(self.shop_players)
         self.shop_ap_items = sorted(self.shop_ap_items)
+        self.regional_shop_games = sorted(self.regional_shop_games)
+        self.regional_shop_players = sorted(self.regional_shop_players)
+        self.regional_shop_ap_items = sorted(self.regional_shop_ap_items)
+        self.shine_games = sorted(self.regional_shop_ap_items)
+        self.shine_slots[-1] = sorted(self.shine_slots[-1])
+        self.shine_items[-1] = sorted(self.shine_items[-1])
+
+        # add common list lookup
+        for world_id in range(len(location_hint_list)):
+            self.shine_replace_data[world_id] = {}
+            self.shine_items[world_id] = []
+            self.shine_slots[world_id] = []
+
+        for location in self.multiworld.get_locations(self.player):
+            for world_id in range(len(location_hint_list)):
+                if self.location_name_to_id[location.name] in location_hint_list[world_id]:
+                    item_name = location.item.name.replace('_', ' ')
+                    slot_name = self.multiworld.get_player_name(location.item.player)
+                    if not item_name in self.shine_items[world_id] and not item_name in self.shop_ap_items:
+                        self.shine_items[world_id].append(item_name)
+                    if not slot_name in self.shine_slots[world_id] and not slot_name in self.shop_players:
+                        self.shine_slots[world_id].append(slot_name)
+
+        # Sort shine item and slot lists
+        for world_id in range(len(location_hint_list)):
+            self.shine_items[world_id] = sorted(self.shine_items[world_id])
+            self.shine_slots[world_id] = sorted(self.shine_slots[world_id])
+
+        for world_id in range(len(location_hint_list)):
+            for hint_id in range(len(location_hint_list[world_id])):
+                for key in list(location_hint_list[world_id].keys()):
+                    if location_hint_list[world_id][key] == hint_id:
+                        loc_name = self.location_id_to_name[key]
+                        if loc_name in self.multiworld.regions.location_cache[self.player]:
+                            location = self.multiworld.get_location(loc_name, self.player)
+                            slot_name = self.multiworld.get_player_name(location.item.player)
+                            item_name = location.item.name.replace('_', ' ')
+                            slot_index: int = (self.shine_slots[world_id].index(slot_name)
+                                               + TextDataOffset.Moons) if slot_name not in self.shop_players\
+                                else self.shop_players.index(slot_name)
+                            name_index: int = (self.shine_items[world_id].index(item_name)
+                                               + TextDataOffset.Moons) if item_name not in self.shop_ap_items\
+                                else self.shop_ap_items.index(item_name)
+                            self.shine_replace_data[world_id][hint_id] = [slot_index, name_index]
+                        else:
+                            self.shine_replace_data[world_id][hint_id] = [255, 255]
+
+
         for location in self.multiworld.get_locations(self.player):
                 if self.location_name_to_id[location.name] < 2582 :
                     if "Shopping" in location.name:
-                        self.shop_replace_data["moons"][self.location_name_to_id[location.name]] = [self.shop_games.index(location.item.game.replace("_", " ")),
-                        self.shop_players.index(self.multiworld.get_player_name(location.item.player)),
-                        self.shop_ap_items.index(location.item.name.replace("_", " ")), location.item.classification.value]
+                        game = location.item.game.replace("_", " ")
+                        slot_name = self.multiworld.get_player_name(location.item.player)
+                        item = location.item.name.replace("_", " ")
+                        game_index = self.shop_games.index(
+                            game) if game in self.shop_games else (self.shine_games.index(
+                            game) + TextDataOffset.Shop_Moon)
+                        player_index = self.shop_players.index(
+                            slot_name) if slot_name in self.shop_players else (self.shine_slots[-1].index(
+                            slot_name) + TextDataOffset.Shop_Moon)
+                        item_index = self.shop_ap_items.index(
+                            item) if item in self.shop_ap_items else (self.shine_items[-1].index(
+                            item) + TextDataOffset.Shop_Moon)
+
+                        self.shop_replace_data["moons"][self.location_name_to_id[location.name]] = [game_index,
+                        player_index, item_index, location.item.classification.value]
                     else:
-                        if 2539 > self.location_name_to_id[location.name] > 2500 or 2582 > self.location_name_to_id[location.name] > 2576:
-                            self.shop_replace_data["caps"][self.location_name_to_id[location.name]] = [self.shop_games.index(location.item.game.replace("_", " ")),
-                            self.shop_players.index(self.multiworld.get_player_name(location.item.player)),
-                            self.shop_ap_items.index( location.item.name.replace("_", " ")), location.item.classification.value]
-                        if self.location_name_to_id[location.name] > 2538:
-                            self.shop_replace_data["clothes"][self.location_name_to_id[location.name]] = [self.shop_games.index(location.item.game.replace("_", " ")),
-                            self.shop_players.index(self.multiworld.get_player_name(location.item.player)),
-                            self.shop_ap_items.index(location.item.name.replace("_", " ")), location.item.classification.value]
+                        if (2539 > self.location_name_to_id[location.name] > 2500 or 2582 > self.location_name_to_id[location.name] > 2576)  and (location.name in coin_shop_locations_table or location.name in regional_shop_locations_table):
+                            game = location.item.game.replace("_", " ")
+                            slot_name = self.multiworld.get_player_name(location.item.player)
+                            item = location.item.name.replace("_", " ")
+                            game_index = self.shop_games.index(game) if game in self.shop_games else (self.regional_shop_games.index(game) + TextDataOffset.Regional)
+                            player_index = self.shop_players.index(slot_name) if slot_name in self.shop_players else (self.regional_shop_players.index(slot_name) + TextDataOffset.Regional)
+                            item_index = self.shop_ap_items.index(item) if item in self.shop_ap_items else (self.regional_shop_ap_items.index(item) + TextDataOffset.Regional)
+                            self.shop_replace_data["caps"][self.location_name_to_id[location.name]] = [game_index,
+                            player_index,
+                            item_index, location.item.classification.value]
+                        if self.location_name_to_id[location.name] > 2538 and (location.name in coin_shop_locations_table or location.name in regional_shop_locations_table):
+                            game = location.item.game.replace("_", " ")
+                            slot_name = self.multiworld.get_player_name(location.item.player)
+                            item = location.item.name.replace("_", " ")
+                            game_index = self.shop_games.index(
+                                game) if game in self.shop_games else (self.regional_shop_games.index(
+                                game) + TextDataOffset.Regional)
+                            player_index = self.shop_players.index(
+                                slot_name) if slot_name in self.shop_players else (self.regional_shop_players.index(
+                                slot_name) + TextDataOffset.Regional)
+                            item_index = self.shop_ap_items.index(
+                                item) if item in self.shop_ap_items else (self.regional_shop_ap_items.index(
+                                item) + TextDataOffset.Regional)
+                            self.shop_replace_data["clothes"][self.location_name_to_id[location.name]] = [game_index, player_index,
+                                                                                                          item_index, location.item.classification.value]
                 if location.name in stickers:
-                    self.shop_replace_data["stickers"][self.location_name_to_id[location.name]] = [self.shop_games.index(location.item.game.replace("_", " ")),
-                    self.shop_players.index(self.multiworld.get_player_name(location.item.player)),
-                    self.shop_ap_items.index(location.item.name.replace("_", " ")), location.item.classification.value]
+                    game = location.item.game.replace("_", " ")
+                    slot_name = self.multiworld.get_player_name(location.item.player)
+                    item = location.item.name.replace("_", " ")
+                    game_index = self.shop_games.index(
+                        game) if game in self.shop_games else (self.regional_shop_games.index(game) + TextDataOffset.Regional)
+                    player_index = self.shop_players.index(slot_name) if slot_name in self.shop_players else (self.regional_shop_players.index(slot_name) + TextDataOffset.Regional)
+                    item_index = self.shop_ap_items.index(
+                        item) if item in self.shop_ap_items else (self.regional_shop_ap_items.index(item) + TextDataOffset.Regional)
+                    self.shop_replace_data["stickers"][self.location_name_to_id[location.name]] = [game_index,
+                    player_index,
+                    item_index, location.item.classification.value]
                 if location.name in souvenirs:
-                    self.shop_replace_data["souvenirs"][self.location_name_to_id[location.name]] = [self.shop_games.index(location.item.game.replace("_", " ")),
-                    self.shop_players.index(self.multiworld.get_player_name(location.item.player)),
-                    self.shop_ap_items.index(location.item.name.replace("_", " ")), location.item.classification.value]
+                    game = location.item.game.replace("_", " ")
+                    slot_name = self.multiworld.get_player_name(location.item.player)
+                    item = location.item.name.replace("_", " ")
+                    game_index = self.shop_games.index(
+                        game) if game in self.shop_games else (
+                                self.regional_shop_games.index(game) + TextDataOffset.Regional)
+                    player_index = self.shop_players.index(slot_name) if slot_name in self.shop_players else (
+                                self.regional_shop_players.index(slot_name) + TextDataOffset.Regional)
+                    item_index = self.shop_ap_items.index(
+                        item) if item in self.shop_ap_items else (
+                                self.regional_shop_ap_items.index(item) + TextDataOffset.Regional)
+
+                    self.shop_replace_data["souvenirs"][self.location_name_to_id[location.name]] = [game_index,
+                                        player_index,
+                                        item_index, location.item.classification.value]
 
         return {**(self.options.as_dict("goal", "colors", "regional_coins", "capture_sanity", "entrance_randomization", "death_link")), "counts" : self.moon_counts,
-                "shine_items" : self.shine_items, "shine_replace_data" : self.shine_replace_data, "shine_colors" : self.shine_colors,
+                "shine_games": self.shine_games ,"shine_slots" : self.shine_slots, "shine_items" : self.shine_items, "shine_replace_data" : self.shine_replace_data, "shine_colors" : self.shine_colors,
                 "shop_games" : self.shop_games, "shop_players" : self.shop_players, "shop_ap_items" : self.shop_ap_items,
+                "regional_shop_games" : self.regional_shop_games, "regional_shop_players" : self.regional_shop_players, "regional_shop_ap_items" : self.regional_shop_ap_items,
                 "shop_replace_data" : self.shop_replace_data, "coin_values" : self.coin_values,
                 "entrances" : self.entrance_data}
 
