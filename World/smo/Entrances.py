@@ -884,7 +884,7 @@ internal_name_to_entrance = {
     },
     "SandWorldSphinxExStage": {
         "exit": "run00return",
-        "entrance": "aaa",
+        "entrance": "aaaSand",
         "entrance2": "run00",
     },
     "SeaWorldUtsuboCaveStage": {
@@ -1465,8 +1465,8 @@ internal_name_to_entrance = {
             'secret': 'fff',
         },
         'MoonWorldCaptureParadeStage': {
-            'exit':'bbb',
-            'entrance': 'vvv',
+            'exit':'vvv',
+            'entrance': 'bbb',
         },
         'MoonWorldSphinxRoom': 'ggg',
         'MoonWorldShopRoom': 'ddd',
@@ -1933,6 +1933,7 @@ stage_ids = [
     'Fukuwarai2',
     'CostumeEventWorldPeach',
     'SeaWorldEX2Return',
+    'aaaSand',
 ]
 
 def create_entrances(self):
