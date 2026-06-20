@@ -326,6 +326,7 @@ class SMOEntranceData:
         ice_trace_walking: "IceWalkerExStage",
         shiveria: "SnowWorldTownStage",
         snowline_circuit_lobby: "SnowWorldLobby000Stage",
+        "Snowline": "SnowWorldLobby000Stage",
         "Snowline Circuit: Class S Lobby": "SnowWorldLobby001Stage",
         "Snowline Circuit: Class A": "SnowWorldRace000Stage",
         "Snowline Circuit: Class S": "SnowWorldRace001Stage",
