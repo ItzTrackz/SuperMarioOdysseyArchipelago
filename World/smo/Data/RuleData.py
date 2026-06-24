@@ -1480,9 +1480,16 @@ regional_rule_data : dict[str, list] = {
     SMOLocationData.cap_kingdom_regional_coin_group_9: [],
     SMOLocationData.top_hat_tower_regional_coin_group_1: [],
     SMOLocationData.top_hat_tower_regional_coin_group_2: [],
-    SMOLocationData.frog_pond_regional_coin_group_1: [],
-    SMOLocationData.pushblocks_regional_coin_group_1: [],
-    SMOLocationData.poison_tides_regional_coin_group_1: [],
+    SMOLocationData.frog_pond_regional_coin_group_1: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMORuleCondition.CAPTURE], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.pushblocks_regional_coin_group_1: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.spark_pylon], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.poison_tides_regional_coin_group_1: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
+    ],
     #endregion
 
     #region Cascade
