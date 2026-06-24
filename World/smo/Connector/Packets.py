@@ -54,6 +54,27 @@ class ItemType(Enum):
     HealthUpgrade = 7
     WalletUpgrade = 8
 
+class CappyMessageType(Enum):
+    Connect = 0
+    Moon = 1
+    MultiMoon = 2
+    RegionalCoin = 3
+    Cap = 4
+    Clothes = 5
+    Sticker = 6
+    Souvenir = 7
+    Capture = 8
+    MoonRock = 9
+    HealthUpgrade = 10
+    WalletUpgrade = 11
+    Coins = 12
+
+class ApInfoType(Enum):
+    Games = 0
+    Players = 1
+    Items = 2
+
+
 class MessageType(Enum):
     Chat = 0
     System = 1
@@ -62,8 +83,9 @@ class MessageType(Enum):
 #region Check Packets
 
 class CheckPacket:
-    OBJ_ID_SIZE = 0x80
+    OBJ_ID_SIZE = 0x40
     STAGE_NAME_SIZE = 0x30
+    SENDER_NAME_SIZE = 0x40
     location_id : int
     # Shop Items
     item_type : ItemType
@@ -75,9 +97,12 @@ class CheckPacket:
     stage : str
     # Coins
     amount : int
-    SIZE : short = 16 + OBJ_ID_SIZE + STAGE_NAME_SIZE
+    sender_name : str
 
-    def __init__(self, packet_bytes : bytearray = None, location_id : int = None, item_type : int = None, index : int = None, obj_id : str = None, stage : str = None, amount : int = None):
+
+    SIZE : short = 16 + OBJ_ID_SIZE + STAGE_NAME_SIZE + SENDER_NAME_SIZE
+
+    def __init__(self, packet_bytes : bytearray = None, location_id : int = None, item_type : int = None, index : int = None, obj_id : str = None, stage : str = None, amount : int = None, sender_name : str = None):
         if packet_bytes:
             self.deserialize(packet_bytes)
         else:
@@ -87,6 +112,7 @@ class CheckPacket:
             self.obj_id = obj_id
             self.stage = stage
             self.amount = amount
+            self.sender_name = sender_name
 
     def serialize(self) -> bytearray:
         data : bytearray = bytearray()
@@ -100,6 +126,9 @@ class CheckPacket:
         while len(data) < 12 + self.OBJ_ID_SIZE + self.STAGE_NAME_SIZE:
             data += b"\x00"
         data += self.amount.to_bytes(4, "little", signed=True)
+        data += self.sender_name.encode()
+        while len(data) < 16 + self.OBJ_ID_SIZE + self.STAGE_NAME_SIZE + self.SENDER_NAME_SIZE:
+            data += b"\x00"
         if len(data) != self.SIZE:
             raise f"CheckPacket failed to serialize. bytearray is incorrect size {self.SIZE}."
         return data
@@ -120,6 +149,8 @@ class CheckPacket:
         offset += self.STAGE_NAME_SIZE
         self.amount  = int.from_bytes(data[offset:offset + 4], "little")
         offset += 4
+        self.sender_name = data[offset:offset + self.SENDER_NAME_SIZE].decode()
+        offset += self.SENDER_NAME_SIZE
         count = 0
         for char in self.obj_id:
             count += 1 if char != '\0' else 0
@@ -128,7 +159,10 @@ class CheckPacket:
         for char in self.stage:
             count += 1 if char != '\0' else 0
         self.stage = self.stage[0:count]
-
+        count = 0
+        for char in self.sender_name:
+            count += 1 if char != '\0' else 0
+        self.sender_name = self.sender_name[0:count]
 
 class SentChecksPacket:
     check_type: ItemType
@@ -742,7 +776,7 @@ class Packet:
                 case PacketType.ArchipelagoChat:
                     self.packet = ChatMessagePacket(guid=packet_data[0], message_type=packet_data[1], message=packet_data[2])
                 case PacketType.Check:
-                    self.packet = CheckPacket(location_id=packet_data[0], item_type=packet_data[1], index=packet_data[2], obj_id=packet_data[3], stage=packet_data[4], amount=packet_data[5])
+                    self.packet = CheckPacket(location_id=packet_data[0], item_type=packet_data[1], index=packet_data[2], obj_id=packet_data[3], stage=packet_data[4], amount=packet_data[5], sender_name=packet_data[6])
                 case PacketType.DeathLink:
                     self.packet = DeathLinkPacket()
                 case PacketType.SentChecks:
