@@ -1,6 +1,8 @@
+from .Packets import ItemType
 from ..Options import Goal
 from ..Data.ItemData import SMOItemData
 from ..Locations import regional_coins
+# from .Player import SMOPlayer
 
 class ShopReplaceText:
     game_index : int = -1
@@ -2584,6 +2586,64 @@ def get_item_type(item : int) -> int:
 
     # ADD Moon Rock and Useful
 
+def get_in_game_id(player: "SMOPlayer", item_type: ItemType, item_id : int) -> int:
+    in_game_id = -1
+    match item_type:
+        case ItemType.Moon:
+            in_game_id = player.get_next_moon(item_id)
+
+        case ItemType.RegionalCoin:
+            in_game_id = item_id
+
+        case ItemType.Capture:
+            in_game_id = item_id - 4025
+
+        case ItemType.Clothes:
+            in_game_id = item_id - 2538
+
+        case ItemType.Cap:
+            in_game_id = (item_id - 2500) if item_id < 2539 else (item_id - 2538)
+
+        case ItemType.Souvenir:
+            in_game_id = item_id - 2599
+
+        case ItemType.Sticker:
+            in_game_id = item_id - 2582
+
+        case ItemType.Coins:
+            in_game_id = item_id
+
+    return in_game_id
+
+def get_location_id(item_type: ItemType, in_game_location: int):
+
+    if -8 <= item_type.value <= -5:
+        item_type = ItemType((item_type.value + 5) * -1)
+    location_id = -1
+    match item_type:
+        case ItemType.Moon:
+            location_id = in_game_location
+
+        case ItemType.RegionalCoin:
+            location_id = in_game_location
+
+        case ItemType.Capture:
+            location_id = in_game_location + 4025
+
+        case ItemType.Clothes:
+            location_id = in_game_location + 2538
+
+        case ItemType.Cap:
+            location_id = (in_game_location + 2500) if in_game_location < 39 else (
+                2538 + in_game_location)
+
+        case ItemType.Souvenir:
+            location_id = in_game_location + 2599
+
+        case ItemType.Sticker:
+            location_id = in_game_location + 2582
+
+    return location_id
 
 def get_regional_coin_location(stage_name: str, placement_id: str) -> int:
     """
