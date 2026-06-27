@@ -15,7 +15,7 @@ from .Items import item_table, SMOItem, filler_item_table, outfits, shop_items, 
 from .Locations import locations_table, SMOLocation, locations_list, post_game_locations_list, \
     special_locations_table, full_moon_locations_list, story_moons, multi_moons, goals_table, regional_coin_table, \
     regional_coin_groups, regional_coins, regional_coin_groups_table, regional_sub_area_to_kingdom, shop_location_costs, \
-    coin_shop_locations_table, regional_shop_locations_table, TextDataOffset
+    coin_shop_locations_table, regional_shop_locations_table, TextDataOffset, loc_Captures
 from .Regions import create_regions
 from .Entrances import display_name_to_internal_name, display_name_alias, stage_id_to_name, SMORandomizationGroup, \
     internal_name_to_entrance, stage_names, stage_ids, get_entrance_pair, get_stage_ids, SMOEntrance, \
@@ -243,7 +243,9 @@ class SMOWorld(World):
         # shine id to color change
         self.shine_colors: dict[int, int] = {}
         self.color_list: list[int] = []
+        # Shop Shine Game Name Replacements
         self.shine_games: list[str] = []
+        # Shop Item Game Name Replacements
         self.shop_games: list[str] = []
         self.shop_players: list[str] = []
         self.shop_ap_items: list[str] = []
@@ -251,7 +253,10 @@ class SMOWorld(World):
         self.regional_shop_players: list[str] = []
         self.regional_shop_ap_items: list[str] = []
         self.shop_replace_data = {}
+        # The value of a coin item by location
         self.coin_values = {}
+        # Dict of location_id -> (item_name, player_name) for non-local items
+        self.text_less_locations = {}
         self.world_exits: list[tuple[str, dict]] = []
         self.world_sub_area_exits = []
         self.non_dead_end_sub_areas = []
@@ -1143,10 +1148,14 @@ class SMOWorld(World):
         self.shine_games = []
         self.shine_slots[-1] = []
         self.shine_items[-1] = []
-        for location in self.multiworld.get_locations(self.player):
+        self.text_less_locations = {}
+        for location in self.get_locations():
             is_coin_item = location.name in coin_shop_locations_table
             is_regional_item = location.name in regional_shop_locations_table
             is_moon_item = "Shopping" in location.name
+            is_text_less = location.item.player != self.player and \
+                (location.name in regional_coin_table or location.name in regional_coin_groups_table or location.name in loc_Captures)
+
             if is_coin_item or is_regional_item or is_moon_item:
                 game = location.item.game.replace("_", " ")
                 player_name = self.multiworld.get_player_name(location.item.player)
@@ -1172,6 +1181,8 @@ class SMOWorld(World):
                         self.shine_items[-1].append(item_name)
                     if not game in self.shine_games and not game in self.shop_games:
                         self.shine_games.append(game)
+            if is_text_less:
+                self.text_less_locations[location.address] = (location.item.player, location.item.name)
 
         # Fill extra common slot names
         for i in range(1, self.multiworld.players):
@@ -1197,7 +1208,7 @@ class SMOWorld(World):
             self.shine_items[world_id] = []
             self.shine_slots[world_id] = []
 
-        for location in self.multiworld.get_locations(self.player):
+        for location in self.get_locations():
             for world_id in range(len(location_hint_list)):
                 if self.location_name_to_id[location.name] in location_hint_list[world_id]:
                     item_name = location.item.name.replace('_', ' ')
@@ -1232,7 +1243,7 @@ class SMOWorld(World):
                             self.shine_replace_data[world_id][hint_id] = [255, 255]
 
 
-        for location in self.multiworld.get_locations(self.player):
+        for location in self.get_locations():
                 if self.location_name_to_id[location.name] < 2582 :
                     if "Shopping" in location.name:
                         game = location.item.game.replace("_", " ")
@@ -1309,7 +1320,7 @@ class SMOWorld(World):
                 "shine_games": self.shine_games ,"shine_slots" : self.shine_slots, "shine_items" : self.shine_items, "shine_replace_data" : self.shine_replace_data, "shine_colors" : self.shine_colors,
                 "shop_games" : self.shop_games, "shop_players" : self.shop_players, "shop_ap_items" : self.shop_ap_items,
                 "regional_shop_games" : self.regional_shop_games, "regional_shop_players" : self.regional_shop_players, "regional_shop_ap_items" : self.regional_shop_ap_items,
-                "shop_replace_data" : self.shop_replace_data, "coin_values" : self.coin_values,
+                "shop_replace_data" : self.shop_replace_data, "coin_values" : self.coin_values, "text_less_locations": self.text_less_locations,
                 "entrances" : self.entrance_data}
 
 
