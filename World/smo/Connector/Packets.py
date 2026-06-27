@@ -34,6 +34,7 @@ class ConnectionType(Enum):
     Reconnect = 1
 
 class ItemType(Enum):
+    SentCheck = -11
     ShopMoonScout = -10
     MoonRockScout = -9
     StickerScout = -8
