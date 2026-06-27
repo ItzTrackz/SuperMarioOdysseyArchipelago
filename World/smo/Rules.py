@@ -40,6 +40,9 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
         match condition_type:
             case SMORuleCondition.CAPTURE:
                 return options.capture_sanity.value == options.capture_sanity.option_true
+
+            case SMORuleCondition.ABILITY:
+                return options.ability_sanity.value == options.ability_sanity.option_true
             #case SMORuleCondition.REGIONAL_COINS:
 
 
@@ -118,6 +121,17 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                         rules_list.append(lambda state : state.has_all(data, self.player))
 
             case SMORuleCondition.ITEM:
+                if isinstance(data, str):
+                    access_rule += f'state.has_all(["{data}"], {self.player})'
+                    all_access_rules.add(f'state.has_all(["{data}"], {self.player})')
+                    rules_list.append(lambda state: state.has_all([data], self.player))
+
+                else:
+                    access_rule += f'state.has_all({data}, {self.player})'
+                    all_access_rules.add(f'state.has_all({data}, {self.player})')
+                    rules_list.append(lambda state: state.has_all(data, self.player))
+
+            case SMORuleCondition.ABILITY:
                 if isinstance(data, str):
                     access_rule += f'state.has_all(["{data}"], {self.player})'
                     all_access_rules.add(f'state.has_all(["{data}"], {self.player})')
