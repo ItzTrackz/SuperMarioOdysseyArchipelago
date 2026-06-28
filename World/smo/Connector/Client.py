@@ -863,10 +863,12 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
                                 if location in ctx.slot_data["text_less_locations"]:
                                     receiver, item_name = ctx.slot_data["text_less_locations"][location]
                                     receiver_name = ctx.player_names[receiver]
-                                    packet = Packet(guid=ctx.proxy_guid, packet_type=PacketType.Check,
+                                    msg_packet = Packet(guid=ctx.proxy_guid, packet_type=PacketType.Check,
                                                     packet_data=[-1, ItemType.SentCheck, -1, item_name, "", 0,
                                                                  receiver_name])
-                                    ctx.proxy_msgs.append(packet)
+                                    ctx.proxy_msgs.append(msg_packet)
+                                else:
+                                    logger.info(f"Location {location} not in 'text_lass_locations'")
 
                             if location_id != -1:
                                 if ctx.slot_data["regional_coins"] == 1:
@@ -885,10 +887,12 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
                                 if location in ctx.slot_data["text_less_locations"]:
                                     receiver, item_name = ctx.slot_data["text_less_locations"][location]
                                     receiver_name = ctx.player_names[receiver]
-                                    packet = Packet(guid=ctx.proxy_guid, packet_type=PacketType.Check,
+                                    msg_packet = Packet(guid=ctx.proxy_guid, packet_type=PacketType.Check,
                                                     packet_data=[-1, ItemType.SentCheck, -1, item_name, "", 0,
                                                                  receiver_name])
-                                    ctx.proxy_msgs.append(packet)
+                                    ctx.proxy_msgs.append(msg_packet)
+                                else:
+                                    logger.info(f"Location {location} not in 'text_lass_locations'")
 
                             ctx.server_msgs.append({"cmd": "LocationChecks", "locations": [location_id]})
                         # Add Regional Coin
