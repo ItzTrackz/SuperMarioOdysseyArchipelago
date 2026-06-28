@@ -10,8 +10,8 @@ from .Data.ItemData import SMOItemData
 from .Data.RuleData import kingdom_name_to_id, SMOKingdoms
 from .Options import SMOOptions
 from .Items import item_table, SMOItem, filler_item_table, outfits, shop_items, \
-    moon_item_table, moon_types, world_list, stickers, souvenirs, capture_items, \
-    location_hint_list, regional_coin_types
+    moon_item_table, moon_types, stickers, souvenirs, capture_items, \
+    location_hint_list, regional_coin_types, difficulty_items, option_value_to_trick_item, option_value_to_glitch_item
 from .Locations import locations_table, SMOLocation, locations_list, post_game_locations_list, \
     special_locations_table, full_moon_locations_list, story_moons, multi_moons, goals_table, regional_coin_table, \
     regional_coin_groups, regional_coins, regional_coin_groups_table, regional_sub_area_to_kingdom, shop_location_costs, \
@@ -59,35 +59,35 @@ class SMOWorld(World):
     location_name_to_id = locations_table
     # Number of Power Moons required to leave each kingdom
     default_moon_counts = {
-        "cascade": 5,
-        "sand": 16,
-        "lake": 8,
-        "wooded": 16,
-        "lost": 10,
-        "metro": 20,
-        "snow": 10,
-        "seaside": 10,
-        "luncheon": 18,
-        "ruined": 3,
-        "bowser": 8,
-        "dark": 250,
-        "darker": 500
+        SMOKingdoms.CASCADE: 5,
+        SMOKingdoms.SAND: 16,
+        SMOKingdoms.LAKE: 8,
+        SMOKingdoms.WOODED: 16,
+        SMOKingdoms.LOST: 10,
+        SMOKingdoms.METRO: 20,
+        SMOKingdoms.SNOW: 10,
+        SMOKingdoms.SEASIDE: 10,
+        SMOKingdoms.LUNCHEON: 18,
+        SMOKingdoms.RUINED: 3,
+        SMOKingdoms.BOWSER: 8,
+        SMOKingdoms.DARK: 250,
+        SMOKingdoms.DARKER: 500
     }
 
     default_regional_counts = {
-        "cap": 50,
-        "cascade": 50,
-        "sand": 100,
-        "lake": 50,
-        "wooded": 100,
-        "lost": 50,
-        "metro": 100,
-        "snow": 50,
-        "seaside": 100,
-        "luncheon": 100,
-        "bowser": 100,
-        "moon": 50,
-        "mushroom": 100,
+        SMOKingdoms.CAP: 50,
+        SMOKingdoms.CASCADE: 50,
+        SMOKingdoms.SAND: 100,
+        SMOKingdoms.LAKE: 50,
+        SMOKingdoms.WOODED: 100,
+        SMOKingdoms.LOST: 50,
+        SMOKingdoms.METRO: 100,
+        SMOKingdoms.SNOW: 50,
+        SMOKingdoms.SEASIDE: 100,
+        SMOKingdoms.LUNCHEON: 100,
+        SMOKingdoms.BOWSER: 100,
+        SMOKingdoms.MOON: 50,
+        SMOKingdoms.MUSHROOM: 100,
     }
 
     # Number of Power Moons required to unlock post game outfits.
@@ -115,40 +115,40 @@ class SMOWorld(World):
 
     # Maximum number of Power Moons for any given kingdom's progression
     max_counts = {
-        "cascade": 19,
-        "sand": 65,
-        "lake": 28,
-        "wooded": 53,
-        "lost": 20,
-        "metro": 57,
-        "snow": 35,
-        "seaside": 51,
-        "luncheon": 53,
-        "ruined": 6,
-        "bowser": 40,
-        "mushroom": 43, # Needs recount
-        "dark": 375,
-        "darker": 750
+        SMOKingdoms.CASCADE: 19,
+        SMOKingdoms.SAND: 65,
+        SMOKingdoms.LAKE: 28,
+        SMOKingdoms.WOODED: 53,
+        SMOKingdoms.LOST: 20,
+        SMOKingdoms.METRO: 57,
+        SMOKingdoms.SNOW: 35,
+        SMOKingdoms.SEASIDE: 51,
+        SMOKingdoms.LUNCHEON: 53,
+        SMOKingdoms.RUINED: 6,
+        SMOKingdoms.BOWSER: 40,
+        SMOKingdoms.MUSHROOM: 43, # Needs recount
+        SMOKingdoms.DARK: 375,
+        SMOKingdoms.DARKER: 750
     }
     # Number of Power Moon checks in each kingdom
     max_checks = {
-        "cap": 31,
-        "cascade": 42,
-        "sand": 93,
-        "lake": 44,
-        "wooded": 80,
-        "cloud": 9,
-        "lost": 35,
-        "metro": 85,
-        "snow": 57,
-        "seaside": 73,
-        "luncheon": 72,
-        "ruined": 12,
-        "bowser": 64,
-        "moon": 38,
-        "mushroom": 55,
-        "dark": 26,
-        "darker": 3
+        SMOKingdoms.CAP: 31,
+        SMOKingdoms.CASCADE: 42,
+        SMOKingdoms.SAND: 93,
+        SMOKingdoms.LAKE: 44,
+        SMOKingdoms.WOODED: 80,
+        SMOKingdoms.CLOUD: 9,
+        SMOKingdoms.LOST: 35,
+        SMOKingdoms.METRO: 85,
+        SMOKingdoms.SNOW: 57,
+        SMOKingdoms.SEASIDE: 73,
+        SMOKingdoms.LUNCHEON: 72,
+        SMOKingdoms.RUINED: 12,
+        SMOKingdoms.BOWSER: 64,
+        SMOKingdoms.MOON: 38,
+        SMOKingdoms.MUSHROOM: 55,
+        SMOKingdoms.DARK: 26,
+        SMOKingdoms.DARKER: 3
     }
 
     # Items can be grouped using their names to allow easy checking if any item
@@ -178,20 +178,20 @@ class SMOWorld(World):
     def __init__(self, multiworld: "MultiWorld", player: int):
         # Number of Power Moons required to leave each kingdom
         self.moon_counts = {
-            "cascade": 5,
-            "sand": 16,
-            "lake": 8,
-            "wooded": 16,
-            "lost": 10,
-            "metro": 20,
-            "snow": 10,
-            "seaside": 10,
-            "luncheon": 18,
-            "ruined": 3,
-            "bowser": 8,
-            "mushroom": 0,
-            "dark": 250,
-            "darker": 500
+            SMOKingdoms.CASCADE: 5,
+            SMOKingdoms.SAND: 16,
+            SMOKingdoms.LAKE: 8,
+            SMOKingdoms.WOODED: 16,
+            SMOKingdoms.LOST: 10,
+            SMOKingdoms.METRO: 20,
+            SMOKingdoms.SNOW: 10,
+            SMOKingdoms.SEASIDE: 10,
+            SMOKingdoms.LUNCHEON: 18,
+            SMOKingdoms.RUINED: 3,
+            SMOKingdoms.BOWSER: 8,
+            SMOKingdoms.MUSHROOM: 0,
+            SMOKingdoms.DARK: 250,
+            SMOKingdoms.DARKER: 500
         }
         # Number of moons placed for each kingdom
         self.placement_counts = [
@@ -277,7 +277,7 @@ class SMOWorld(World):
         pass
         # self.multiworld.early_items[self.player]["Cascade Multi-Moon"] = 1
         # self.multiworld.early_items[self.player]["Cascade Story Moon"] = 1
-        # self.multiworld.early_items[self.player]["Cascade Power Moon"] = self.moon_counts["cascade"]-4
+        # self.multiworld.early_items[self.player]["Cascade Power Moon"] = self.moon_counts[SMOKingdoms.CASCADE]-4
         # if self.options.capture_sanity.value == self.options.capture_sanity.option_true:
         #     self.multiworld.early_items[self.player]["Broode's Chain Chomp"] = 1
         #     self.multiworld.early_items[self.player]["Chain Chomp"] = 1
@@ -300,7 +300,7 @@ class SMOWorld(World):
         if name in filler_item_table.keys():
             classification = ItemClassification.filler
         else:
-            if name == "Beat the Game" and self.options.goal == "moon":
+            if name == "Beat the Game" and self.options.goal == self.options.goal.option_moon:
                 classification = ItemClassification.progression_skip_balancing
             elif name in outfits:
                 if outfits.index(name) <= 33:
@@ -315,9 +315,10 @@ class SMOWorld(World):
                 else:
                     classification = ItemClassification.progression
             elif name in moon_types:
-                kingdom = name.split()[0].lower()
-                self.placement_counts[world_list.index(kingdom.capitalize())] += 1
-                if self.placement_counts[world_list.index(kingdom.capitalize())] <= self.moon_counts[kingdom]:
+                kingdom = name.replace(" Power Moon", "").replace(" Multi-Moon", "").replace(" Story Moon", "")
+                index = kingdom_name_to_id[kingdom]
+                self.placement_counts[index] += 1
+                if self.placement_counts[index] <= self.moon_counts[kingdom]:
                     classification = ItemClassification.progression
                 else:
                     classification = ItemClassification.useful
@@ -348,21 +349,21 @@ class SMOWorld(World):
 
         revised_counts = [
             0,
-            min(floor(self.moon_counts["cascade"] * self.options.extra_moons.value / 100.0),
-                self.max_counts["cascade"]),
-            min(floor(self.moon_counts["sand"] * self.options.extra_moons.value / 100.0), self.max_counts["sand"]),
-            min(floor(self.moon_counts["wooded"] * self.options.extra_moons.value / 100.0), self.max_counts["wooded"]),
-            min(floor(self.moon_counts["lake"] * self.options.extra_moons.value / 100.0), self.max_counts["lake"]),
+            min(floor(self.moon_counts[SMOKingdoms.CASCADE] * self.options.extra_moons.value / 100.0),
+                self.max_counts[SMOKingdoms.CASCADE]),
+            min(floor(self.moon_counts[SMOKingdoms.SAND] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.SAND]),
+            min(floor(self.moon_counts[SMOKingdoms.WOODED] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.WOODED]),
+            min(floor(self.moon_counts[SMOKingdoms.LAKE] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.LAKE]),
             0,
-            min(floor(self.moon_counts["lost"] * self.options.extra_moons.value / 100.0), self.max_counts["lost"]),
-            min(floor(self.moon_counts["metro"] * self.options.extra_moons.value / 100.0), self.max_counts["metro"]),
-            min(floor(self.moon_counts["seaside"] * self.options.extra_moons.value / 100.0),
-                self.max_counts["seaside"]),
-            min(floor(self.moon_counts["snow"] * self.options.extra_moons.value / 100.0), self.max_counts["snow"]),
-            min(floor(self.moon_counts["luncheon"] * self.options.extra_moons.value / 100.0),
-                self.max_counts["luncheon"]),
-            min(floor(self.moon_counts["ruined"] * self.options.extra_moons.value / 100.0), self.max_counts["ruined"]),
-            min(floor(self.moon_counts["bowser"] * self.options.extra_moons.value / 100.0), self.max_counts["bowser"]),
+            min(floor(self.moon_counts[SMOKingdoms.LOST] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.LOST]),
+            min(floor(self.moon_counts[SMOKingdoms.METRO] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.METRO]),
+            min(floor(self.moon_counts[SMOKingdoms.SEASIDE] * self.options.extra_moons.value / 100.0),
+                self.max_counts[SMOKingdoms.SEASIDE]),
+            min(floor(self.moon_counts[SMOKingdoms.SNOW] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.SNOW]),
+            min(floor(self.moon_counts[SMOKingdoms.LUNCHEON] * self.options.extra_moons.value / 100.0),
+                self.max_counts[SMOKingdoms.LUNCHEON]),
+            min(floor(self.moon_counts[SMOKingdoms.RUINED] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.RUINED]),
+            min(floor(self.moon_counts[SMOKingdoms.BOWSER] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.BOWSER]),
             0,
             0,
             0,
@@ -371,18 +372,18 @@ class SMOWorld(World):
 
         # revised_counts = [
         #     0,
-        #     min(floor(self.moon_counts["cascade"] * self.options.extra_moons.value / 100.0), self.max_counts["cascade"]),
-        #     min(floor(self.moon_counts["sand"] * self.options.extra_moons.value / 100.0), self.max_counts["sand"]),
-        #     min(floor(self.moon_counts["wooded"] * self.options.extra_moons.value / 100.0), self.max_counts["wooded"]),
-        #     min(floor(self.moon_counts["lake"] * self.options.extra_moons.value / 100.0), self.max_counts["lake"]),
+        #     min(floor(self.moon_counts[SMOKingdoms.CASCADE] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.CASCADE]),
+        #     min(floor(self.moon_counts[SMOKingdoms.SAND] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.SAND]),
+        #     min(floor(self.moon_counts[SMOKingdoms.WOODED] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.WOODED]),
+        #     min(floor(self.moon_counts[SMOKingdoms.LAKE] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.LAKE]),
         #     0,
-        #     min(floor(self.moon_counts["lost"] * self.options.extra_moons.value / 100.0), self.max_counts["lost"]),
-        #     min(floor(self.moon_counts["metro"] * self.options.extra_moons.value / 100.0), self.max_counts["metro"]),
-        #     min(floor(self.moon_counts["seaside"] * self.options.extra_moons.value / 100.0), self.max_counts["seaside"]),
-        #     min(floor(self.moon_counts["snow"] * self.options.extra_moons.value / 100.0), self.max_counts["snow"]),
-        #     min(floor(self.moon_counts["luncheon"] * self.options.extra_moons.value / 100.0), self.max_counts["luncheon"]),
-        #     min(floor(self.moon_counts["ruined"] * self.options.extra_moons.value / 100.0), self.max_counts["ruined"]),
-        #     min(floor(self.moon_counts["bowser"] * self.options.extra_moons.value / 100.0), self.max_counts["bowser"]),
+        #     min(floor(self.moon_counts[SMOKingdoms.LOST] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.LOST]),
+        #     min(floor(self.moon_counts[SMOKingdoms.METRO] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.METRO]),
+        #     min(floor(self.moon_counts[SMOKingdoms.SEASIDE] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.SEASIDE]),
+        #     min(floor(self.moon_counts[SMOKingdoms.SNOW] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.SNOW]),
+        #     min(floor(self.moon_counts[SMOKingdoms.LUNCHEON] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.LUNCHEON]),
+        #     min(floor(self.moon_counts[SMOKingdoms.RUINED] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.RUINED]),
+        #     min(floor(self.moon_counts[SMOKingdoms.BOWSER] * self.options.extra_moons.value / 100.0), self.max_counts[SMOKingdoms.BOWSER]),
         #     0,
         #     0,
         #     0,
@@ -390,37 +391,38 @@ class SMOWorld(World):
         # ]
         if self.options.goal == self.options.goal.option_dark:
             kingdoms : list = list(range(15))
-            while sum(revised_counts[0:15]) < self.moon_counts["dark"]:
+            while sum(revised_counts[0:15]) < self.moon_counts[SMOKingdoms.DARK]:
                 index = kingdoms[random.randint(0, len(kingdoms) - 1)]
                 revised_counts[index] += 1
-                if revised_counts[index] == self.max_checks[world_list[index].lower()]:
+                if revised_counts[index] == self.max_checks[kingdom_name_to_id[index].lower()]:
                     kingdoms.remove(index)
         elif self.options.goal == self.options.goal.option_darker:
             kingdoms: list = list(range(16))
-            while sum(revised_counts[0:16]) < self.moon_counts["darker"]:
+            while sum(revised_counts[0:16]) < self.moon_counts[SMOKingdoms.DARKER]:
                 index = kingdoms[random.randint(0, len(kingdoms) - 1)]
                 revised_counts[index] += 1
-                if revised_counts[index] == self.max_checks[world_list[index].lower()]:
+                if revised_counts[index] == self.max_checks[kingdom_name_to_id[index].lower()]:
                     kingdoms.remove(index)
 
         for kingdom in story_moons.keys():
             for i in range(len(story_moons[kingdom])):
                 if story_moons[kingdom][i] in locations:
                     pool.append(f"{kingdom} Story Moon")
-                    self.placement_counts[world_list.index(kingdom.capitalize())] += 1
+                    self.placement_counts[kingdom_name_to_id[kingdom]] += 1
                     self.placement_counts[15] += 1
                     self.placement_counts[16] += 1
         for kingdom in multi_moons.keys():
             for i in range(len(multi_moons[kingdom])):
                 if multi_moons[kingdom][i] in locations:
-                    pool.append(f"{kingdom + (' Side' if 'Dark' in kingdom else '')} Multi-Moon")
-                    self.placement_counts[world_list.index(kingdom.capitalize())] += 3
+                    pool.append(f"{kingdom} Multi-Moon")
+                    self.placement_counts[kingdom_name_to_id[kingdom]] += 3
                     self.placement_counts[15] += 3
                     self.placement_counts[16] += 3
 
-        for index in range(len(world_list)):
+        for kingdom in kingdom_name_to_id:
+            index = kingdom_name_to_id[kingdom]
             while self.placement_counts[index] < revised_counts[index]:
-                pool.append(f"{world_list[index] + (' Side' if 'Dark' in world_list[index] else '')} Power Moon")
+                pool.append(f"{kingdom} Power Moon")
                 self.placement_counts[index] += 1
                 self.placement_counts[15] += 1
                 self.placement_counts[16] += 1
@@ -428,30 +430,30 @@ class SMOWorld(World):
 
         # for location in locations:
         #     # found : bool = False
-        #     for index in range(len(world_list)):
+        #     for index in range(len(kingdom_name_to_id)):
         #         if location in full_moon_locations_list[index]:
         #             item = ""
         #             if (placement_counts[index] < revised_counts[index]
-        #                 or (world_list[index] in story_moons and location in story_moons[world_list[index]])
-        #                 or (index < 14 and world_list[index] in multi_moons and location in multi_moons[world_list[index]])):
+        #                 or (kingdom_name_to_id[index] in story_moons and location in story_moons[kingdom_name_to_id[index]])
+        #                 or (index < 14 and kingdom_name_to_id[index] in multi_moons and location in multi_moons[kingdom_name_to_id[index]])):
         #                 # found = True
-        #                 item: str = world_list[index]
+        #                 item: str = kingdom_name_to_id[index]
         #                 place : bool = False
         #
         #                 if "Dark" in item:
         #                     item += " Side"
         #                 # Multi
-        #                 if world_list[index] in multi_moons and location in multi_moons[world_list[index]]:
+        #                 if kingdom_name_to_id[index] in multi_moons and location in multi_moons[kingdom_name_to_id[index]]:
         #                     item += " Multi-Moon"
         #                     # Prevent placement of duplicate goal Multi-Moon
         #                     if location == goals_table[self.options.goal.value]:
         #                         break
         #                     place = not self.options.story >= 2
-        #                 elif world_list[index] in story_moons and location in story_moons[world_list[index]]:
+        #                 elif kingdom_name_to_id[index] in story_moons and location in story_moons[kingdom_name_to_id[index]]:
         #                     item += " Story Moon"
         #                     place = not (self.options.story == 1 or self.options.story == 3)
         #                 else:
-        #                     if world_list[index] == "Mushroom":
+        #                     if kingdom_name_to_id[index] == "Mushroom":
         #                         item = "Power Star"
         #                     else:
         #                         item += " Power Moon"
@@ -472,10 +474,12 @@ class SMOWorld(World):
         #             break
         #     # if not found:
         #     #     print(location)
-        for index in range(len(world_list)):
+        for kingdom in kingdom_name_to_id:
+            index = kingdom_name_to_id[kingdom]
+            moon_item = f"{kingdom} Power Moon"
             while self.placement_counts[index] > revised_counts[index]:
-                if world_list[index] + " Power Moon" in pool:
-                    pool.remove(world_list[index] + " Power Moon")
+                if moon_item in pool:
+                    pool.remove(moon_item)
                     self.placement_counts[index] -= 1
                 else:
                     break
@@ -549,7 +553,7 @@ class SMOWorld(World):
             else:
                 for place in regional_sub_area_to_kingdom:
                     if location.parent_region.name in regional_sub_area_to_kingdom[place]:
-                        kingdom = place
+                        kingdom = place.lower()
                         break
             match self.options.regional_coins.value:
                 case self.options.regional_coins.option_groups:
@@ -563,20 +567,19 @@ class SMOWorld(World):
 
         #endregion Regional Coins
 
+        for difficulty in range(self.options.trick_logic.value):
+            self.push_precollected(self.create_item(option_value_to_trick_item[difficulty]))
+        for difficulty in range(self.options.glitch_logic.value):
+            self.push_precollected(self.create_item(option_value_to_glitch_item[difficulty]))
 
         # Remove start_inventory items from pool
         for start_item in self.options.start_inventory:
             for num in range(self.options.start_inventory[start_item]):
                 pool.remove(start_item)
 
-        needed_items = len(list(self.multiworld.get_unfilled_locations(self.player))) - 1
+        total_locations = len(self.multiworld.get_unfilled_locations(self.player))
+        pool += [self.get_filler_item_name() for _ in range(total_locations - len(pool))]
         #print(len(pool), needed_items)
-        if len(pool) < needed_items:
-            while len(pool) - 1 < needed_items:
-                pool.append(self.get_filler_item_name())
-        # else:
-        #     while len(pool) > needed_items:
-        #         pool.remove(self.get_filler_item_name())
 
 
         for i in pool:
@@ -718,7 +721,7 @@ class SMOWorld(World):
         # Fix some exits not having a corresponding entrance
 
     def get_filler_item_name(self) -> str:
-        #print ("why no filler")
+        # Add more Filler Item Types
         return "Coins"
 
     def generate_basic(self) -> None:
@@ -728,11 +731,11 @@ class SMOWorld(World):
         """ Randomizes the moon requirements for progressing to each kingdom."""
         if self.options.counts == 1:
             for key in self.moon_counts.keys():
-                if key != "dark" and key != "darker":
+                if key != SMOKingdoms.DARK and key != SMOKingdoms.DARKER:
                     self.moon_counts[key] = 1
             kingdoms = list(self.moon_counts.keys())
-            kingdoms.remove("dark")
-            kingdoms.remove("darker")
+            kingdoms.remove(SMOKingdoms.DARK)
+            kingdoms.remove(SMOKingdoms.DARKER)
             count = 0
             for kingdom in kingdoms:
                 count += self.moon_counts[kingdom]
@@ -744,13 +747,13 @@ class SMOWorld(World):
                     kingdoms.remove(selected)
         elif self.options.counts == 2:
             for key in self.moon_counts.keys():
-                if key != "dark" and key != "darker":
+                if key != SMOKingdoms.DARK and key != SMOKingdoms.DARKER:
                     self.moon_counts[key] = 1
-            self.moon_counts["ruined"] = 3
+            self.moon_counts[SMOKingdoms.RUINED] = 3
             kingdoms = list(self.moon_counts.keys())
-            kingdoms.remove("dark")
-            kingdoms.remove("darker")
-            kingdoms.remove("ruined")
+            kingdoms.remove(SMOKingdoms.DARK)
+            kingdoms.remove(SMOKingdoms.DARKER)
+            kingdoms.remove(SMOKingdoms.RUINED)
             count = 3
             for kingdom in kingdoms:
                 count += self.moon_counts[kingdom]
@@ -767,17 +770,17 @@ class SMOWorld(World):
         elif self.options.counts == 4:
             for key in self.moon_counts.keys():
                 self.moon_counts[key] = random.randint(int(self.moon_counts[key] * 1.0), int(self.moon_counts[key] * 2.0))
-        if self.moon_counts["dark"] > self.moon_counts["darker"]:
-            temp = self.moon_counts["darker"]
-            self.moon_counts["darker"] = self.moon_counts["dark"]
-            self.moon_counts["dark"] = temp
+        if self.moon_counts[SMOKingdoms.DARK] > self.moon_counts[SMOKingdoms.DARKER]:
+            temp = self.moon_counts[SMOKingdoms.DARKER]
+            self.moon_counts[SMOKingdoms.DARKER] = self.moon_counts[SMOKingdoms.DARK]
+            self.moon_counts[SMOKingdoms.DARK] = temp
         for key in self.moon_counts.keys():
             if self.moon_counts[key] > self.max_counts[key]:
                 self.moon_counts[key] = self.max_counts[key]
         if self.options.counts == 1 or self.options.counts == 2:
             kingdoms = list(self.moon_counts.keys())
-            kingdoms.remove("dark")
-            kingdoms.remove("darker")
+            kingdoms.remove(SMOKingdoms.DARK)
+            kingdoms.remove(SMOKingdoms.DARKER)
             count = 0
             for kingdom in kingdoms:
                 count += self.moon_counts[kingdom]
@@ -785,9 +788,9 @@ class SMOWorld(World):
                 raise Exception("Moon count exception! Moons required to beat the game is not 124, was " + str(count))
         # Change all outfit moon requirements to a proportion based on random Dark Side count
         # for key in self.outfit_moon_counts.keys():
-        #     self.outfit_moon_counts[key] = int(self.outfit_moon_counts[key] * (self.moon_counts["dark"]/250))
-            # if self.outfit_moon_counts[key] > self.moon_counts["dark"]:
-            #     self.outfit_moon_counts[key] = self.moon_counts["dark"] - 1
+        #     self.outfit_moon_counts[key] = int(self.outfit_moon_counts[key] * (self.moon_counts[SMOKingdoms.DARK]/250))
+            # if self.outfit_moon_counts[key] > self.moon_counts[SMOKingdoms.DARK]:
+            #     self.outfit_moon_counts[key] = self.moon_counts[SMOKingdoms.DARK] - 1
 
 
     def bind_game_entrances(self) -> None:
@@ -1088,7 +1091,7 @@ class SMOWorld(World):
                                     self.shine_colors[self.location_name_to_id[location.name]] = self.color_list[19]
                                 elif location.item.name in outfits:
                                     self.shine_colors[self.location_name_to_id[location.name]] = self.color_list[20]
-                                elif world_list[kingdom] in location.item.name:
+                                elif kingdom_name_to_id[kingdom] in location.item.name:
                                     self.shine_colors[self.location_name_to_id[location.name]] = self.color_list[kingdom]
                                     break
 
@@ -1114,7 +1117,7 @@ class SMOWorld(World):
                                     self.shine_colors[self.location_name_to_id[location.name]] = self.color_list[19]
                                 elif location.item.name in outfits:
                                     self.shine_colors[self.location_name_to_id[location.name]] = self.color_list[20]
-                                elif world_list[kingdom] in location.item.name:
+                                elif kingdom_name_to_id[kingdom] in location.item.name:
                                     self.shine_colors[self.location_name_to_id[location.name]] = self.color_list[
                                         kingdom]
                                     break
@@ -1328,8 +1331,8 @@ class SMOWorld(World):
         if self.options.counts > 0:
             text = f"{'Moon Requirements:':33}"
             for key in self.moon_counts.keys():
-                if world_list.index(key.capitalize()) <= self.options.goal:
-                    text += f"\n{'':33}{(key.capitalize() + (' Kingdom: ' if world_list.index(key.capitalize()) < self.options.goal.option_dark else ' Side: '))}{str(self.moon_counts[key])}"
+                if kingdom_name_to_id.index(key.capitalize()) <= self.options.goal:
+                    text += f"\n{'':33}{(key.capitalize() + (' Kingdom: ' if kingdom_name_to_id.index(key.capitalize()) < self.options.goal.option_dark else ' Side: '))}{str(self.moon_counts[key])}"
             spoiler_handle.write(text)
 
         if self.options.entrance_randomization > 0:
