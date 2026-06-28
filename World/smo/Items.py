@@ -322,6 +322,27 @@ flag_items = {
     "Beat the Game" : 39,
 }
 
+difficulty_items = {
+    SMOItemData.easy_tricks: 8002,
+    SMOItemData.intermediate_tricks: 8003,
+    SMOItemData.hard_tricks: 8004,
+    SMOItemData.easy_glitches: 8005,
+    SMOItemData.intermediate_glitches: 8006,
+    SMOItemData.hard_glitches: 8007,
+}
+
+option_value_to_trick_item = [
+    SMOItemData.easy_tricks,
+    SMOItemData.intermediate_tricks,
+    SMOItemData.hard_tricks,
+]
+
+option_value_to_glitch_item = [
+    SMOItemData.easy_glitches,
+    SMOItemData.intermediate_glitches,
+    SMOItemData.hard_glitches,
+]
+
 #region Kingdom Location to Hint ID
 
 cap_location_to_hint = {
@@ -1196,7 +1217,8 @@ item_table = {
     **loc_Captures,
     # **world_items_table,
     **flag_items,
-    **filler_item_table
+    **filler_item_table,
+    **difficulty_items,
 }
 
 # moon_item_list = [
