@@ -23,6 +23,7 @@ class SMORuleCondition(IntEnum):
     GLITCH_HARD = 12
     ABILITY = 13
     LOCATION = 14
+    STORY_COMPLETE = 15
     PARENTHESIS_OPEN = 98
     PARENTHESIS_CLOSE = 99
 
@@ -73,6 +74,7 @@ kingdom_name_to_id = {
     SMOKingdoms.LUNCHEON: 10,
     SMOKingdoms.RUINED: 11,
     SMOKingdoms.BOWSER: 12,
+    "Bowser": 12,
     SMOKingdoms.MOON: 13,
     SMOKingdoms.MUSHROOM: 14,
     SMOKingdoms.DARK: 15,
