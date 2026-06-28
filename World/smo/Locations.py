@@ -5415,11 +5415,11 @@ regional_sub_area_to_kingdom = {
                 SMORegion.top_hat_tower_regional_coins,
                 SMORegion.top_hat_tower_regional_groups,
         ],
-        "cascade": [
+        SMOKingdoms.CASCADE: [
                 SMORegion.chasm_lifts_regional_coins,
                 SMORegion.chasm_lifts_regional_groups,
         ],
-        "sand": [
+        SMOKingdoms.SAND: [
                 SMORegion.ice_cave_regional_coins,
                 SMORegion.ice_cave_regional_groups,
                 SMORegion.jaxi_ruins_regional_coins,
@@ -5435,11 +5435,11 @@ regional_sub_area_to_kingdom = {
                 SMORegion.underground_ruins_regional_coins,
                 SMORegion.underground_ruins_regional_groups,
         ],
-        "lake": [
+        SMOKingdoms.LAKE: [
                 SMORegion.bouncy_flowers_regional_coins,
                 SMORegion.bouncy_flowers_regional_groups
         ],
-        "wooded": [
+        SMOKingdoms.WOODED: [
                 SMORegion.sky_garden_tower_regional_coins,
                 SMORegion.sky_garden_tower_regional_groups,
                 SMORegion.deep_woods_regional_coins,
@@ -5453,7 +5453,7 @@ regional_sub_area_to_kingdom = {
                 SMORegion.walking_on_clouds_regional_coins,
                 SMORegion.walking_on_clouds_regional_groups,
         ],
-        "metro": [
+        SMOKingdoms.METRO: [
                 SMORegion.city_hall_regional_coins,
                 SMORegion.city_hall_regional_groups,
                 SMORegion.high_rise_regional_coins,
@@ -5466,17 +5466,17 @@ regional_sub_area_to_kingdom = {
                 SMORegion.sewers_regional_groups,
 
         ],
-        "snow": [
+        SMOKingdoms.SNOW: [
                 SMORegion.shiveria_regional_coins,
                 SMORegion.shiveria_regional_groups,
                 SMORegion.snowline_regional_coins,
                 SMORegion.snowline_regional_groups,
         ],
-        "seaside": [
+        SMOKingdoms.SEASIDE: [
                 SMORegion.sea_cave_regional_coins,
                 SMORegion.sea_cave_regional_groups,
         ],
-        "luncheon": [
+        SMOKingdoms.LUNCHEON: [
                 SMORegion.cascading_magma_regional_coins,
                 SMORegion.cascading_magma_regional_groups,
                 SMORegion.spinning_athletics_regional_coins,
@@ -5486,11 +5486,11 @@ regional_sub_area_to_kingdom = {
                 SMORegion.fork_flickin_regional_coins,
                 SMORegion.fork_flickin_regional_groups,
         ],
-        "moon": [
+        SMOKingdoms.MOON: [
                 SMORegion.moon_cave_regional_coins,
                 SMORegion.moon_cave_regional_groups,
         ],
-        "mushroom": [
+        SMOKingdoms.MUSHROOM: [
                 SMORegion.peachs_castle_regional_coins,
                 SMORegion.peachs_castle_regional_groups,
         ]
@@ -5672,53 +5672,53 @@ post_game_locations_list = [
 ]
 
 multi_moons = {
-    "Cascade" : [SMOLocationData.multi_moon_atop_the_falls],
-    "Sand" : [SMOLocationData.showdown_on_the_inverted_pyramid,
+    SMOKingdoms.CASCADE : [SMOLocationData.multi_moon_atop_the_falls],
+        SMOKingdoms.SAND : [SMOLocationData.showdown_on_the_inverted_pyramid,
     SMOLocationData.the_hole_in_the_desert],
-    "Lake" : [SMOLocationData.broodals_over_the_lake],
-    "Wooded" : [SMOLocationData.flower_thieves_of_sky_garden,
+    SMOKingdoms.LAKE : [SMOLocationData.broodals_over_the_lake],
+    SMOKingdoms.WOODED : [SMOLocationData.flower_thieves_of_sky_garden,
     SMOLocationData.defend_the_secret_flower_field],
-    "Metro" : [SMOLocationData.new_donk_citys_pest_problem,
+    SMOKingdoms.METRO : [SMOLocationData.new_donk_citys_pest_problem,
     SMOLocationData.a_traditional_festival],
-    "Snow" : [SMOLocationData.the_bound_bowl_grand_prix],
-    "Seaside" : [SMOLocationData.the_glass_is_half_full],
-    "Luncheon" : [SMOLocationData.big_pot_on_the_volcano_dive_in,
+    SMOKingdoms.SNOW : [SMOLocationData.the_bound_bowl_grand_prix],
+    SMOKingdoms.SEASIDE : [SMOLocationData.the_glass_is_half_full],
+    SMOKingdoms.LUNCHEON : [SMOLocationData.big_pot_on_the_volcano_dive_in,
     SMOLocationData.cookatiel_showdown],
-    "Ruined" : [SMOLocationData.battle_with_the_lord_of_lightning],
-    "Bowser" : [SMOLocationData.showdown_at_bowsers_castle],
-    "Mushroom" : [SMOLocationData.tussle_in_tostarena_rematch,
+    SMOKingdoms.RUINED : [SMOLocationData.battle_with_the_lord_of_lightning],
+    SMOKingdoms.BOWSER : [SMOLocationData.showdown_at_bowsers_castle],
+    SMOKingdoms.MUSHROOM : [SMOLocationData.tussle_in_tostarena_rematch,
     SMOLocationData.struggle_in_steam_gardens_rematch,
     SMOLocationData.dust_up_in_new_donk_city_rematch,
     SMOLocationData.battle_in_bubblaine_rematch,
     SMOLocationData.blowup_at_mount_volbono_rematch,
     SMOLocationData.rumble_in_crumbleden_rematch],
-    "Dark" : [SMOLocationData.arrival_at_rabbit_ridge],
-    "Darker" : [SMOLocationData.a_long_journeys_end]
+    SMOKingdoms.DARK : [SMOLocationData.arrival_at_rabbit_ridge],
+    SMOKingdoms.DARKER : [SMOLocationData.a_long_journeys_end]
 }
 
 story_moons = {
-    "Cascade" : [SMOLocationData.our_first_power_moon],
-    "Sand" : [SMOLocationData.atop_the_highest_tower,
+    SMOKingdoms.CASCADE : [SMOLocationData.our_first_power_moon],
+    SMOKingdoms.SAND : [SMOLocationData.atop_the_highest_tower,
     SMOLocationData.moon_shards_in_the_sand],
-    "Wooded" : [SMOLocationData.road_to_sky_garden,
+    SMOKingdoms.WOODED : [SMOLocationData.road_to_sky_garden,
     SMOLocationData.path_to_the_secret_flower_field],
-    "Metro" : [SMOLocationData.drummer_on_board,
+    SMOKingdoms.METRO : [SMOLocationData.drummer_on_board,
     SMOLocationData.guitarist_on_board,
     SMOLocationData.bassist_on_board,
     SMOLocationData.trumpeter_on_board,
     SMOLocationData.powering_up_the_station],
-    "Snow" : [SMOLocationData.the_icicle_barrier,
+    SMOKingdoms.SNOW : [SMOLocationData.the_icicle_barrier,
     SMOLocationData.the_ice_wall_barrier,
     SMOLocationData.the_gusty_barrier,
     SMOLocationData.the_snowy_mountain_barrier],
-    "Seaside" : [SMOLocationData.the_stone_pillar_seal,
+    SMOKingdoms.SEASIDE : [SMOLocationData.the_stone_pillar_seal,
     SMOLocationData.the_lighthouse_seal,
     SMOLocationData.the_hot_spring_seal,
     SMOLocationData.the_seal_above_the_canyon],
-    "Luncheon" : [SMOLocationData.the_broodals_are_after_some_cookin,
+    SMOKingdoms.LUNCHEON : [SMOLocationData.the_broodals_are_after_some_cookin,
     SMOLocationData.under_the_cheese_rocks,
     SMOLocationData.climb_up_the_cascading_magma],
-    "Bowser" : [SMOLocationData.infiltrate_bowsers_castle,
+    SMOKingdoms.BOWSER : [SMOLocationData.infiltrate_bowsers_castle,
     SMOLocationData.smart_bombing,
     SMOLocationData.big_broodal_battle]
 }
