@@ -1,7 +1,7 @@
 from BaseClasses import CollectionState
 
 from .Items import outfits, shop_items, moon_types
-from .Locations import  regional_coin_groups, regional_sub_area_to_kingdom
+from .Locations import  regional_coin_groups, regional_sub_area_to_kingdom, multi_moons, story_moons
 from .Data.RegionData import SMORegion
 from .Data.EntranceData import SMOEntranceData
 
@@ -42,6 +42,25 @@ def total_moons(state: CollectionState, player: int) -> int:
 
     #print (amt)
     return amt
+
+def can_complete_story(state: CollectionState, kingdom: str, player: int) -> bool:
+    """ Returns true if all locations required to complete a given `kingdom` story are reachable
+        Args:
+                state: The CollectionState of the current player.
+                kingdom: The kingdom to check
+                player: The index of this world's player.
+        Return:
+            Whether the story in 'kingdom' is completable.
+    """
+    is_reachable = True
+    moons = multi_moons[kingdom]
+    if kingdom in story_moons:
+        moons += story_moons[kingdom]
+    for moon in moons:
+        if not state.can_reach_location(moon, player):
+            is_reachable = False
+            break
+    return is_reachable
 
 
 def count_regionals(state: CollectionState, kingdom: str, player: int) -> int:

@@ -1,8 +1,7 @@
 from types import NoneType
 from typing import Optional, Any
 from BaseClasses import Region, Entrance, EntranceType, CollectionState
-from . import world_list, capture_items
-from .Data.RuleData import SMORuleCondition, SMORuleOperation
+from .Data.RuleData import SMORuleCondition, SMORuleOperation, SMOKingdoms
 from .Data.EntranceData import SMOEntranceData
 from .Data.ItemData import SMOItemData
 from .Entrances import create_entrances, SMORandomizationGroup, SMOEntrance
@@ -893,7 +892,7 @@ def create_regions(self):
     odyssey_connections = [
         (SMORegion.defunct_odyssey, {
             SMORegion.restored_odyssey: lambda state: state.can_reach(self.multiworld.get_region(SMORegion.cascade_kingdom_peace, self.player)) and count_moons(state, "Cascade", self.player) >= self.moon_counts[
-                "cascade"],
+                SMOKingdoms.CASCADE],
             SMORegion.odyssey_interior: None,
             SMORegion.cap_kingdom: None,
             SMORegion.cascade_kingdom: None,
@@ -901,7 +900,7 @@ def create_regions(self):
         (SMORegion.restored_odyssey, {
             SMORegion.cascade_kingdom_revisit: None,
             SMORegion.sand_kingdom: None,
-            SMORegion.odyssey_sail_sand: lambda state: count_moons(state, "Sand", self.player) >= self.moon_counts["sand"],
+            SMORegion.odyssey_sail_sand: lambda state: count_moons(state, "Sand", self.player) >= self.moon_counts[SMOKingdoms.SAND],
             SMORegion.odyssey_outfit: None,
         }),
         (SMORegion.odyssey_interior, {
@@ -909,51 +908,51 @@ def create_regions(self):
         }),
         (SMORegion.odyssey_sail_sand, {
             SMORegion.lake_kingdom: None,
-            SMORegion.odyssey_sails_branch_1: lambda state: count_moons(state, "Lake", self.player) >= self.moon_counts["lake"],
+            SMORegion.odyssey_sails_branch_1: lambda state: count_moons(state, "Lake", self.player) >= self.moon_counts[SMOKingdoms.LAKE],
         }),
         (SMORegion.odyssey_sails_branch_1, {
-            SMORegion.odyssey_broken_down: lambda state: count_moons(state, "Lake", self.player) >= self.moon_counts["lake"] and
+            SMORegion.odyssey_broken_down: lambda state: count_moons(state, "Lake", self.player) >= self.moon_counts[SMOKingdoms.LAKE] and
                                                          count_moons(state, "Wooded", self.player) >= self.moon_counts[
-                                                             "wooded"],
+                                                             SMOKingdoms.WOODED],
             SMORegion.wooded_kingdom: None,
         }),
         (SMORegion.odyssey_broken_down, {
             SMORegion.cloud_kingdom_boss_fight: None,
             SMORegion.lost_kingdom: None,
             SMORegion.cloud_kingdom_revisit: None,
-            SMORegion.odyssey_repaired_lost: (lambda state: count_moons(state, "Lost", self.player) >= self.moon_counts["lost"]),
+            SMORegion.odyssey_repaired_lost: (lambda state: count_moons(state, "Lost", self.player) >= self.moon_counts[SMOKingdoms.LOST]),
         }),
         (SMORegion.odyssey_repaired_lost, {
             SMORegion.night_metro_kingdom: (lambda state: state.has(SMORegion.spark_pylon, self.player)) if self.options.capture_sanity else None,
             SMORegion.lost_kingdom_revisit: None,
-            SMORegion.odyssey_sail_metro: lambda state: count_moons(state, "Metro", self.player) >= self.moon_counts["metro"],
+            SMORegion.odyssey_sail_metro: lambda state: count_moons(state, "Metro", self.player) >= self.moon_counts[SMOKingdoms.METRO],
         }),
         (SMORegion.odyssey_sail_metro, {
             SMORegion.snow_kingdom: None,
-            SMORegion.odyssey_sails_branch_2: lambda state: count_moons(state, "Snow", self.player) >= self.moon_counts["snow"],
+            SMORegion.odyssey_sails_branch_2: lambda state: count_moons(state, "Snow", self.player) >= self.moon_counts[SMOKingdoms.SNOW],
         }),
         (SMORegion.odyssey_sails_branch_2, {
             SMORegion.seaside_kingdom: None,
-            SMORegion.luncheon_kingdom: lambda state: count_moons(state, "Snow", self.player) >= self.moon_counts["snow"] and count_moons(state, "Seaside", self.player) >= self.moon_counts["seaside"],
-            SMORegion.odyssey_sail_luncheon: lambda state: count_moons(state, "Luncheon", self.player) >= self.moon_counts["luncheon"],
+            SMORegion.luncheon_kingdom: lambda state: count_moons(state, "Snow", self.player) >= self.moon_counts[SMOKingdoms.SNOW] and count_moons(state, "Seaside", self.player) >= self.moon_counts[SMOKingdoms.SEASIDE],
+            SMORegion.odyssey_sail_luncheon: lambda state: count_moons(state, "Luncheon", self.player) >= self.moon_counts[SMOKingdoms.LUNCHEON],
         }),
         (SMORegion.odyssey_sail_luncheon, {
             SMORegion.ruined_kingdom: None,
-            SMORegion.odyssey_repaired_ruined: lambda state: count_moons(state, "Ruined", self.player) >= self.moon_counts["ruined"],
+            SMORegion.odyssey_repaired_ruined: lambda state: count_moons(state, "Ruined", self.player) >= self.moon_counts[SMOKingdoms.RUINED],
         }),
         (SMORegion.odyssey_repaired_ruined, {
             SMORegion.bowsers_kingdom: None,
-            SMORegion.odyssey_complete: lambda state: count_moons(state, "Bowser", self.player) >= self.moon_counts["bowser"] and state.can_reach(self.multiworld.get_region(SMORegion.bowser_kingdom_peace, self.player)),
+            SMORegion.odyssey_complete: lambda state: count_moons(state, "Bowser", self.player) >= self.moon_counts[SMOKingdoms.BOWSER] and state.can_reach(self.multiworld.get_region(SMORegion.bowser_kingdom_peace, self.player)),
         }),
         (SMORegion.odyssey_complete, {
             SMORegion.moon_kingdom: None,
             SMORegion.moon_kingdom_tuxedo: None,
             SMORegion.mushroom_kingdom: (lambda state: state.has(SMORegion.bowser, self.player)) if self.options.capture_sanity else None,
-            SMORegion.odyssey_powered_up_dark: (lambda state: state.has(SMORegion.bowser, self.player) and total_moons(state, self.player) >= self.moon_counts["dark"]) if self.options.capture_sanity else (lambda state: total_moons(state, self.player) >= self.moon_counts["dark"]),
+            SMORegion.odyssey_powered_up_dark: (lambda state: state.has(SMORegion.bowser, self.player) and total_moons(state, self.player) >= self.moon_counts[SMOKingdoms.DARK]) if self.options.capture_sanity else (lambda state: total_moons(state, self.player) >= self.moon_counts[SMOKingdoms.DARK]),
         }),
         (SMORegion.odyssey_powered_up_dark, {
             SMORegion.dark_side : None,
-            SMORegion.odyssey_powered_up_darker: lambda state: total_moons(state, self.player) >= self.moon_counts["darker"],
+            SMORegion.odyssey_powered_up_darker: lambda state: total_moons(state, self.player) >= self.moon_counts[SMOKingdoms.DARKER],
         }),
         (SMORegion.odyssey_powered_up_darker, {
             SMORegion.darker_side : None
@@ -972,7 +971,7 @@ def create_regions(self):
             SMORegion.cascade_kingdom: None,
         }),
         (SMORegion.cap_kingdom, {
-            SMORegion.cap_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.cap_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE)]),
             SMORegion.cap_kingdom_shop: None,
             SMORegion.cap_kingdom_regional_coins: None,
             SMORegion.cap_kingdom_regional_groups: None,
@@ -991,7 +990,17 @@ def create_regions(self):
         (SMORegion.cascade_kingdom_peace, {
             SMORegion.cascade_kingdom_peace_regional_coins: None,
             SMORegion.cascade_kingdom_peace_regional_groups: None,
-            SMORegion.cascade_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.cascade_kingdom_moon_rock: create_access_rule(self, [
+        (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp], SMORuleOperation.OR),
+        (SMORuleCondition.CAPTURE, SMOItemData.t_rex, SMORuleOperation.PARENTHESIS_AND),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.PARENTHESIS_OR),
+        (SMORuleCondition.GLITCH_HARD, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, SMOItemData.big_chain_chomp, SMORuleOperation.PARENTHESIS_OR),
+        (SMORuleCondition.CAPTURE, SMOItemData.t_rex, SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.PARENTHESIS_AND),
+        (SMORuleCondition.CAPTURE, SMOItemData.broodes_chain_chomp, SMORuleOperation.NONE),
+    ],)
+,
         }),
         (SMORegion.cascade_kingdom_revisit, {
             SMORegion.cascade_kingdom_shop: None,
@@ -1019,7 +1028,7 @@ def create_regions(self):
             SMORegion.glydon: None,
             SMORegion.lakitu: None,
             SMORegion.strange_neighborhood: lambda state: state.has(SMORegion.mini_rocket, self.player) if self.options.capture_sanity else None,
-            SMORegion.sand_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.sand_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.SAND, SMORuleOperation.NONE)]),
             SMORegion.top_of_the_inverted_pyramid: (lambda state: state.has(SMORegion.spark_pylon, self.player)) if self.options.capture_sanity else None,
             SMORegion.top_of_the_inverted_pyramid_peace: (lambda state: state.can_reach(SMORegion.top_of_the_inverted_pyramid,player=self.player)),
             SMORegion.sand_kingdom_peace_regional_coins: None,
@@ -1036,7 +1045,7 @@ def create_regions(self):
             SMORegion.sherm: None
         }),
         (SMORegion.wooded_kingdom_peace, {
-            SMORegion.wooded_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.wooded_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.WOODED, SMORuleOperation.NONE)]),
         }),
         (SMORegion.lake_kingdom, {
             SMORegion.cheep_cheep: None,
@@ -1044,7 +1053,7 @@ def create_regions(self):
             SMORegion.goomba: None,
             SMORegion.lakitu: None,
             #SMORegion.lake_kingdom_shop: None,
-            SMORegion.lake_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.lake_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.LAKE, SMORuleOperation.NONE)]),
             SMORegion.lake_kingdom_regional_coins: None,
             SMORegion.lake_kingdom_regional_groups: None,
         }),
@@ -1052,7 +1061,7 @@ def create_regions(self):
 
         }),
         (SMORegion.cloud_kingdom_revisit, {
-            SMORegion.cloud_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.cloud_kingdom_moon_rock: None,
         }
          ),
         (SMORegion.lost_kingdom, {
@@ -1060,9 +1069,11 @@ def create_regions(self):
             SMORegion.tropical_wiggler: None,
             SMORegion.lost_kingdom_regional_coins: None,
             SMORegion.lost_kingdom_regional_groups: None,
+            SMORegion.lost_kingdom_moon_rock: None,
+
         }),
         (SMORegion.lost_kingdom_revisit, {
-            SMORegion.lost_kingdom_moon_rock: can_reach_mushroom,
+            # SMORegion.lost_kingdom_moon_rock: can_reach_mushroom,
         }),
         (SMORegion.night_metro_kingdom, {
             #SMORegion.metro_kingdom_shop: None,
@@ -1078,7 +1089,7 @@ def create_regions(self):
             SMORegion.metro_kingdom_regional_groups: None,
         }),
         (SMORegion.metro_kingdom_peace, {
-            SMORegion.metro_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.metro_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.METRO, SMORuleOperation.NONE)]),
         }),
         (SMORegion.seaside_kingdom, {
             SMORegion.gushen: None,
@@ -1088,7 +1099,7 @@ def create_regions(self):
             SMORegion.seaside_kingdom_regional_groups: None,
         }),
         (SMORegion.seaside_kingdom_peace, {
-            SMORegion.seaside_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.seaside_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.SEASIDE, SMORuleOperation.NONE)]),
         }),
         (SMORegion.snow_kingdom, {
             #SMORegion.snow_kingdom_shop: None,
@@ -1100,7 +1111,7 @@ def create_regions(self):
         (SMORegion.snow_kingdom_peace, {
             SMORegion.ty_foo: None,
             SMORegion.cheep_cheep_snow_kingdom: None,
-            SMORegion.snow_kingdom_moon_rock: can_reach_mushroom
+        SMORegion.snow_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.SNOW, SMORuleOperation.NONE)])
         }),
         (SMORegion.luncheon_kingdom, {
             SMORegion.lava_bubble: None,
@@ -1127,11 +1138,11 @@ def create_regions(self):
         }),
         (SMORegion.luncheon_kingdom_peace, {
             SMORegion.fire_piranha_plant: None,
-            SMORegion.luncheon_kingdom_moon_rock: can_reach_mushroom
+            SMORegion.luncheon_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.LUNCHEON, SMORuleOperation.NONE)])
         }),
         (SMORegion.ruined_kingdom, {
             SMORegion.spark_pylon: None,
-            SMORegion.ruined_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.ruined_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.RUINED, SMORuleOperation.NONE)]),
         }),
         (SMORegion.bowsers_kingdom, {
             SMORegion.infiltrate_bowsers_castle: (lambda state: state.has(SMORegion.spark_pylon, self.player)) if self.options.capture_sanity else None,
@@ -1151,7 +1162,7 @@ def create_regions(self):
             SMORegion.bowser_kingdom_peace: None,
         }),
         (SMORegion.bowser_kingdom_peace, {
-            SMORegion.bowser_kingdom_moon_rock: can_reach_mushroom,
+            SMORegion.bowser_kingdom_moon_rock: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.BOWSER, SMORuleOperation.NONE)]),
             SMORegion.bowsers_kingdom_peace_regional_coins: None,
             SMORegion.bowsers_kingdom_peace_regional_groups: None,
         }),
@@ -1282,7 +1293,7 @@ def create_regions(self):
             SMORegion.sand_kingdom_peace: create_access_rule(self,[(SMORuleCondition.CAPTURE, [SMOItemData.knucklotecs_fist], SMORuleOperation.NONE)]),
             SMORegion.bullet_bill: None,
             SMORegion.knucklotecs_fist: None,
-            SMORegion.deepest_underground_post_game: can_reach_mushroom,
+            SMORegion.deepest_underground_post_game: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.SAND, SMORuleOperation.NONE)]),
         }),
         (SMORegion.deepest_underground_peace, {
 
@@ -1375,7 +1386,7 @@ def create_regions(self):
         }),
         (SMORegion.cloud_picture_match, {
             SMORegion.picture_match_part_goomba: None,
-            SMORegion.cloud_post_game_picture_match: can_reach_mushroom
+            SMORegion.cloud_post_game_picture_match: create_access_rule(self, [(SMORuleCondition.REGION, SMORegion.cloud_kingdom_moon_rock, SMORuleOperation.NONE)])
         }),
         (SMORegion.cloud_post_game_picture_match, {
             SMORegion.picture_match_part_goomba: None
@@ -1394,7 +1405,7 @@ def create_regions(self):
         }),
         (SMORegion.rc_race, {
             SMORegion.rc_car: None,
-            SMORegion.rc_race_post_game: can_reach_mushroom
+            SMORegion.rc_race_post_game: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.METRO, SMORuleOperation.NONE)])
         }),
         (SMORegion.private_room, {
 
@@ -1404,7 +1415,7 @@ def create_regions(self):
             SMORegion.city_hall_regional_groups: None,
         }),
         (SMORegion.crowded_street, {
-            SMORegion.crowded_street_post_game: can_reach_mushroom
+            SMORegion.crowded_street_post_game: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.METRO, SMORuleOperation.NONE)])
         }),
         (SMORegion.builder_outfit, {
             SMORegion.spark_pylon: None
@@ -1496,10 +1507,10 @@ def create_regions(self):
             SMORegion.snowline_regional_groups: None,
          }),
         (SMORegion.shiveria_peace, {
-            SMORegion.icicle_barrier_post_game: can_reach_mushroom,
-            SMORegion.ice_wall_barrier_post_game: can_reach_mushroom,
-            SMORegion.snowy_mountain_barrier_post_game: can_reach_mushroom,
-            SMORegion.gusty_barrier_post_game: can_reach_mushroom,
+            SMORegion.icicle_barrier_post_game: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.SNOW, SMORuleOperation.NONE)]),
+            SMORegion.ice_wall_barrier_post_game: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.SNOW, SMORuleOperation.NONE)]),
+            SMORegion.snowy_mountain_barrier_post_game: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.SNOW, SMORuleOperation.NONE)]),
+            SMORegion.gusty_barrier_post_game: create_access_rule(self, [(SMORuleCondition.STORY_COMPLETE, SMOKingdoms.SNOW, SMORuleOperation.NONE)]),
         }),
         (SMORegion.icicle_barrier_post_game, {
             SMORegion.goomba: None

@@ -13,7 +13,7 @@ class SMOItemData:
     snow_power_moon = 'Snow Power Moon'
     luncheon_power_moon = 'Luncheon Power Moon'
     ruined_power_moon = 'Ruined Power Moon'
-    bowser_power_moon = 'Bowser Power Moon'
+    bowser_power_moon = "Bowser's Power Moon"
     moon_power_moon = 'Moon Power Moon'
     power_star = 'Power Star'
     dark_side_power_moon = 'Dark Side Power Moon'
@@ -25,7 +25,7 @@ class SMOItemData:
     seaside_story_moon = 'Seaside Story Moon'
     snow_story_moon = 'Snow Story Moon'
     luncheon_story_moon = 'Luncheon Story Moon'
-    bowser_story_moon = 'Bowser Story Moon'
+    bowser_story_moon = "Bowser's Story Moon"
     cascade_multi_moon = 'Cascade Multi-Moon'
     sand_multi_moon = 'Sand Multi-Moon'
     wooded_multi_moon = 'Wooded Multi-Moon'
@@ -35,7 +35,7 @@ class SMOItemData:
     snow_multi_moon = 'Snow Multi-Moon'
     luncheon_multi_moon = 'Luncheon Multi-Moon'
     ruined_multi_moon = 'Ruined Multi-Moon'
-    bowser_multi_moon = 'Bowser Multi-Moon'
+    bowser_multi_moon = "Bowser's Multi-Moon"
     mushroom_multi_moon = 'Mushroom Multi-Moon'
     dark_side_multi_moon = 'Dark Side Multi-Moon'
 
@@ -290,3 +290,11 @@ class SMOItemData:
     # Trap
     daredevil = "Daredevil"
     bonk = "Bonk"
+
+    # Difficulties
+    easy_tricks = "Easy Tricks"
+    intermediate_tricks = "Intermediate Tricks"
+    hard_tricks = "Hard Tricks"
+    easy_glitches = "Easy Glitches"
+    intermediate_glitches = "Intermediate Glitches"
+    hard_glitches = "Hard Glitches"

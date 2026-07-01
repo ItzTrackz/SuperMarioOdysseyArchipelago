@@ -14,7 +14,7 @@ from .Data.RuleData import SMORuleCondition, SMORuleOperation, SMOEntranceDataTy
 from .Locations import shop_location_costs
 from .Items import capture_items
 from .Options import SMOOptions
-from .Logic import total_moons, count_moons, count_regionals
+from .Logic import total_moons, count_moons, count_regionals, can_complete_story
 
 all_access_rules : set = set()
 
@@ -40,6 +40,9 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
         match condition_type:
             case SMORuleCondition.CAPTURE:
                 return options.capture_sanity.value == options.capture_sanity.option_true
+
+            case SMORuleCondition.ABILITY:
+                return options.ability_sanity.value == options.ability_sanity.option_true
             #case SMORuleCondition.REGIONAL_COINS:
 
 
@@ -113,9 +116,17 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                         rules_list.append(lambda state : state.has_all([data], self.player))
 
                     else:
-                        access_rule += f'state.has_all({data}, {self.player})'
-                        all_access_rules.add(f'state.has_all({data}, {self.player})')
-                        rules_list.append(lambda state : state.has_all(data, self.player))
+                        if isinstance(data[0], list):
+                            combos = len(data)
+                            for index in range(combos):
+                                access_rule += f'state.has_all({data[index]}, {self.player})'
+                                if index < combos - 1:
+                                    access_rule += " or "
+
+                        else:
+                            access_rule += f'state.has_all({data}, {self.player})'
+                            all_access_rules.add(f'state.has_all({data}, {self.player})')
+                            rules_list.append(lambda state : state.has_all(data, self.player))
 
             case SMORuleCondition.ITEM:
                 if isinstance(data, str):
@@ -128,8 +139,24 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                     all_access_rules.add(f'state.has_all({data}, {self.player})')
                     rules_list.append(lambda state: state.has_all(data, self.player))
 
+            case SMORuleCondition.ABILITY:
+                if is_active(self.options, condition):
+                    if isinstance(data, str):
+                        access_rule += f'state.has_all(["{data}"], {self.player})'
+
+                    else:
+                        if isinstance(data[0], list):
+                            combos = len(data)
+                            for index in range(combos):
+                                access_rule += f'state.has_all({data[index]}, {self.player})'
+                                if index < combos - 1:
+                                    access_rule += " or "
+
+                        else:
+                            access_rule += f'state.has_all({data}, {self.player})'
+
             case SMORuleCondition.LOCATION:
-                access_rule += f'state.can_reach(state, "{data}", "Location", {self.player})'
+                access_rule += f'state.can_reach_location(state, "{data}", {self.player})'
                 all_access_rules.add(f'state.can_reach(state, "{data}", "Location", {self.player})')
 
             case SMORuleCondition.MOONS:
@@ -147,61 +174,185 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                 all_access_rules.add(f'count_regionals(state, "{data[0]}", {self.player}) >= {data[1]}')
                 rules_list.append(lambda state: count_regionals(state, data[0], self.player) >= data[1])
 
-            case SMORuleCondition.TRICK_EASY:
-                rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_off)
-                if is_active(self.options, condition):
-                    if not data or data and is_active(self.options, data):
-                        access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_off'
-                        all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_off')
+            case SMORuleCondition.STORY_COMPLETE:
+                access_rule += f'can_complete_story(state, "{data}", {self.player})'
 
-                    else:
-                        operation = SMORuleOperation.NONE
+            case SMORuleCondition.TRICK_EASY:
+                # rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_off)
+                # if is_active(self.options, condition):
+                #     if not data or data and is_active(self.options, data):
+                #         access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_off'
+                #         all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_off')
+                #
+                #     else:
+                #         operation = SMORuleOperation.NONE
+                if not isinstance(data, list):
+                    break
+                if isinstance(data[0], list):
+                    # Add open parenthesis here
+                    combos = len(data)
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for combo in data:
+                            for item in capture_items:
+                                combo.remove(item)
+                    for index in range(combos):
+                        data[index].append(SMOItemData.easy_tricks)
+                        access_rule += f'state.has_all({data[index]}, {self.player})'
+                        if index < combos - 1:
+                            access_rule += " or "
+                    # add close parenthesis here
+
+                else:
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for item in capture_items:
+                            data.remove(item)
+                    data.append(SMOItemData.easy_tricks)
+                    access_rule += f'state.has_all({data}, {self.player})'
 
             case SMORuleCondition.TRICK_INTERMEDIATE:
-                rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_easy)
-                if is_active(self.options, condition):
-                    if not data or data and is_active(self.options, data):
-                        access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_easy'
-                        all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_easy')
-                    else:
-                        operation = SMORuleOperation.NONE
+                # rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_easy)
+                # if is_active(self.options, condition):
+                #     if not data or data and is_active(self.options, data):
+                #         access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_easy'
+                #         all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_easy')
+                #     else:
+                #         operation = SMORuleOperation.NONE
+                if not isinstance(data, list):
+                    break
+                if isinstance(data[0], list):
+                    combos = len(data)
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for combo in data:
+                            for item in capture_items:
+                                combo.remove(item)
+                    for index in range(combos):
+                        data[index].append(SMOItemData.intermediate_tricks)
+                        access_rule += f'state.has_all({data[index]}, {self.player})'
+                        if index < combos - 1:
+                            access_rule += " or "
+
+                else:
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for item in capture_items:
+                            data.remove(item)
+                    data.append(SMOItemData.intermediate_tricks)
+                    access_rule += f'state.has_all({data}, {self.player})'
 
             case SMORuleCondition.TRICK_HARD:
-                rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_intermediate)
-                if is_active(self.options, condition):
-                    if not data or data and is_active(self.options, data):
-                        access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_intermediate'
-                        all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_intermediate')
+                # rules_list.append(lambda state: state.multiworld.worlds[self.player].options.trick_logic.value > state.multiworld.worlds[self.player].options.trick_logic.option_intermediate)
+                # if is_active(self.options, condition):
+                #     if not data or data and is_active(self.options, data):
+                #         access_rule += f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_intermediate'
+                #         all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.trick_logic.value > state.multiworld.worlds[{self.player}].options.trick_logic.option_intermediate')
+                #
+                #     else:
+                #         operation = SMORuleOperation.NONE
+                if not isinstance(data, list):
+                    break
+                if isinstance(data[0], list):
+                    combos = len(data)
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for combo in data:
+                            for item in capture_items:
+                                combo.remove(item)
+                    for index in range(combos):
+                        data[index].append(SMOItemData.hard_tricks)
+                        access_rule += f'state.has_all({data[index]}, {self.player})'
+                        if index < combos - 1:
+                            access_rule += " or "
 
-                    else:
-                        operation = SMORuleOperation.NONE
+                else:
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for item in capture_items:
+                            data.remove(item)
+                    data.append(SMOItemData.hard_tricks)
+                    access_rule += f'state.has_all({data}, {self.player})'
 
             case SMORuleCondition.GLITCH_EASY:
-                rules_list.append(
-                    lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value > state.multiworld.worlds[
-                        self.player].options.glitch_logic.option_off)
-                if is_active(self.options, condition):
-                    access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_off'
-                    all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_off')
+                # rules_list.append(
+                #     lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value > state.multiworld.worlds[
+                #         self.player].options.glitch_logic.option_off)
+                # if is_active(self.options, condition):
+                #     access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_off'
+                #     all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_off')
+                if not isinstance(data, list):
+                    break
+                if isinstance(data[0], list):
+                    combos = len(data)
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for combo in data:
+                            for item in capture_items:
+                                combo.remove(item)
+                    for index in range(combos):
+                        data[index].append(SMOItemData.easy_glitches)
+                        access_rule += f'state.has_all({data[index]}, {self.player})'
+                        if index < combos - 1:
+                            access_rule += " or "
+
+                else:
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for item in capture_items:
+                            data.remove(item)
+                    data.append(SMOItemData.easy_glitches)
+                    access_rule += f'state.has_all({data}, {self.player})'
 
             case SMORuleCondition.GLITCH_INTERMEDIATE:
-                rules_list.append(
-                    lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value >
-                                  state.multiworld.worlds[
-                                      self.player].options.glitch_logic.option_easy)
-                if is_active(self.options, condition):
-                    access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_easy'
-                    all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_easy')
+                # rules_list.append(
+                #     lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value >
+                #                   state.multiworld.worlds[
+                #                       self.player].options.glitch_logic.option_easy)
+                # if is_active(self.options, condition):
+                #     access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_easy'
+                #     all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_easy')
+                if not isinstance(data, list):
+                    break
+                if isinstance(data[0], list):
+                    combos = len(data)
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for combo in data:
+                            for item in capture_items:
+                                combo.remove(item)
+                    for index in range(combos):
+                        data[index].append(SMOItemData.intermediate_glitches)
+                        access_rule += f'state.has_all({data[index]}, {self.player})'
+                        if index < combos - 1:
+                            access_rule += " or "
+
+                else:
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for item in capture_items:
+                            data.remove(item)
+                    data.append(SMOItemData.intermediate_glitches)
+                    access_rule += f'state.has_all({data}, {self.player})'
 
             case SMORuleCondition.GLITCH_HARD:
-                rules_list.append(
-                    lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value >
-                                  state.multiworld.worlds[
-                                      self.player].options.glitch_logic.option_intermediate)
-                if is_active(self.options, condition):
-                    access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_intermediate'
-                    all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_intermediate')
+                # rules_list.append(
+                #     lambda state: state.multiworld.worlds[self.player].options.glitch_logic.value >
+                #                   state.multiworld.worlds[
+                #                       self.player].options.glitch_logic.option_intermediate)
+                # if is_active(self.options, condition):
+                #     access_rule += f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_intermediate'
+                #     all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_intermediate')
+                if not isinstance(data, list):
+                    break
+                if isinstance(data[0], list):
+                    combos = len(data)
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for combo in data:
+                            for item in capture_items:
+                                combo.remove(item)
+                    for index in range(combos):
+                        data[index].append(SMOItemData.hard_glitches)
+                        access_rule += f'state.has_all({data[index]}, {self.player})'
+                        if index < combos - 1:
+                            access_rule += " or "
 
+                else:
+                    if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
+                        for item in capture_items:
+                            data.remove(item)
+                    data.append(SMOItemData.hard_glitches)
+                    access_rule += f'state.has_all({data}, {self.player})'
 
         condition_index += 1
         if operation in parenthesis_operators and (not parenthesis_open or not is_active(self.options, condition)):

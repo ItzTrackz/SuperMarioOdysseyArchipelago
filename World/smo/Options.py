@@ -149,6 +149,14 @@ class SMORegionalCoinSanity(Choice):
     default = 0
     display_name = "Randomize Regional Coins"
 
+class SMOAbilityRando(Toggle):
+    """
+        Add Abilities to the pool.
+        This includes all of Mario's default movement options.
+    """
+
+    display_name = "Randomize Abilities"
+
 class SMOEntranceRando(Choice):
     """
         Randomizes Sub-Area Loading Zones
@@ -174,6 +182,7 @@ class SMOOptions(PerGameCommonOptions):
     colors : RandomizeMoonColors
     counts : RandomizeMoonCount
     capture_sanity : CaptureSanity
+    ability_sanity : SMOAbilityRando
     entrance_randomization : SMOEntranceRando
     death_link : SMODeathLink
 
