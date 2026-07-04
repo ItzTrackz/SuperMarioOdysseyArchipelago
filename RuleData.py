@@ -81,12 +81,14 @@ kingdom_name_to_id = {
 moon_rule_data : dict[str, list] = {
     #region Cap Moons 
     SMOLocationData.frog_jumping_above_the_fog: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.frog, SMOItemData.cap_throw], SMORuleOperation.NONE),
     ],
     SMOLocationData.frog_jumping_from_the_top_deck: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.frog, SMOItemData.cap_throw], SMORuleOperation.NONE),
     ],
-    SMOLocationData.cap_kingdom_timer_challenge_1: [],
+    SMOLocationData.cap_kingdom_timer_challenge_1: [
+        (SMORuleCondition.ABILITY, [SMOItemData.cap_throw, SMOItemData.jump], SMORuleOperation.NONE),
+    ],
     SMOLocationData.shopping_in_bonneton: [],
     SMOLocationData.the_forgotten_treasure: [
         (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.NONE),
@@ -98,25 +100,30 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
     ],
     SMOLocationData.peach_in_the_cap_kingdom: [
-        (SMORuleCondition.REGION, SMORegion.mushroom_kingdom, SMORuleOperation.NONE)
+        (SMORuleCondition.REGION, [SMORegion.mushroom_kingdom, SMOItemData.jump], SMORuleOperation.NONE)
     ],
     SMOLocationData.found_with_cap_kingdom_art: [
-        (SMORuleCondition.REGION, SMORegion.moon_kingdom, SMORuleOperation.AND),
-        (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.NONE)
+        (SMORuleCondition.REGION, [SMORegion.moon_kingdom, SMOItemData.ground_pound], SMORuleOperation.NONE)
     ],
     #endregion
 
     #region Cap Moons Top of Top Hat Tower
     SMOLocationData.good_evening_captain_toad: [],
-    SMOLocationData.cap_kingdom_regular_cup: [],
+    SMOLocationData.cap_kingdom_regular_cup: [
+        (SMORuleCondition.ABILITY, [SMOItemData.jump], SMORuleOperation.NONE),
+    ],
     #endregion
 
     #region Cap Moons Moon Rock
-    SMOLocationData.next_to_glasses_bridge: [],
+    SMOLocationData.next_to_glasses_bridge: [
+        (SMORuleCondition.ABILITY, [SMOItemData.jump], SMORuleOperation.NONE),
+    ],
     SMOLocationData.danger_sign: [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
     ],
-    SMOLocationData.under_the_big_ones_brim: [],
+    SMOLocationData.under_the_big_ones_brim: [
+        (SMORuleCondition.ABILITY, [SMOItemData.jump], SMORuleOperation.NONE),
+    ],
     SMOLocationData.fly_to_the_edge_of_the_fog: [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.OR),
         (SMORuleCondition.TRICK_INTERMEDIATE, [SMORuleCondition.ABILITY], SMORuleOperation.PARENTHESIS_AND),
@@ -459,7 +466,7 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.walking_the_desert: [],
     #endregion
 
-    #region Sand Kingdom Top of Top hat Tower Post Peace
+    #region Sand Kingdom Top of Inverted Pyramid Post Peace
     SMOLocationData.the_lurker_under_the_stone: [
         (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.NONE)
     ],
@@ -584,8 +591,127 @@ moon_rule_data : dict[str, list] = {
     ],
     SMOLocationData.freezing_waterway_hidden_room: [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE)
-    ]
+    ],
     #endregion
+
+    #region Lake Kingdom Odyssey
+    SMOLocationData.on_the_lakeshore: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.taking_notes_dive_and_swim: [],
+    #endregion
+
+    #region Lake Kingdom Main
+    SMOLocationData.dorrie_back_rider: [],
+    SMOLocationData.cheep_cheep_crossing: [],
+    SMOLocationData.whats_in_the_box: [],
+    SMOLocationData.from_the_broken_pillar: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.OR),
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.moon_shards_in_the_lake: [],
+    SMOLocationData.taking_notes_in_the_cliffside: [],
+    SMOLocationData.our_secret_little_room: [],
+    SMOLocationData.lets_go_swimming_captain_toad: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.OR),
+        (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.shopping_in_lake_lamode: [],
+    SMOLocationData.i_feel_underdressed: [],
+    SMOLocationData.secret_path_to_lake_lamode: [],
+    SMOLocationData.lake_fishing: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.lakitu], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.i_met_a_lake_cheep_cheep: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.broodals_over_the_lake: [],
+    SMOLocationData.end_of_the_hidden_passage: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.treasure_in_the_spiky_waterway: [],
+    SMOLocationData.lake_gardening_spiky_passage_seed: [],
+    #endregion
+
+    #region Lake Kingdom Moon Rock
+    SMOLocationData.behind_the_floodgate: [],
+    SMOLocationData.high_flying_leap: [],
+    SMOLocationData.deep_deep_down: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.OR),
+        (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.rooftop_of_the_water_plaza: [
+        (SMORuleCondition.ABILITY, [SMOItemData.climb, SMOItemData.ground_pound], SMORuleOperation.OR)
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.spin, SMOItemData.ledge_grab, SMOItemData.ground_pound], [SMOItemData.spin, SMOItemData.ledge_grab, SMOItemData.ground_pound],
+        [SMOItemData.backflip, SMOItemData.ledge_grab , SMOItemData.ground_pound], [SMOItemData.ground_pound_jump, SMOItemData.ledge_grab, SMOItemData.ground_pound], 
+        [SMOItemData.triple_jump, SMOItemData.ground_pound], [SMOItemData.dive, SMOItemData.ground_pound], [SMOItemData.vault, SMOItemData.ground_pound], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, [SMOItemData.ground_pound], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.bird_traveling_over_the_lake: [],
+    SMOLocationData.love_by_the_lake: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regular_cup: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep, SMOItemData.zipper], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.dive, SMOItemData.vault, SMOItemData.wall_jump], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_master_cup: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep, SMOItemData.zipper], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.dive, SMOItemData.vault, SMOItemData.wall_jump], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.taxi_flying_through_lake_lamode: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.binoculars], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.that_trendy_pirate_look: [],
+    SMOLocationData.space_is_in_right_now: [],
+    SMOLocationData.that_old_west_style: [],
+    SMOLocationData.peach_in_the_lake_kingdom: [],
+    SMOLocationData.found_with_lake_kingdom_art: [
+        (SMORuleCondition.ABILITY, [SMOItemData.climb, SMOItemData.ground_pound], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_timer_challenge_1: [],
+    SMOLocationData.lake_kingdom_timer_challenge_2: [
+        (SMORuleCondition.ABILITY, [SMOItemData.wall_jump, SMOItemData.dive], [SMOItemData.spin, SMOItemData.ledge_grab], [SMOItemData.ground_pound_jump, SMOItemData.ledge_grab]
+         [SMOItemData.ground_pound_jump, SMOItemData.dive], [SMOItemData.side_flip, SMOItemData.ledge_grab], [SMOItemData.side_flip, SMOItemData.dive], [SMOItemData.triple_jump, SMOItemData.ledge_grab], 
+         [SMOItemData.triple_jump, SMOItemData.dive], SMORuleOperation.NONE)
+    ],
+    #endregion
+
+    #region Lake Kingdom Poison Swamp
+    SMOLocationData.waves_of_poison_hoppin_over: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.waves_of_poison_hop_to_it: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.NONE)
+    ],
+    #endregion
+
+    #region Lake Kingdom Zipper Chasm
+    SMOLocationData.unzip_the_chasm: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.dive, SMOItemData.vault], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.super_secret_zipper: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.dive, SMOItemData.vault], SMORuleOperation.NONE)
+    ],
+    #endregion
+
+    #region Lake Kingdom Bouncy Flowers
+    SMOLocationData.jump_grab_cling_and_climb: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ledge_grab], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.jump_grab_and_climb_some_more: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ledge_grab], SMORuleOperation.NONE)
+    ],
+    #endregion
+
+    #region Lake Kingdom Arch Repair
+    SMOLocationData.a_successful_repair_job: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.puzzle_part_lake_kingdom], SMORuleOperation.NONE)
+    ],
+    #endregion
+
 
 }
 
@@ -1206,5 +1332,132 @@ regional_rule_data : dict[str, list] = {
     SMOLocationData.jaxi_ruins_regional_coin_7: [],
     SMOLocationData.jaxi_ruins_regional_coin_8: [], 
     #endregion
+
+    #region Lake Kingdom Start Regional Coins
+    SMOLocationData.lake_kingdom_regional_coin_group_4: [],
+    SMOLocationData.lake_kingdom_regional_coin_12: [],
+    SMOLocationData.lake_kingdom_regional_coin_13: [],
+    SMOLocationData.lake_kingdom_regional_coin_14: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_6: [],
+    SMOLocationData.lake_kingdom_regional_coin_18: [],
+    SMOLocationData.lake_kingdom_regional_coin_19: [],
+    SMOLocationData.lake_kingdom_regional_coin_20: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_2: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_5: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_6: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_7: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_group_5: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_15: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_16: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_17: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    #endregion
+
+    #region Lake Kingdom Main Regional Coins
+    SMOLocationData.lake_kingdom_regional_coin_group_1: [],
+    SMOLocationData.lake_kingdom_regional_coin_1: [],
+    SMOLocationData.lake_kingdom_regional_coin_2: [],
+    SMOLocationData.lake_kingdom_regional_coin_3: [],
+    SMOLocationData.lake_kingdom_regional_coin_4: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_3: [],
+    SMOLocationData.lake_kingdom_regional_coin_8: [],
+    SMOLocationData.lake_kingdom_regional_coin_9: [],
+    SMOLocationData.lake_kingdom_regional_coin_10: [],
+    SMOLocationData.lake_kingdom_regional_coin_11: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_7: [],
+    SMOLocationData.lake_kingdom_regional_coin_21: [],
+    SMOLocationData.lake_kingdom_regional_coin_22: [],
+    SMOLocationData.lake_kingdom_regional_coin_23: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_8: [],
+    SMOLocationData.lake_kingdom_regional_coin_24: [],
+    SMOLocationData.lake_kingdom_regional_coin_25: [],
+    SMOLocationData.lake_kingdom_regional_coin_26: [],
+    SMOLocationData.lake_kingdom_regional_coin_27: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_9: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_28: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_29: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_30: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_31: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_group_10: [],
+    SMOLocationData.lake_kingdom_regional_coin_32: [],
+    SMOLocationData.lake_kingdom_regional_coin_33: [],
+    SMOLocationData.lake_kingdom_regional_coin_34: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_11: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.triple_jump, SMOItemData.vault], [SMOItemData.ground_pound_jump, SMOItemData.vault], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, [SMOItemData.side_flip, SMOItemData.vault], [SMOItemData.backflip, SMOItemData.vault], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_35: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.triple_jump, SMOItemData.vault], [SMOItemData.ground_pound_jump, SMOItemData.vault], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, [SMOItemData.side_flip, SMOItemData.vault], [SMOItemData.backflip, SMOItemData.vault], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_36: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.triple_jump, SMOItemData.vault], [SMOItemData.ground_pound_jump, SMOItemData.vault], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, [SMOItemData.side_flip, SMOItemData.vault], [SMOItemData.backflip, SMOItemData.vault], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_37: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.triple_jump, SMOItemData.vault], [SMOItemData.ground_pound_jump, SMOItemData.vault], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, [SMOItemData.side_flip, SMOItemData.vault], [SMOItemData.backflip, SMOItemData.vault], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_38: [
+        (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_EASY, [SMOItemData.triple_jump, SMOItemData.vault], [SMOItemData.ground_pound_jump, SMOItemData.vault], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, [SMOItemData.side_flip, SMOItemData.vault], [SMOItemData.backflip, SMOItemData.vault], SMORuleOperation.NONE),
+    ],
+    SMOLocationData.lake_kingdom_regional_coin_group_12: [],
+    SMOLocationData.lake_kingdom_regional_coin_39: [],
+    SMOLocationData.lake_kingdom_regional_coin_40: [],
+    SMOLocationData.lake_kingdom_regional_coin_41: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_13: [],
+    SMOLocationData.lake_kingdom_regional_coin_42: [],
+    SMOLocationData.lake_kingdom_regional_coin_43: [],
+    SMOLocationData.lake_kingdom_regional_coin_44: [],
+    SMOLocationData.lake_kingdom_regional_coin_group_14: [],
+    SMOLocationData.lake_kingdom_regional_coin_45: [],
+    SMOLocationData.lake_kingdom_regional_coin_46: [],
+    SMOLocationData.lake_kingdom_regional_coin_47: [],
+    #endregion
+
+    #region Bouncy Flowers Regional Coins
+    SMOLocationData.bouncy_flowers_regional_coin_group_1: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ledge_grab], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.bouncy_flowers_regional_coin_1: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ledge_grab], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.bouncy_flowers_regional_coin_2: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ledge_grab], SMORuleOperation.NONE)
+    ],
+    SMOLocationData.bouncy_flowers_regional_coin_3: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ledge_grab], SMORuleOperation.NONE)
+    ],
 }
 
