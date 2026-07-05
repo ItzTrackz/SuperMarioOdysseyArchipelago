@@ -81,6 +81,16 @@ kingdom_name_to_id = {
     SMOKingdoms.DARKER: 16,
 }
 
+glitches = {
+    SMOItemData.surface_clip: [SMOItemData.cap_throw, SMOItemData.ground_pound, SMOItemData.roll],
+    SMOItemData.roll_cancel_clip: [SMOItemData.jump, SMOItemData.cap_throw, SMOItemData.ground_pound, SMOItemData.roll],
+
+}
+
+tricks = {
+
+}
+
 moon_rule_data : dict[str, list] = {
     #region Cap Moons
     SMOLocationData.frog_jumping_above_the_fog: [
