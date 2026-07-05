@@ -281,6 +281,31 @@ regional_coin_types = {
     SMOItemData.mushroom_kingdom_regional_group: 64,
 }
 
+abilities = {
+    SMOItemData.jump: 65,
+    SMOItemData.double_jump: 66,
+    SMOItemData.triple_jump: 67,
+    SMOItemData.side_flip: 68,
+    SMOItemData.back_flip: 69,
+    SMOItemData.long_jump: 70,
+    SMOItemData.wall_jump: 71,
+    SMOItemData.spin: 72,
+    SMOItemData.spin_jump: 73,
+    SMOItemData.ground_pound: 74,
+    SMOItemData.ground_pound_jump: 75,
+    SMOItemData.cap_throw: 76,
+    SMOItemData.up_throw: 77,
+    SMOItemData.down_throw: 78,
+    SMOItemData.spin_throw: 79,
+    SMOItemData.crouch: 80,
+    SMOItemData.roll: 81,
+    SMOItemData.roll_boost: 82,
+    SMOItemData.vault: 83,
+    SMOItemData.dive: 84,
+    SMOItemData.climb: 85,
+    SMOItemData.ledge_grab: 86,
+}
+
 world_list = [
     "Cap",
     "Cascade",
@@ -1215,6 +1240,7 @@ location_hint_list = [
 item_table = {
     **moon_item_table,
     **loc_Captures,
+    **abilities,
     # **world_items_table,
     **flag_items,
     **filler_item_table,
