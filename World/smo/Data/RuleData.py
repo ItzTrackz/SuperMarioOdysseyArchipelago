@@ -110,7 +110,9 @@ moon_rule_data : dict[str, list] = {
     SMOLocationData.secrets_of_the_frog_pond: [
         (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.NONE),
     ],
-    SMOLocationData.the_forgotten_treasure: [],
+    SMOLocationData.the_forgotten_treasure: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.NONE),
+    ],
     SMOLocationData.taxi_flying_through_bonneton: [
         (SMORuleCondition.CAPTURE, [SMOItemData.binoculars], SMORuleOperation.NONE),
     ],
@@ -118,7 +120,9 @@ moon_rule_data : dict[str, list] = {
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
     ],
     SMOLocationData.cap_kingdom_regular_cup: [],
-    SMOLocationData.peach_in_the_cap_kingdom: [],
+    SMOLocationData.peach_in_the_cap_kingdom: [
+        (SMORuleCondition.REGION, [SMORegion.mushroom_kingdom], SMORuleOperation.NONE)
+    ],
     SMOLocationData.found_with_cap_kingdom_art: [],
     SMOLocationData.next_to_glasses_bridge: [],
     SMOLocationData.danger_sign: [
@@ -126,15 +130,20 @@ moon_rule_data : dict[str, list] = {
     ],
     SMOLocationData.under_the_big_ones_brim: [],
     SMOLocationData.fly_to_the_edge_of_the_fog: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, [SMOItemData.dive], SMORuleOperation.NONE),
     ],
     SMOLocationData.spin_the_hat_get_a_prize: [],
     SMOLocationData.hidden_in_a_sunken_hat: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, [[SMOItemData.dive], [SMOItemData.vault]], SMORuleOperation.NONE),
     ],
-    SMOLocationData.fog_shrouded_platform: [],
+    SMOLocationData.fog_shrouded_platform: [
+        (SMORuleCondition.ABILITY, [SMOItemData.ground_pound], SMORuleOperation.NONE),
+    ],
     SMOLocationData.bird_traveling_in_the_fog: [
-        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE),
+        (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.OR),
+        (SMORuleCondition.TRICK_INTERMEDIATE, None, SMORuleOperation.NONE),
     ],
     SMOLocationData.caught_hopping_near_the_ship: [],
     SMOLocationData.taking_notes_in_the_fog: [
