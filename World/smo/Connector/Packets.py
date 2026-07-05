@@ -54,6 +54,7 @@ class ItemType(Enum):
     MoonRock = 6
     HealthUpgrade = 7
     WalletUpgrade = 8
+    Ability = 9
 
 class CappyMessageType(Enum):
     Connect = 0
@@ -274,13 +275,14 @@ class SlotDataPacket:
     goal : int
     regionals : bool
     captures : bool
+    abilities : bool
     entrance_randomization : bool
-    SIZE : short = 30
+    SIZE : short = 31
 
     def __init__(self, packet_bytes : bytearray = None, cascade : int = None, sand : int = None, wooded : int = None,
                  lake : int = None, lost : int = None, metro : int = None, seaside : int = None, snow : int = None,
                  luncheon : int = None, ruined : int = None, bowser : int = None, dark : int = None, darker : int = None,
-                 goal: int = None, regionals : bool = None, captures : bool = None, entrance_randomization : bool = None):
+                 goal: int = None, regionals : bool = None, captures : bool = None, abilities : bool = None, entrance_randomization : bool = None):
         if packet_bytes:
             self.deserialize(packet_bytes)
         else:
@@ -300,6 +302,7 @@ class SlotDataPacket:
             self.goal = goal
             self.regionals = regionals
             self.captures = captures
+            self.abilities = abilities
             self.entrance_randomization = entrance_randomization
 
     def serialize(self) -> bytearray:
@@ -320,6 +323,7 @@ class SlotDataPacket:
         data += self.goal.to_bytes(1, "little")
         data += self.regionals.to_bytes(1, "little")
         data += self.captures.to_bytes(1, "little")
+        data += self.abilities.to_bytes(1, "little")
         data += self.entrance_randomization.to_bytes(1, "little")
         if len(data) != self.SIZE:
             raise f"CountsPacket failed to serialize. bytearray is incorrect size {self.SIZE}."
@@ -360,6 +364,8 @@ class SlotDataPacket:
         self.regionals = bool.from_bytes(data[offset:offset + 1], "little")
         offset += 1
         self.captures = bool.from_bytes(data[offset:offset + 1], "little")
+        offset += 1
+        self.abilities = bool.from_bytes(data[offset:offset + 1], "little")
         offset += 1
         self.entrance_randomization = bool.from_bytes(data[offset:offset + 1], "little")
 
@@ -773,7 +779,7 @@ class Packet:
                         lake=packet_data[3], lost =packet_data[4], metro=packet_data[5], seaside=packet_data[6],
                         snow=packet_data[7], luncheon=packet_data[8], ruined=packet_data[9], bowser=packet_data[10],
                         dark=packet_data[11], darker=packet_data[12], goal=packet_data[13], regionals=packet_data[14], captures=packet_data[15],
-                                                 entrance_randomization=packet_data[16])
+                                                abilities=packet_data[16], entrance_randomization=packet_data[17])
                 case PacketType.ArchipelagoChat:
                     self.packet = ChatMessagePacket(guid=packet_data[0], message_type=packet_data[1], message=packet_data[2])
                 case PacketType.Check:
