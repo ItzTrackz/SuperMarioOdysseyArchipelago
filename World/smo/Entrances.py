@@ -2120,15 +2120,15 @@ def create_entrances(self):
         (SMORegion.night_metro_kingdom, {
             SMOEntranceData.city_hall: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.OR),
-                (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE)
+                (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.NONE)
             ])),
             SMOEntranceData.metro_kingdom_shop: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.OR),
-                (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE)
+                (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.NONE)
             ])),
             SMOEntranceData.metro_kingdom_shop_regional: (create_access_rule(self, [
                 (SMORuleCondition.CAPTURE, SMOItemData.spark_pylon, SMORuleOperation.OR),
-                (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE)
+                (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.NONE)
             ])),
             SMOEntranceData.private_room: (create_access_rule(self, [
                 (SMORuleCondition.REGION,SMORegion.day_metro_kingdom, SMORuleOperation.NONE)
@@ -2339,10 +2339,10 @@ def create_entrances(self):
         (SMORegion.moon_kingdom, {
             SMOEntranceData.inside_the_church: None,
             SMOEntranceData.moon_cave: None,
+            SMOEntranceData.moon_kingdom_shop: None,
         }),
         (SMORegion.moon_kingdom_peace, {
             SMOEntranceData.moon_sphynx_vault: None,
-            SMOEntranceData.moon_kingdom_shop: None,
         }),
         (SMORegion.moon_kingdom_moon_rock, {
             SMOEntranceData.giant_swings: None,

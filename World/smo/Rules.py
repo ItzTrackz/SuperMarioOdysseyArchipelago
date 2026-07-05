@@ -109,24 +109,24 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                 rules_list.append(lambda state: state.can_reach_entrance(f"{data[0]} {data[1]} {data[2]}", self.player))
 
             case SMORuleCondition.CAPTURE:
-                if is_active(self.options, condition):
-                    if isinstance(data, str):
-                        access_rule += f'state.has_all(["{data}"], {self.player})'
-                        all_access_rules.add(f'state.has_all(["{data}"], {self.player})')
-                        rules_list.append(lambda state : state.has_all([data], self.player))
+                # if is_active(self.options, condition):
+                if isinstance(data, str):
+                    access_rule += f'state.has_all(["{data}"], {self.player})'
+                    all_access_rules.add(f'state.has_all(["{data}"], {self.player})')
+                    rules_list.append(lambda state : state.has_all([data], self.player))
+
+                else:
+                    if isinstance(data[0], list):
+                        combos = len(data)
+                        for index in range(combos):
+                            access_rule += f'state.has_all({data[index]}, {self.player})'
+                            if index < combos - 1:
+                                access_rule += " or "
 
                     else:
-                        if isinstance(data[0], list):
-                            combos = len(data)
-                            for index in range(combos):
-                                access_rule += f'state.has_all({data[index]}, {self.player})'
-                                if index < combos - 1:
-                                    access_rule += " or "
-
-                        else:
-                            access_rule += f'state.has_all({data}, {self.player})'
-                            all_access_rules.add(f'state.has_all({data}, {self.player})')
-                            rules_list.append(lambda state : state.has_all(data, self.player))
+                        access_rule += f'state.has_all({data}, {self.player})'
+                        all_access_rules.add(f'state.has_all({data}, {self.player})')
+                        rules_list.append(lambda state : state.has_all(data, self.player))
 
             case SMORuleCondition.ITEM:
                 if isinstance(data, str):
@@ -140,20 +140,20 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                     rules_list.append(lambda state: state.has_all(data, self.player))
 
             case SMORuleCondition.ABILITY:
-                if is_active(self.options, condition):
-                    if isinstance(data, str):
-                        access_rule += f'state.has_all(["{data}"], {self.player})'
+                # if is_active(self.options, condition):
+                if isinstance(data, str):
+                    access_rule += f'state.has_all(["{data}"], {self.player})'
+
+                else:
+                    if isinstance(data[0], list):
+                        combos = len(data)
+                        for index in range(combos):
+                            access_rule += f'state.has_all({data[index]}, {self.player})'
+                            if index < combos - 1:
+                                access_rule += " or "
 
                     else:
-                        if isinstance(data[0], list):
-                            combos = len(data)
-                            for index in range(combos):
-                                access_rule += f'state.has_all({data[index]}, {self.player})'
-                                if index < combos - 1:
-                                    access_rule += " or "
-
-                        else:
-                            access_rule += f'state.has_all({data}, {self.player})'
+                        access_rule += f'state.has_all({data}, {self.player})'
 
             case SMORuleCondition.LOCATION:
                 access_rule += f'state.can_reach_location(state, "{data}", {self.player})'
@@ -188,7 +188,7 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                 #         operation = SMORuleOperation.NONE
                 if not isinstance(data, list):
                     break
-                if isinstance(data[0], list):
+                if len(data) > 0 and  isinstance(data[0], list):
                     # Add open parenthesis here
                     combos = len(data)
                     if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
@@ -219,7 +219,7 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                 #         operation = SMORuleOperation.NONE
                 if not isinstance(data, list):
                     break
-                if isinstance(data[0], list):
+                if len(data) > 0 and isinstance(data[0], list):
                     combos = len(data)
                     if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
                         for combo in data:
@@ -249,7 +249,7 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                 #         operation = SMORuleOperation.NONE
                 if not isinstance(data, list):
                     break
-                if isinstance(data[0], list):
+                if len(data) > 0 and isinstance(data[0], list):
                     combos = len(data)
                     if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
                         for combo in data:
@@ -277,7 +277,7 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                 #     all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_off')
                 if not isinstance(data, list):
                     break
-                if isinstance(data[0], list):
+                if len(data) > 0 and isinstance(data[0], list):
                     combos = len(data)
                     if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
                         for combo in data:
@@ -306,7 +306,7 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                 #     all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_easy')
                 if not isinstance(data, list):
                     break
-                if isinstance(data[0], list):
+                if len(data) > 0 and isinstance(data[0], list):
                     combos = len(data)
                     if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
                         for combo in data:
@@ -335,7 +335,7 @@ def create_access_rule(self: "SMOWorld", conditions: list[tuple[SMORuleCondition
                 #     all_access_rules.add(f'state.multiworld.worlds[{self.player}].options.glitch_logic.value > state.multiworld.worlds[{self.player}].options.glitch_logic.option_intermediate')
                 if not isinstance(data, list):
                     break
-                if isinstance(data[0], list):
+                if len(data) > 0 and isinstance(data[0], list):
                     combos = len(data)
                     if self.options.capture_sanity.value == self.options.capture_sanity.option_false:
                         for combo in data:
@@ -645,7 +645,7 @@ def set_rules(self, options : SMOOptions) -> None:
                  create_access_rule(self, [
                      (SMORuleCondition.CAPTURE, SMOItemData.big_chain_chomp, SMORuleOperation.OR),
                      (SMORuleCondition.CAPTURE, SMOItemData.t_rex, SMORuleOperation.OR),
-                     (SMORuleCondition.TRICK_EASY, SMORuleCondition.CAPTURE, SMORuleOperation.NONE),
+                     (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.NONE),
                  ]))
         #set_rule(self.multiworld.get_location("Our First Power Moon", self.player),
         #         lambda state: state.has("Chain Chomp", self.player) or state.has(SMOItemData.t_rex, self.player))
@@ -661,11 +661,11 @@ def set_rules(self, options : SMOOptions) -> None:
     # New Rules
     set_rule(self.get_location(SMOLocationData.searching_the_frog_pond), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.secrets_of_the_frog_pond), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.skimming_the_poison_tide), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE)
@@ -693,19 +693,19 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.the_invisible_maze), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.moe_eye], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.skull_sign_in_the_transparent_maze), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.moe_eye], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.the_bullet_bill_maze_break_through), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.the_bullet_bill_maze_side_path), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
 
     set_rule(self.get_location(SMOLocationData.underground_treasure_chest), create_access_rule(self, [
@@ -713,18 +713,18 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.goomba_tower_assembly), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_INTERMEDIATE, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.the_hole_in_the_desert), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill, SMOItemData.knucklotecs_fist], SMORuleOperation.NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.where_the_transparent_platforms_end), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.moe_eye], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_HARD, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_HARD, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.jump_onto_the_transparent_lift), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.moe_eye], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_INTERMEDIATE, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.through_the_freezing_waterway), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE)
@@ -737,19 +737,19 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.unzip_the_chasm), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.super_secret_zipper), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.waves_of_poison_hoppin_over), create_access_rule(self, [
     (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_INTERMEDIATE, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.waves_of_poison_hop_to_it), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_INTERMEDIATE, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     # set_rule(self.get_location(SMOLocationData.flower_road_run), create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE)
@@ -759,7 +759,7 @@ def set_rules(self, options : SMOOptions) -> None:
     # ]))
     set_rule(self.get_location(SMOLocationData.elevator_escalation), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.elevator_blind_spot), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.NONE)
@@ -769,7 +769,7 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.nut_hidden_in_the_fog), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.walking_on_clouds), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.NONE)
@@ -791,7 +791,7 @@ def set_rules(self, options : SMOOptions) -> None:
     # ]))
     set_rule(self.get_location(SMOLocationData.below_breakdown_road), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.banzai_bill], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.picture_match_basically_a_goomba), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_goomba], SMORuleOperation.NONE)
@@ -801,11 +801,11 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.stretch_and_traverse_the_jungle), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.aglow_in_the_jungle), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     # set_rule(self.get_location(SMOLocationData.chasing_klepto), create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
@@ -825,7 +825,7 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.moon_shards_under_siege), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.GLITCH_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.GLITCH_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.sharpshooting_under_siege), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.NONE)
@@ -835,11 +835,11 @@ def set_rules(self, options : SMOOptions) -> None:
     # ]))
     set_rule(self.get_location(SMOLocationData.one_mans_trash), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.swinging_scaffolding_jump), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.hammer_bro], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.swinging_scaffolding_break), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.hammer_bro], SMORuleOperation.NONE)
@@ -851,7 +851,7 @@ def set_rules(self, options : SMOOptions) -> None:
         ]))
     set_rule(self.get_location(SMOLocationData.looking_back_in_the_dark_waterway), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.fly_through_the_narrow_valley), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE)
@@ -861,11 +861,11 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.hurry_and_stretch), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.stretch_on_the_side_path), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.aim_poke ), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.pokio], SMORuleOperation.NONE)
@@ -890,7 +890,7 @@ def set_rules(self, options : SMOOptions) -> None:
     # ]))
     set_rule(self.get_location(SMOLocationData.ice_dodging_goomba_stack), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.GLITCH_HARD, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.GLITCH_HARD, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     # set_rule(self.get_location(SMOLocationData.the_ice_wall_barrier), create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
@@ -900,11 +900,11 @@ def set_rules(self, options : SMOOptions) -> None:
     # ]))
     set_rule(self.get_location(SMOLocationData.the_gusty_barrier), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.ty_foo], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.atop_a_blustery_arch), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.ty_foo], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     # set_rule(self.get_location(SMOLocationData.the_snowy_mountain_barrier), create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
@@ -945,7 +945,7 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.climb_the_cheese_rocks), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.hammer_bro], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     # TEST CAPTURELESS
     set_rule(self.get_location(SMOLocationData.magma_narrow_path), create_access_rule(self, [
@@ -958,7 +958,7 @@ def set_rules(self, options : SMOOptions) -> None:
     set_rule(self.get_location(SMOLocationData.stepping_over_the_gears_and_lanterns_on_the_gear_steps),
              create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.fire_bro], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.TRICK_EASY, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
              ]))
     set_rule(self.get_location(SMOLocationData.lanterns_on_the_gear_steps), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.fire_bro], SMORuleOperation.NONE)
@@ -996,7 +996,7 @@ def set_rules(self, options : SMOOptions) -> None:
     ]))
     set_rule(self.get_location(SMOLocationData.under_the_bowser_statue), create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bowser_statue], SMORuleOperation.PARENTHESIS_OR),
-        (SMORuleCondition.GLITCH_INTERMEDIATE, None, SMORuleOperation.PARENTHESIS_NONE)
+        (SMORuleCondition.GLITCH_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     set_rule(self.get_location(SMOLocationData.in_a_hole_in_the_magma), create_access_rule(self, [
         (SMORuleCondition.CAPTURE,
@@ -1029,14 +1029,14 @@ def set_rules(self, options : SMOOptions) -> None:
           SMOEntranceDataType.EXIT], SMORuleOperation.NONE)
     ]))
 
-    set_rule(self.get_location(SMOLocationData.up_in_the_rafters), create_access_rule(self, [
-        (SMORuleCondition.REGION, SMORegion.odyssey_complete, SMORuleOperation.NONE)
-    ]))
+    # set_rule(self.get_location(SMOLocationData.up_in_the_rafters), create_access_rule(self, [
+    #     (SMORuleCondition.REGION, SMORegion.odyssey_complete, SMORuleOperation.NONE)
+    # ]))
 
-    set_rule(self.get_location(SMOLocationData.beat_the_game), create_access_rule(self, [
-        (SMORuleCondition.CAPTURE, [SMOItemData.bowser], SMORuleOperation.AND),
-        (SMORuleCondition.REGION, SMORegion.odyssey_complete, SMORuleOperation.NONE),
-    ]))
+    # set_rule(self.get_location(SMOLocationData.beat_the_game), create_access_rule(self, [
+    #     (SMORuleCondition.CAPTURE, [SMOItemData.bowser], SMORuleOperation.AND),
+    #     (SMORuleCondition.REGION, SMORegion.odyssey_complete, SMORuleOperation.NONE),
+    # ]))
 
     if len(self.get_region(SMORegion.mushroom_picture_match).locations) > 0:
         set_rule(self.get_location(SMOLocationData.picture_match_basically_mario), create_access_rule(self, [
@@ -1075,4 +1075,4 @@ def set_rules(self, options : SMOOptions) -> None:
 # are connected and placed as desired
 
     from Utils import visualize_regions
-    visualize_regions(self.get_region("Menu"), "my_world.puml")
+    visualize_regions(self.get_region(SMORegion.defunct_odyssey), "my_world.puml")
