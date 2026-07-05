@@ -1413,6 +1413,31 @@ inverse_capture_items = {
     4076: SMOItemData.yoshi,
 }
 
+inverse_abilities = {
+    65: SMOItemData.jump,
+    66: SMOItemData.double_jump,
+    67: SMOItemData.triple_jump,
+    68: SMOItemData.side_flip,
+    69: SMOItemData.back_flip,
+    70: SMOItemData.long_jump,
+    71: SMOItemData.wall_jump,
+    72: SMOItemData.spin,
+    73: SMOItemData.spin_jump,
+    74: SMOItemData.ground_pound,
+    75: SMOItemData.ground_pound_jump,
+    76: SMOItemData.cap_throw,
+    77: SMOItemData.up_throw,
+    78: SMOItemData.down_throw,
+    79: SMOItemData.spin_throw,
+    80: SMOItemData.crouch,
+    81: SMOItemData.roll,
+    82: SMOItemData.roll_boost,
+    83: SMOItemData.vault,
+    84: SMOItemData.dive,
+    85: SMOItemData.climb,
+    86: SMOItemData.ledge_grab,
+}
+
 inverse_filler_items = {
     9994: "50 Coins",
     9995: "100 Coins",
@@ -1432,6 +1457,7 @@ id_to_name = {
     **inverse_flag_items,
     **inverse_regional_coin_items,
     **inverse_capture_items,
+    **inverse_abilities,
     **inverse_filler_items
 }
 
@@ -2560,6 +2586,10 @@ def get_item_type(item : int) -> int:
     elif item < 65:
         return 4
 
+    # Abilities
+    elif item < 87:
+        return 9
+
     # Caps
     elif item < 2539 or item == 2577 or item == 2581:
         return 1
@@ -2610,6 +2640,9 @@ def get_in_game_id(player: "SMOPlayer", item_type: ItemType, item_id : int) -> i
         case ItemType.Sticker:
             in_game_id = item_id - 2582
 
+        case ItemType.Ability:
+            in_game_id = item_id - 65
+
         case ItemType.Coins:
             in_game_id = item_id
 
@@ -2642,6 +2675,9 @@ def get_location_id(item_type: ItemType, in_game_location: int):
 
         case ItemType.Sticker:
             location_id = in_game_location + 2582
+
+        case ItemType.Ability:
+            location_id = in_game_location + 65
 
     return location_id
 
