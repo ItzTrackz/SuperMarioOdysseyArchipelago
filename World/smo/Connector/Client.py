@@ -275,19 +275,24 @@ class SMOContext(CommonContext):
         :return:
         """
         # print(self.slot_data)
+        slot_data = []
+        for kingdom in kingdom_name_to_id:
+            if kingdom in self.slot_data["counts"]:
+                slot_data.append(self.slot_data["counts"][kingdom])
         self.proxy_msgs.append(Packet(guid=self.proxy_guid, packet_type=PacketType.SlotData,
-              packet_data=[self.slot_data["counts"]["cascade"],
-                           self.slot_data["counts"]["sand"],
-                           self.slot_data["counts"]["wooded"], self.slot_data["counts"]["lake"],
-                           self.slot_data["counts"]["lost"], self.slot_data["counts"]["metro"],
-                           self.slot_data["counts"]["seaside"],
-                           self.slot_data["counts"]["snow"],
-                           self.slot_data["counts"]["luncheon"],
-                           self.slot_data["counts"]["ruined"],
-                           self.slot_data["counts"]["bowser"], self.slot_data["counts"]["dark"],
-                           self.slot_data["counts"]["darker"],
+              packet_data=[self.slot_data["counts"][SMOKingdoms.CASCADE],
+                           self.slot_data["counts"][SMOKingdoms.SAND],
+                           self.slot_data["counts"][SMOKingdoms.WOODED], self.slot_data["counts"][SMOKingdoms.LAKE],
+                           self.slot_data["counts"][SMOKingdoms.LOST], self.slot_data["counts"][SMOKingdoms.METRO],
+                           self.slot_data["counts"][SMOKingdoms.SEASIDE],
+                           self.slot_data["counts"][SMOKingdoms.SNOW],
+                           self.slot_data["counts"][SMOKingdoms.LUNCHEON],
+                           self.slot_data["counts"][SMOKingdoms.RUINED],
+                           self.slot_data["counts"][SMOKingdoms.BOWSER], self.slot_data["counts"][SMOKingdoms.DARK],
+                           self.slot_data["counts"][SMOKingdoms.DARKER],
                            self.slot_data["goal"],
                            self.slot_data["death_link"], self.slot_data["capture_sanity"],
+                           self.slot_data["ability_sanity"],
                            self.slot_data["entrance_randomization"] > 0]))
 
 
@@ -625,10 +630,11 @@ class SMOContext(CommonContext):
 
                         # Filler
                         case ItemType.Coins:
-                            if str(net_item.location) in self.slot_data["coin_values"][str(net_item.player)]:
-                                packet.packet.amount = self.slot_data["coin_values"][str(net_item.player)][str(net_item.location)]
-                            else:
-                                print(packet.packet.sender_name, " location id: ", net_item.location)
+                            if str(net_item.player) in self.slot_data["coin_values"]:
+                                if str(net_item.location) in self.slot_data["coin_values"][str(net_item.player)]:
+                                    packet.packet.amount = self.slot_data["coin_values"][str(net_item.player)][str(net_item.location)]
+                                else:
+                                    print(packet.packet.sender_name, " location id: ", net_item.location)
                         # Flag items
                         case -4:
                             pass
