@@ -1027,7 +1027,6 @@ loc_Post_Cloud = {
 }
 
 loc_Moon_Post_Moon = {
-        SMOLocationData.beat_the_game: 2499,
 }
 
 loc_Captures = {
@@ -1722,6 +1721,8 @@ sub_area_bowser_clouds = {
 
 sub_area_church = {
         SMOLocationData.up_in_the_rafters: 593,
+        SMOLocationData.beat_the_game: 2499,
+
 }
 
 sub_area_shiveria = {
