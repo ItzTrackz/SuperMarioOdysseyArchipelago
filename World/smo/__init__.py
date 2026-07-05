@@ -11,7 +11,8 @@ from .Data.RuleData import kingdom_name_to_id, SMOKingdoms
 from .Options import SMOOptions
 from .Items import item_table, SMOItem, filler_item_table, outfits, shop_items, \
     moon_item_table, moon_types, stickers, souvenirs, capture_items, \
-    location_hint_list, regional_coin_types, difficulty_items, option_value_to_trick_item, option_value_to_glitch_item
+    location_hint_list, regional_coin_types, difficulty_items, option_value_to_trick_item, option_value_to_glitch_item, \
+    abilities
 from .Locations import locations_table, SMOLocation, locations_list, post_game_locations_list, \
     special_locations_table, full_moon_locations_list, story_moons, multi_moons, goals_table, regional_coin_table, \
     regional_coin_groups, regional_coins, regional_coin_groups_table, regional_sub_area_to_kingdom, shop_location_costs, \
@@ -326,6 +327,9 @@ class SMOWorld(World):
             elif name in regional_coin_types:
                 classification = ItemClassification.progression
 
+            elif name in abilities:
+                classification = ItemClassification.progression
+
         item: SMOItem
 
         # if classification == ItemClassification.progression_skip_balancing and name in self.item_name_groups["Cascade"]:
@@ -533,10 +537,13 @@ class SMOWorld(World):
             # else:
             #      print(location.name)
 
-        if self.options.capture_sanity.value == self.options.capture_sanity.option_true:
-            for location in locations:
+        for location in locations:
+            if self.options.capture_sanity.value == self.options.capture_sanity.option_true:
                 if location in capture_items and not location in self.multiworld.early_items[self.player]:
                     pool.append(location)
+            else:
+                # Push all captures into inventory when disabled
+                self.push_precollected(self.create_item(location))
 
         #endregion Captures
 
@@ -566,6 +573,19 @@ class SMOWorld(World):
                     location.place_locked_item(self.create_item(getattr(SMOItemData, f"{kingdom}_kingdom_regional_coin")))
 
         #endregion Regional Coins
+
+        #region Abilities
+
+        for ability in abilities:
+            if self.options.ability_sanity.value == self.options.ability_sanity.option_true:
+                if ability not in [SMOItemData.jump, SMOItemData.cap_throw]:
+                    pool.append(ability)
+                else:
+                    self.push_precollected(self.create_item(ability))
+            else:
+                # Push all captures into inventory when disabled
+                self.push_precollected(self.create_item(ability))
+        #endregion Abilities
 
         for difficulty in range(self.options.trick_logic.value):
             self.push_precollected(self.create_item(option_value_to_trick_item[difficulty]))
@@ -1319,7 +1339,7 @@ class SMOWorld(World):
                                         player_index,
                                         item_index, location.item.classification.value]
 
-        return {**(self.options.as_dict("goal", "colors", "regional_coins", "capture_sanity", "entrance_randomization", "death_link")), "counts" : self.moon_counts,
+        return {**(self.options.as_dict("goal", "colors", "regional_coins", "capture_sanity", "ability_sanity", "entrance_randomization", "death_link")), "counts" : self.moon_counts,
                 "shine_games": self.shine_games ,"shine_slots" : self.shine_slots, "shine_items" : self.shine_items, "shine_replace_data" : self.shine_replace_data, "shine_colors" : self.shine_colors,
                 "shop_games" : self.shop_games, "shop_players" : self.shop_players, "shop_ap_items" : self.shop_ap_items,
                 "regional_shop_games" : self.regional_shop_games, "regional_shop_players" : self.regional_shop_players, "regional_shop_ap_items" : self.regional_shop_ap_items,
@@ -1331,8 +1351,8 @@ class SMOWorld(World):
         if self.options.counts > 0:
             text = f"{'Moon Requirements:':33}"
             for key in self.moon_counts.keys():
-                if kingdom_name_to_id.index(key.capitalize()) <= self.options.goal:
-                    text += f"\n{'':33}{(key.capitalize() + (' Kingdom: ' if kingdom_name_to_id.index(key.capitalize()) < self.options.goal.option_dark else ' Side: '))}{str(self.moon_counts[key])}"
+                if kingdom_name_to_id[key] <= self.options.goal:
+                    text += f"\n{'':33}{(key + (' Kingdom: ' if kingdom_name_to_id[key] < self.options.goal.option_dark else ' Side: '))}{str(self.moon_counts[key])}"
             spoiler_handle.write(text)
 
         if self.options.entrance_randomization > 0:
