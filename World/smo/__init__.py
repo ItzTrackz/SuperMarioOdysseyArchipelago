@@ -1221,7 +1221,7 @@ class SMOWorld(World):
         self.regional_shop_games = sorted(self.regional_shop_games)
         self.regional_shop_players = sorted(self.regional_shop_players)
         self.regional_shop_ap_items = sorted(self.regional_shop_ap_items)
-        self.shine_games = sorted(self.regional_shop_ap_items)
+        self.shine_games = sorted(self.shine_games)
         self.shine_slots[-1] = sorted(self.shine_slots[-1])
         self.shine_items[-1] = sorted(self.shine_items[-1])
 
