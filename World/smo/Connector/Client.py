@@ -602,13 +602,14 @@ class SMOContext(CommonContext):
                     match item_type:
                         # Moons
                         case ItemType.Moon:
-                            moon_item_name = id_to_name[net_item.item].split()[0]
-                            if "Power" in moon_item_name:
-                                moon_item_name = SMOKingdoms.MUSHROOM
-                            if "Bowser" in moon_item_name:
-                                moon_item_name = SMOKingdoms.BOWSER
-                            moon_item = kingdom_name_to_id[moon_item_name]
-                            if moon_item > 15:
+                            moon_item_name: str = id_to_name[net_item.item]
+                            moon_item = -1
+                            for kingdom in kingdom_name_to_id:
+                                if kingdom in moon_item_name:
+                                    moon_item = kingdom_name_to_id[kingdom]
+                                    break
+
+                            if "Multi-Moon" in moon_item_name:
                                 moon_item += 17
 
                             packet.packet.amount = moon_item
