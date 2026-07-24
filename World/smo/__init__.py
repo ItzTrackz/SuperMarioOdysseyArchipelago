@@ -295,8 +295,9 @@ class SMOWorld(World):
             # self.top_hat_tower_bind = self.valid_top_hat_replacements[sub_area_index]
             # print(self.top_hat_tower_bind)
 
-    def create_item(self, name: str) -> Item:
-        item_id = self.item_name_to_id[name]
+    def create_item(self, name: str, item_id: int | None = -1) -> Item:
+        if item_id:
+            item_id = self.item_name_to_id[name]
         classification: ItemClassification = ItemClassification.filler
         if name in filler_item_table.keys():
             classification = ItemClassification.filler
@@ -409,6 +410,9 @@ class SMOWorld(World):
                     kingdoms.remove(index)
 
         for kingdom in story_moons.keys():
+            index = kingdom_name_to_id[kingdom]
+            if index > self.options.goal.value:
+                continue
             for i in range(len(story_moons[kingdom])):
                 if story_moons[kingdom][i] in locations:
                     pool.append(f"{kingdom} Story Moon")
@@ -416,6 +420,9 @@ class SMOWorld(World):
                     self.placement_counts[15] += 1
                     self.placement_counts[16] += 1
         for kingdom in multi_moons.keys():
+            index = kingdom_name_to_id[kingdom]
+            if index > self.options.goal.value:
+                continue
             for i in range(len(multi_moons[kingdom])):
                 if multi_moons[kingdom][i] in locations:
                     pool.append(f"{kingdom} Multi-Moon")
@@ -425,11 +432,12 @@ class SMOWorld(World):
 
         for kingdom in kingdom_name_to_id:
             index = kingdom_name_to_id[kingdom]
-            while self.placement_counts[index] < revised_counts[index]:
-                pool.append(f"{kingdom} Power Moon")
-                self.placement_counts[index] += 1
-                self.placement_counts[15] += 1
-                self.placement_counts[16] += 1
+            if index <= self.options.goal.value:
+                while self.placement_counts[index] < revised_counts[index]:
+                    pool.append(f"{kingdom} Power Moon")
+                    self.placement_counts[index] += 1
+                    self.placement_counts[15] += 1
+                    self.placement_counts[16] += 1
 
 
         # for location in locations:
@@ -511,7 +519,7 @@ class SMOWorld(World):
                 elif self.options.shop_sanity == "shuffle":
                     item_names.append(location)
                 else:
-                    self.get_location(location).place_locked_item(self.create_item(location))
+                    self.get_location(location).place_locked_item(self.create_item(location, None))
 
         # Souvenirs and stickers
         for location in shop_items:
@@ -570,7 +578,7 @@ class SMOWorld(World):
                     pool.append(getattr(SMOItemData, f"{kingdom}_kingdom_regional_coin"))
 
                 case self.options.regional_coins.option_off:
-                    location.place_locked_item(self.create_item(getattr(SMOItemData, f"{kingdom}_kingdom_regional_coin")))
+                    location.place_locked_item(self.create_item(getattr(SMOItemData, f"{kingdom}_kingdom_regional_coin"), None))
 
         #endregion Regional Coins
 
@@ -581,16 +589,16 @@ class SMOWorld(World):
                 if ability not in [SMOItemData.jump, SMOItemData.cap_throw]:
                     pool.append(ability)
                 else:
-                    self.push_precollected(self.create_item(ability))
+                    self.push_precollected(self.create_item(ability, None))
             else:
                 # Push all captures into inventory when disabled
-                self.push_precollected(self.create_item(ability))
+                self.push_precollected(self.create_item(ability, None))
         #endregion Abilities
 
         for difficulty in range(self.options.trick_logic.value):
-            self.push_precollected(self.create_item(option_value_to_trick_item[difficulty]))
+            self.push_precollected(self.create_item(option_value_to_trick_item[difficulty], None))
         for difficulty in range(self.options.glitch_logic.value):
-            self.push_precollected(self.create_item(option_value_to_glitch_item[difficulty]))
+            self.push_precollected(self.create_item(option_value_to_glitch_item[difficulty], None))
 
         # Remove start_inventory items from pool
         for start_item in self.options.start_inventory:
