@@ -314,3 +314,60 @@ class SMOItemData:
     # Glitches and Tricks shorthand
     surface_clip = "Surface Clip"
     roll_cancel_clip = "Roll Cancel Clip"
+
+    # Events
+    cascade_bridge_down = "Cascade Bridge Down"
+    cascade_madame_defeated = "Cascade Madame Broode Defeated"
+
+    sand_tower_platforms_active = "Floating Platforms Activated"
+    sand_pyramid_opened = "Inverted Pyramid Opened"
+    sand_harriet_defeated = "Sand Harriet Defeated"
+    sand_knucklotec_defeated = "Sand Knucklotec Defeated"
+
+    wooded_sphynx_complete = "Wooded Sphynx Moved"
+    wooded_lever_door = "Wooded Lever Door"
+    wooded_flower_road_switch = "Wooded Flower Road Switch Unlocked"
+    wooded_spewart_defeated = "Wooded Spewart Defeated"
+    wooded_flower_field_gate_opened = "Wooded Secret Flower Field Gate Opened"
+
+    lake_town_switch = "Lake Town Water Column Unlocked"
+    lake_arena_switch = "Lake Arena Shortcut Unlocked"
+    lake_rango_defeated = "Lake Rango Defeated"
+
+    cloud_bowser_defeated = "Cloud Bowser Defeated"
+
+    lost_klepto_defeated = "Lost Klepto Defeated"
+
+    metro_mecha_wiggler_defeated = "Metro Mecha Wiggler Defeated"
+    metro_guitarist_obtained = "Metro Guitarist Recruited"
+    metro_trumpeter_obtained = "Metro Trumpeter Recruited"
+    metro_bassist_obtained = "Metro Bassist Recruited"
+    metro_drummer_obtained = "Metro Drummer Recruited"
+    metro_power_on = "Metro Powered Up"
+    metro_festival_unlocked = "Metro Festival Unlocked"
+    metro_rc_door_opened = "Metro RC Door Opened"
+
+    seaside_stone_pillar_seal_unlocked = "Seaside Stone Pillar Seal Unlocked"
+    seaside_lighthouse_seal_unlocked = "Seaside Lighthouse Seal Unlocked"
+    seaside_hot_spring_seal_unlocked = "Seaside Hot Spring Seal Unlocked"
+    seaside_canyon_seal_unlocked = "Seaside Canyon Seal Unlocked"
+    seaside_mollusque_lanceur_defeated = "Mollusque-Lanceur Defeated"
+
+    snow_icicle_barrier_unlocked = "Snow Icicle Barrier Unlocked"
+    snow_snowy_mountain_barrier_unlocked = "Snow Snowy Mountain Barrier Unlocked"
+    snow_ice_wall_barrier_unlocked = "Snow Ice Wall Barrier Unlocked"
+    snow_gusty_barrier_unlocked = "Snow Gusty Barrier Unlocked"
+    snow_grand_prix_defeated = "Snow Grand Prix Complete"
+
+    luncheon_spewart_defeated = "Luncheon Spewart Defeated"
+    luncheon_cheese_rock_lever = "Luncheon Cheese Rock Lever"
+    luncheon_magma_cavern_completed = "Luncheon Magma Cavern Completed"
+    luncheon_cookatiel_defeated = "Luncheon Cookatiel Defeated"
+
+    ruined_lord_of_lightning_defeated = "Ruined Lord of Lightning Defeated"
+
+    moon_sphynx_moved = "Moon Sphynx Moved"
+    moon_bowser_defeated = "Moon Bowser Defeated"
+    moon_bowser2_defeated = "Moon Bowser 2 Defeated"
+
+    world_travelling_peach_activated = "World Travelling Peach Activated"
