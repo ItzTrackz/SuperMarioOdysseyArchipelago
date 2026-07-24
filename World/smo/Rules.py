@@ -440,6 +440,9 @@ def set_rules(self, options : SMOOptions) -> None:
             self: SMOWorld object for this player's world.
             options: The options from this player's yaml.
     """
+    def safe_set_rule(location_name: str, expression: Callable):
+        if location_name in self.multiworld.regions.location_cache[self.player]:
+            set_rule(self.get_location(location_name), expression)
     # Regional Coin Items
     regional_totals = {}
     for item, option, kingdom, cost in shop_location_costs:
@@ -447,98 +450,98 @@ def set_rules(self, options : SMOOptions) -> None:
             regional_totals[kingdom] = 0
         if self.options.goal.value >= option or self.options.entrance_randomization > 0:
             regional_totals[kingdom] += cost
-            set_rule(self.get_location(item), create_access_rule(self,[
+            safe_set_rule(item, create_access_rule(self,[
                 (SMORuleCondition.REGIONAL_COINS, [kingdom, regional_totals[kingdom]], SMORuleOperation.NONE)
             ]))
 
     # Outfit Moons
     if self.options.goal > self.options.goal.option_lake:
-        set_rule(self.get_location(SMOLocationData.mechanic_cap), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.mechanic_cap, create_access_rule(self, [
             (SMORuleCondition.ITEM, SMOItemData.mechanic_cap, SMORuleOperation.OR),
             (SMORuleCondition.REGION, SMORegion.odyssey_broken_down, SMORuleOperation.NONE)
         ]))
-        set_rule(self.get_location(SMOLocationData.mechanic_outfit), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.mechanic_outfit, create_access_rule(self, [
             (SMORuleCondition.ITEM, SMOItemData.mechanic_outfit, SMORuleOperation.OR),
             (SMORuleCondition.REGION, SMORegion.odyssey_broken_down, SMORuleOperation.NONE)
         ]))
-        set_rule(self.get_location(SMOLocationData.fashionable_cap), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.fashionable_cap, create_access_rule(self, [
             (SMORuleCondition.ITEM, SMOItemData.fashionable_cap, SMORuleOperation.OR),
             (SMORuleCondition.REGION, SMORegion.odyssey_broken_down, SMORuleOperation.NONE)
         ]))
-        set_rule(self.get_location(SMOLocationData.fashionable_outfit), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.fashionable_outfit, create_access_rule(self, [
             (SMORuleCondition.ITEM, SMOItemData.fashionable_outfit, SMORuleOperation.OR),
             (SMORuleCondition.REGION, SMORegion.odyssey_broken_down, SMORuleOperation.NONE)
         ]))
 
     if self.options.goal > self.options.goal.option_metro:
-        set_rule(self.get_location(SMOLocationData.pirate_hat), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.pirate_hat, create_access_rule(self, [
             (SMORuleCondition.ITEM, SMOItemData.pirate_hat, SMORuleOperation.OR),
             (SMORuleCondition.REGION, SMORegion.odyssey_sails_branch_2, SMORuleOperation.NONE)
         ]))
-        set_rule(self.get_location(SMOLocationData.pirate_outfit), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.pirate_outfit, create_access_rule(self, [
             (SMORuleCondition.ITEM, SMOItemData.pirate_outfit, SMORuleOperation.OR),
             (SMORuleCondition.REGION, SMORegion.odyssey_sails_branch_2, SMORuleOperation.NONE)
         ]))
-        # set_rule(self.multiworld.get_location("Clown Hat", self.player),
+        # safe_set_rule(self.multiworld.get_location("Clown Hat", self.player),
         #          lambda state: state.has("Clown Hat", self.player) or
         #         (count_moons(self, state, "Snow", self.player) and
         #         count_moons(self, state, "", self.player)))
-        # set_rule(self.multiworld.get_location("Clown Suit", self.player),
+        # safe_set_rule(self.multiworld.get_location("Clown Suit", self.player),
         #          lambda state: state.has("Clown Suit", self.player) or
         #         (count_moons(self, state, "", self.player) and
         #         count_moons(self, state, "", self.player)))
-        # set_rule(self.multiworld.get_location("", self.player),
+        # safe_set_rule(self.multiworld.get_location("", self.player),
         #          lambda state: state.has("", self.player) or
         #         (count_moons(self, state, "", self.player) and
         #         count_moons(self, state, "", self.player)))
 
 
     if self.options.goal > self.options.goal.option_moon:
-        set_rule(self.get_location(SMOLocationData.caveman_cave_fan),
+        safe_set_rule(SMOLocationData.caveman_cave_fan,
             create_access_rule(self, [
                 (SMORuleCondition.ITEM, [SMOItemData.caveman_headwear, SMOItemData.caveman_outfit], SMORuleOperation.NONE)
             ]))
-        set_rule(self.get_location(SMOLocationData.that_trendy_pirate_look),
+        safe_set_rule(SMOLocationData.that_trendy_pirate_look,
                  create_access_rule(self, [
                      (SMORuleCondition.ITEM, [SMOItemData.pirate_hat, SMOItemData.pirate_outfit],
                       SMORuleOperation.NONE)
                  ]))
-        set_rule(self.get_location(SMOLocationData.space_is_in_right_now),
+        safe_set_rule(SMOLocationData.space_is_in_right_now,
                  create_access_rule(self, [
                      (SMORuleCondition.ITEM, [SMOItemData.space_suit, SMOItemData.space_helmet],
                       SMORuleOperation.NONE)
                  ]))
 
-        set_rule(self.get_location(SMOLocationData.that_old_west_style),
+        safe_set_rule(SMOLocationData.that_old_west_style,
                  create_access_rule(self, [
                      (SMORuleCondition.ITEM, [SMOItemData.cowboy_hat, SMOItemData.cowboy_outfit],
                       SMORuleOperation.NONE)
                  ]))
-        set_rule(self.get_location(SMOLocationData.mechanic_repairs_complete),
+        safe_set_rule(SMOLocationData.mechanic_repairs_complete,
                  create_access_rule(self, [
                      (SMORuleCondition.ITEM, [SMOItemData.mechanic_cap, SMOItemData.mechanic_outfit],
                       SMORuleOperation.NONE)
                  ]))
-        set_rule(self.get_location(SMOLocationData.doctor_in_the_house),
+        safe_set_rule(SMOLocationData.doctor_in_the_house,
                  create_access_rule(self, [
                      (SMORuleCondition.ITEM, [SMOItemData.doctor_headwear, SMOItemData.doctor_outfit],
                       SMORuleOperation.NONE)
                  ]))
 
-        # set_rule(self.multiworld.get_location("Mushroom Kingdom - Totally Classic", self.player),
+        # safe_set_rule(self.multiworld.get_location("Mushroom Kingdom - Totally Classic", self.player),
         #          lambda state: (state.has("Mario 64 Cap", self.player) and state.has("Mario 64 Suit", self.player)) or (
         #                      state.has("Metal Mario Cap", self.player) and state.has("Metal Mario Clothes", self.player)))
-        # set_rule(self.multiworld.get_location("Mushroom Kingdom - Courtyard Chest Trap", self.player),
+        # safe_set_rule(self.multiworld.get_location("Mushroom Kingdom - Courtyard Chest Trap", self.player),
         #          lambda state: (state.has("Mario 64 Cap", self.player) and state.has("Mario 64 Suit", self.player)) or (
         #                      state.has("Metal Mario Cap", self.player) and state.has("Metal Mario Clothes", self.player)))
-        set_rule(self.get_location(SMOLocationData.surprise_clown),
+        safe_set_rule(SMOLocationData.surprise_clown,
                  create_access_rule(self, [
                      (SMORuleCondition.ITEM, [SMOItemData.clown_hat, SMOItemData.clown_suit],
                       SMORuleOperation.NONE)
                  ]))
 
     # OBSELETE from new region access rules
-    # set_rule(self.get_location(SMOLocationData.dancing_with_new_friends),
+    # safe_set_rule(SMOLocationData.dancing_with_new_friends),
     #          create_access_rule(self, [
     #              (SMORuleCondition.ITEM, [SMOItemData.sombrero, SMOItemData.poncho],
     #               SMORuleOperation.OR),
@@ -547,31 +550,31 @@ def set_rules(self, options : SMOOptions) -> None:
 
     if self.options.goal > self.options.goal.option_lake:
         pass
-        # set_rule(self.multiworld.get_location("Exploring for Treasure", self.player),
+        # safe_set_rule(self.multiworld.get_location("Exploring for Treasure", self.player),
         #          lambda state: state.has("Explorer Hat", self.player) and state.has("Explorer Outfit", self.player))
 
 
     # if self.options.goal > self.options.goal.option_metro:
-        # set_rule(self.multiworld.get_location("Rewiring the Neighborhood", self.player),
+        # safe_set_rule(self.multiworld.get_location("Rewiring the Neighborhood", self.player),
         #          lambda state: state.has("Builder Helmet", self.player) and state.has("Builder Outfit", self.player))
-        # set_rule(self.multiworld.get_location("A Relaxing Dance", self.player),
+        # safe_set_rule(self.multiworld.get_location("A Relaxing Dance", self.player),
         #          lambda state: state.has("Resort Hat", self.player) and state.has("Resort Outfit", self.player))
-        # set_rule(self.multiworld.get_location("Moon Shards in the Cold Room", self.player),
+        # safe_set_rule(self.multiworld.get_location("Moon Shards in the Cold Room", self.player),
         #          lambda state: state.has("Snow Hood", self.player) and state.has("Snow Suit", self.player))
-        # set_rule(self.multiworld.get_location("Slip Behind the Ice", self.player),
+        # safe_set_rule(self.multiworld.get_location("Slip Behind the Ice", self.player),
         #          lambda state: state.has("Snow Hood", self.player) and state.has("Snow Suit", self.player))
 
 
     # if self.options.goal > self.options.goal.option_metro:
-    #     set_rule(self.multiworld.get_location("A Strong Simmer", self.player),
+    #     safe_set_rule(self.multiworld.get_location("A Strong Simmer", self.player),
     #              lambda state: state.has("Chef Hat", self.player) and state.has("Chef Suit", self.player))
-    #     set_rule(self.multiworld.get_location("An Extreme Simmer", self.player),
+    #     safe_set_rule(self.multiworld.get_location("An Extreme Simmer", self.player),
     #              lambda state: state.has("Chef Hat", self.player) and state.has("Chef Suit", self.player))
     #
     # if self.options.goal > self.options.goal.option_luncheon:
-    #     set_rule(self.multiworld.get_location("Scene of Crossing the Poison Swamp", self.player),
+    #     safe_set_rule(self.multiworld.get_location("Scene of Crossing the Poison Swamp", self.player),
     #              lambda state: state.has("Samurai Helmet", self.player) and state.has("Samurai Armor", self.player))
-    #     set_rule(self.multiworld.get_location("Taking Notes: In the Folding Screen", self.player),
+    #     safe_set_rule(self.multiworld.get_location("Taking Notes: In the Folding Screen", self.player),
     #              lambda state: state.has("Samurai Helmet", self.player) and state.has("Samurai Armor", self.player))
 
     # Post Game Outfits
@@ -579,22 +582,22 @@ def set_rules(self, options : SMOOptions) -> None:
         for outfit in self.outfit_moon_counts.keys():
             if self.options.goal > self.options.goal.option_dark:
                 if self.outfit_moon_counts[outfit] < self.moon_counts["dark"]:
-                    set_rule(self.get_location(outfit), create_access_rule(self, [
+                    safe_set_rule(outfit, create_access_rule(self, [
                         (SMORuleCondition.TOTAL_MOONS, self.outfit_moon_counts[outfit], SMORuleOperation.OR),
                         (SMORuleCondition.ITEM, outfit, SMORuleOperation.NONE)
                     ]))
                 else:
-                    set_rule(self.get_location(outfit), create_access_rule(self, [
+                    safe_set_rule(outfit, create_access_rule(self, [
                         (SMORuleCondition.ITEM, outfit, SMORuleOperation.NONE)
                     ]))
             elif self.options.goal > self.options.goal.option_darker:
                 if self.outfit_moon_counts[outfit] < self.moon_counts["darker"]:
-                    set_rule(self.get_location(outfit), create_access_rule(self, [
+                    safe_set_rule(outfit, create_access_rule(self, [
                         (SMORuleCondition.TOTAL_MOONS, self.outfit_moon_counts[outfit], SMORuleOperation.OR),
                         (SMORuleCondition.ITEM, outfit, SMORuleOperation.NONE)
                     ]))
                 else:
-                    set_rule(self.get_location(outfit), create_access_rule(self, [
+                    safe_set_rule(outfit, create_access_rule(self, [
                         (SMORuleCondition.ITEM, outfit, SMORuleOperation.NONE)
                     ]))
 
@@ -641,378 +644,378 @@ def set_rules(self, options : SMOOptions) -> None:
     # Captures
     # Cascade Story
 
-        set_rule(self.get_location(SMOItemData.broodes_chain_chomp),
+        safe_set_rule(SMOItemData.broodes_chain_chomp,
                  create_access_rule(self, [
                      (SMORuleCondition.CAPTURE, SMOItemData.big_chain_chomp, SMORuleOperation.OR),
                      (SMORuleCondition.CAPTURE, SMOItemData.t_rex, SMORuleOperation.OR),
                      (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.NONE),
                  ]))
-        #set_rule(self.multiworld.get_location("Our First Power Moon", self.player),
+        #safe_set_rule(self.multiworld.get_location("Our First Power Moon", self.player),
         #         lambda state: state.has("Chain Chomp", self.player) or state.has(SMOItemData.t_rex, self.player))
-        #set_rule(self.multiworld.get_location("Multi Moon Atop the Falls", self.player),
+        #safe_set_rule(self.multiworld.get_location("Multi Moon Atop the Falls", self.player),
         #         lambda state: state.has("Broode's Chain Chomp", self.player))
         # Sand Story
         # TEST CAPTURELESS
-        set_rule(self.get_location(SMOLocationData.knucklotecs_fist),
+        safe_set_rule(SMOLocationData.knucklotecs_fist,
                  create_access_rule(self, [
                      (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.NONE),
                  ]))
 
     # New Rules
-    set_rule(self.get_location(SMOLocationData.searching_the_frog_pond), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.searching_the_frog_pond, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.secrets_of_the_frog_pond), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.secrets_of_the_frog_pond, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.skimming_the_poison_tide), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.skimming_the_poison_tide, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.slipping_through_the_poison_tide), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.slipping_through_the_poison_tide, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.push_block_peril), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.push_block_peril, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.spark_pylon], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.hidden_among_the_push_blocks), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.hidden_among_the_push_blocks, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.spark_pylon], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.nice_shot_with_the_chain_chomp), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.nice_shot_with_the_chain_chomp, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.very_nice_shot_with_the_chain_chomp), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.very_nice_shot_with_the_chain_chomp, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.chain_chomp], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.dinosaur_nest_big_cleanup), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.dinosaur_nest_big_cleanup, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.t_rex], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.dinosaur_nest_running_wild), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.dinosaur_nest_running_wild, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.t_rex], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.the_invisible_maze), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.the_invisible_maze, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.moe_eye], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.skull_sign_in_the_transparent_maze), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.skull_sign_in_the_transparent_maze, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.moe_eye], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.the_bullet_bill_maze_break_through), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.the_bullet_bill_maze_break_through, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.the_bullet_bill_maze_side_path), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.the_bullet_bill_maze_side_path, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
 
-    set_rule(self.get_location(SMOLocationData.underground_treasure_chest), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.underground_treasure_chest, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.goomba_tower_assembly), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.goomba_tower_assembly, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.the_hole_in_the_desert), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.the_hole_in_the_desert, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill, SMOItemData.knucklotecs_fist], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.where_the_transparent_platforms_end), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.where_the_transparent_platforms_end, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.moe_eye], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_HARD, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.jump_onto_the_transparent_lift), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.jump_onto_the_transparent_lift, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.moe_eye], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.through_the_freezing_waterway), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.through_the_freezing_waterway, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.freezing_waterway_hidden_room), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.freezing_waterway_hidden_room, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.a_successful_repair_job), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.a_successful_repair_job, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.puzzle_part_lake_kingdom], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.unzip_the_chasm), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.unzip_the_chasm, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.super_secret_zipper), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.super_secret_zipper, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.zipper], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.waves_of_poison_hoppin_over), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.waves_of_poison_hoppin_over, create_access_rule(self, [
     (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.waves_of_poison_hop_to_it), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.waves_of_poison_hop_to_it, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.frog], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.flower_road_run), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.flower_road_run, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE)
     # ]))
-    # set_rule(self.get_location(SMOLocationData.flower_road_reach), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.flower_road_reach, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.NONE)
     # ]))
-    set_rule(self.get_location(SMOLocationData.elevator_escalation), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.elevator_escalation, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.elevator_blind_spot), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.elevator_blind_spot, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.wandering_in_the_fog), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.wandering_in_the_fog, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.nut_hidden_in_the_fog), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.nut_hidden_in_the_fog, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.paragoomba], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.walking_on_clouds), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.walking_on_clouds, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.above_the_clouds), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.above_the_clouds, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.defend_the_secret_flower_field), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.defend_the_secret_flower_field, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.invisible_road_danger), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.invisible_road_danger, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.poison_piranha_plant], SMORuleOperation.NONE)
     # ]))
-    # set_rule(self.get_location(SMOLocationData.invisible_road_hidden_room), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.invisible_road_hidden_room, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.poison_piranha_plant], SMORuleOperation.NONE)
     # ]))
-    # set_rule(self.get_location(SMOLocationData.down_and_back_breakdown_road), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.down_and_back_breakdown_road, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.banzai_bill], SMORuleOperation.NONE)
     # ]))
-    set_rule(self.get_location(SMOLocationData.below_breakdown_road), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.below_breakdown_road, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.banzai_bill], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.picture_match_basically_a_goomba), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.picture_match_basically_a_goomba, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_goomba], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.picture_match_a_stellar_goomba), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.picture_match_a_stellar_goomba, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_goomba], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.stretch_and_traverse_the_jungle), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.stretch_and_traverse_the_jungle, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.aglow_in_the_jungle), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.aglow_in_the_jungle, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.tropical_wiggler], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.chasing_klepto), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.chasing_klepto, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
     # ]))
     # TEST CAPTURELESS
-    set_rule(self.get_location(SMOLocationData.extremely_hot_bath), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.extremely_hot_bath, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.rc_car_pro), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.rc_car_pro, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.rc_car], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.rewiring_the_neighborhood), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.rewiring_the_neighborhood, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.spark_pylon], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.off_the_beaten_wire), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.off_the_beaten_wire, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.spark_pylon], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.moon_shards_under_siege), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.moon_shards_under_siege, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.GLITCH_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.sharpshooting_under_siege), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.sharpshooting_under_siege, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.sherm], SMORuleOperation.NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.bullet_billding), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.bullet_billding, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.NONE)
     # ]))
-    set_rule(self.get_location(SMOLocationData.one_mans_trash), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.one_mans_trash, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bullet_bill], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.swinging_scaffolding_jump), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.swinging_scaffolding_jump, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.hammer_bro], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.swinging_scaffolding_break), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.swinging_scaffolding_break, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.hammer_bro], SMORuleOperation.NONE)
     ]))
 
     if self.options.goal.value > self.options.goal.option_dark:
-        set_rule(self.get_location(SMOLocationData.powering_up_the_power_plant), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.powering_up_the_power_plant, create_access_rule(self, [
             (SMORuleCondition.CAPTURE, [SMOItemData.puzzle_part_metro_kingdom], SMORuleOperation.NONE)
         ]))
-    set_rule(self.get_location(SMOLocationData.looking_back_in_the_dark_waterway), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.looking_back_in_the_dark_waterway, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.cheep_cheep], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.fly_through_the_narrow_valley), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.fly_through_the_narrow_valley, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.treasure_chest_in_the_narrow_valley), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.treasure_chest_in_the_narrow_valley, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.gushen], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.hurry_and_stretch), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.hurry_and_stretch, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.stretch_on_the_side_path), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.stretch_on_the_side_path, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.uproot], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.aim_poke ), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.aim_poke , create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.pokio], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.poke_roll ), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.poke_roll , create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.pokio], SMORuleOperation.NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.entrance_to_shiveria), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.entrance_to_shiveria, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
     # ]))
-    # set_rule(self.get_location(SMOLocationData.shining_in_the_snow_in_town), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.shining_in_the_snow_in_town, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
     # ]))
-    # set_rule(self.get_location(SMOLocationData.the_shiverian_treasure_chest), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.the_shiverian_treasure_chest, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
     # ]))
-    set_rule(self.get_location(SMOLocationData.found_with_snow_kingdom_art), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.found_with_snow_kingdom_art, create_access_rule(self, [
         (SMORuleCondition.REGION, SMORegion.shiveria_peace, SMORuleOperation.NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.the_icicle_barrier), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.the_icicle_barrier, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
     # ]))
-    set_rule(self.get_location(SMOLocationData.ice_dodging_goomba_stack), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.ice_dodging_goomba_stack, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.GLITCH_HARD, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.the_ice_wall_barrier), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.the_ice_wall_barrier, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
     # ]))
-    # set_rule(self.get_location(SMOLocationData.treasure_in_the_ice_wall), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.treasure_in_the_ice_wall, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
     # ]))
-    set_rule(self.get_location(SMOLocationData.the_gusty_barrier), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.the_gusty_barrier, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.ty_foo], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.atop_a_blustery_arch), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.atop_a_blustery_arch, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.ty_foo], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.the_snowy_mountain_barrier), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.the_snowy_mountain_barrier, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
     # ]))
-    # set_rule(self.get_location(SMOLocationData.behind_the_snowy_mountain), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.behind_the_snowy_mountain, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.goomba, SMOItemData.ty_foo], SMORuleOperation.NONE)
     # ]))
-    set_rule(self.get_location(SMOLocationData.the_bound_bowl_grand_prix), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.the_bound_bowl_grand_prix, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.shiverian_racer], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.snowline_circuit_class_s), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.snowline_circuit_class_s, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.shiverian_racer], SMORuleOperation.AND),
         (SMORuleCondition.REGION, SMORegion.snow_kingdom_peace, SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.stacked_up_ice_climb), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.stacked_up_ice_climb, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.goomba], SMORuleOperation.AND),
         (SMORuleCondition.REGION, SMORegion.snow_kingdom_moon_rock, SMORuleOperation.AND),
         (SMORuleCondition.REGION, SMORegion.shiveria_peace, SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.icy_jump_challenge), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.icy_jump_challenge, create_access_rule(self, [
         (SMORuleCondition.REGION, SMORegion.snow_kingdom_moon_rock, SMORuleOperation.AND),
         (SMORuleCondition.REGION, SMORegion.shiveria_peace, SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.a_strong_simmer), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.a_strong_simmer, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.an_extreme_simmer), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.an_extreme_simmer, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.fork_flickin_to_the_summit), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.fork_flickin_to_the_summit, create_access_rule(self, [
     (SMORuleCondition.CAPTURE, [SMOItemData.volbonan], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.fork_flickin_detour), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.fork_flickin_detour, create_access_rule(self, [
     (SMORuleCondition.CAPTURE, [SMOItemData.volbonan], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.excavate_n_search_the_cheese_rocks), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.excavate_n_search_the_cheese_rocks, create_access_rule(self, [
     (SMORuleCondition.CAPTURE, [SMOItemData.hammer_bro], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.climb_the_cheese_rocks), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.climb_the_cheese_rocks, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.hammer_bro], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
     # TEST CAPTURELESS
-    set_rule(self.get_location(SMOLocationData.magma_narrow_path), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.magma_narrow_path, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.crossing_to_the_magma), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.crossing_to_the_magma, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
     ]))
     # TEST CAPTURELESS
-    set_rule(self.get_location(SMOLocationData.stepping_over_the_gears_and_lanterns_on_the_gear_steps),
+    safe_set_rule(SMOLocationData.stepping_over_the_gears_and_lanterns_on_the_gear_steps,
              create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.fire_bro], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.TRICK_EASY, [], SMORuleOperation.PARENTHESIS_NONE)
              ]))
-    set_rule(self.get_location(SMOLocationData.lanterns_on_the_gear_steps), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.lanterns_on_the_gear_steps, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.fire_bro], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.treasure_of_the_lava_islands), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.treasure_of_the_lava_islands, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.flying_over_the_lava_islands), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.flying_over_the_lava_islands, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.lava_bubble], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.charging_through_an_army), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.charging_through_an_army, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.chargin_chuck], SMORuleOperation.NONE)
     ]))
-    # set_rule(self.get_location(SMOLocationData.the_mummys_curse), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.the_mummys_curse, create_access_rule(self, [
     # (SMORuleCondition.CAPTURE, [SMOItemData.chargin_chuck], SMORuleOperation.NONE)
     # ]))
     # TEST CAPTURELESS
-    set_rule(self.get_location(SMOLocationData.jizos_big_adventure), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.jizos_big_adventure, create_access_rule(self, [
     (SMORuleCondition.CAPTURE, [SMOItemData.jizo], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.jizo_and_the_hidden_room), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.jizo_and_the_hidden_room, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.jizo], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.searching_hexagon_tower), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.searching_hexagon_tower, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.parabones], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.center_of_hexagon_tower), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.center_of_hexagon_tower, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.parabones], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.climb_the_wooden_tower), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.climb_the_wooden_tower, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.pokio], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.poke_the_wooden_tower), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.poke_the_wooden_tower, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.pokio], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.under_the_bowser_statue), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.under_the_bowser_statue, create_access_rule(self, [
         (SMORuleCondition.CAPTURE, [SMOItemData.bowser_statue], SMORuleOperation.PARENTHESIS_OR),
         (SMORuleCondition.GLITCH_INTERMEDIATE, [], SMORuleOperation.PARENTHESIS_NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.in_a_hole_in_the_magma), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.in_a_hole_in_the_magma, create_access_rule(self, [
         (SMORuleCondition.CAPTURE,
          [SMOItemData.parabones], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.around_the_barrier_wall), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.around_the_barrier_wall, create_access_rule(self, [
         (SMORuleCondition.CAPTURE,
          [SMOItemData.sherm, SMOItemData.spark_pylon, SMOItemData.hammer_bro,
           SMOItemData.tropical_wiggler, SMOItemData.banzai_bill, SMOItemData.bullet_bill], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.on_top_of_the_cannon), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.on_top_of_the_cannon, create_access_rule(self, [
         (SMORuleCondition.CAPTURE,
          [SMOItemData.sherm, SMOItemData.spark_pylon, SMOItemData.hammer_bro,
           SMOItemData.tropical_wiggler, SMOItemData.banzai_bill, SMOItemData.bullet_bill], SMORuleOperation.NONE)
     ]))
-    set_rule(self.get_location(SMOLocationData.fly_to_the_treasure_chest_and_back), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.fly_to_the_treasure_chest_and_back, create_access_rule(self, [
         (SMORuleCondition.CAPTURE,
          [SMOItemData.bowser_statue, SMOItemData.sherm, SMOItemData.spark_pylon, SMOItemData.hammer_bro,
           SMOItemData.tropical_wiggler, SMOItemData.banzai_bill, SMOItemData.bullet_bill], SMORuleOperation.NONE)
@@ -1020,7 +1023,7 @@ def set_rules(self, options : SMOOptions) -> None:
 
 
     # Inverted Mural Unique Sub Area access rule
-    set_rule(self.get_location(SMOLocationData.secret_of_the_inverted_mural), create_access_rule(self, [
+    safe_set_rule(SMOLocationData.secret_of_the_inverted_mural, create_access_rule(self, [
         (SMORuleCondition.ENTRANCE,
          [SMORegion.sand_kingdom, f"{SMOEntranceData.inverted_pyramid_lower_interior} Unique Exit",
           SMOEntranceDataType.EXIT], SMORuleOperation.OR),
@@ -1029,20 +1032,20 @@ def set_rules(self, options : SMOOptions) -> None:
           SMOEntranceDataType.EXIT], SMORuleOperation.NONE)
     ]))
 
-    # set_rule(self.get_location(SMOLocationData.up_in_the_rafters), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.up_in_the_rafters, create_access_rule(self, [
     #     (SMORuleCondition.REGION, SMORegion.odyssey_complete, SMORuleOperation.NONE)
     # ]))
 
-    # set_rule(self.get_location(SMOLocationData.beat_the_game), create_access_rule(self, [
+    # safe_set_rule(SMOLocationData.beat_the_game, create_access_rule(self, [
     #     (SMORuleCondition.CAPTURE, [SMOItemData.bowser], SMORuleOperation.AND),
     #     (SMORuleCondition.REGION, SMORegion.odyssey_complete, SMORuleOperation.NONE),
     # ]))
 
     if len(self.get_region(SMORegion.mushroom_picture_match).locations) > 0:
-        set_rule(self.get_location(SMOLocationData.picture_match_basically_mario), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.picture_match_basically_mario, create_access_rule(self, [
             (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_mario], SMORuleOperation.NONE)
         ]))
-        set_rule(self.get_location(SMOLocationData.picture_match_a_stellar_mario), create_access_rule(self, [
+        safe_set_rule(SMOLocationData.picture_match_a_stellar_mario, create_access_rule(self, [
             (SMORuleCondition.CAPTURE, [SMOItemData.picture_match_part_mario], SMORuleOperation.NONE)
         ]))
 
@@ -1050,10 +1053,11 @@ def set_rules(self, options : SMOOptions) -> None:
     for location in self.get_locations():
         if location.name in rule_data:
             if location.access_rule != Location.access_rule:
-                print(location.name)
+                pass
+                # print(location.name)
             else:
                 if len(rule_data[location.name]) > 0:
-                    set_rule(location, create_access_rule(self, rule_data[location.name]))
+                    safe_set_rule(location, create_access_rule(self, rule_data[location.name]))
 
         if location.name in regional_coin_table:
             for stage in regional_coin_groups:
@@ -1062,7 +1066,7 @@ def set_rules(self, options : SMOOptions) -> None:
                         for regional_group_name in regional_coin_groups_table:
                             if regional_coin_groups_table[regional_group_name] == regional_group_id:
                                 if regional_group_name in rule_data:
-                                    set_rule(location, create_access_rule(self, rule_data[regional_group_name]))
+                                    safe_set_rule(location, create_access_rule(self, rule_data[regional_group_name]))
                                 else:
                                     break
 
