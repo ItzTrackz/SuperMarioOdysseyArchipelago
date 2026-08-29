@@ -25,6 +25,8 @@ class Goal(Choice):
     Valid options: Metro (A Traditional Festival), Luncheon (Cookatiel Showdown), Moon (Beat the game), Dark (Arrival at Rabbit Ridge), Darker (A Long Journey's End)"""
     display_name = "Goal"
 
+    option_sand = 2
+    option_lake = 4
     option_cloud = 5
     option_metro = 7
     option_luncheon = 10
@@ -196,7 +198,6 @@ class ItemPool(Choice):
 class AbilitiesForSale(Range):
     """
     Each Purple Shop sells this many seeded progressive ability offers. Shops can repeat offers, but an individual shop cannot.
-
     """
 
     display_name = "Abilities For Sale"
@@ -213,7 +214,7 @@ class CapturesForSale(Range):
     Each Purple Shop sells this many seeded capture offers. Shops can repeat offers, but an individual shop cannot.
     """
 
-    display_name = "Each Purple Shop sells this many seeded capture offers. Shops can repeat offers, but an individual shop cannot."
+    display_name = "Captures For Sale"
 
     range_start = 0
     range_end = 3
@@ -668,6 +669,7 @@ class TrackerTimer(DefaultOnToggle):
 
 @dataclass
 class SMOOptions(PerGameCommonOptions):
+    starting_position: StartingPosition
     goal: Goal
     seed_style : SeedStyle
     locked_captures : LockedCaptures
@@ -726,7 +728,7 @@ option_groups = [
     ),
     OptionGroup(
         "Logic Settings",
-        [LogicLevel, PrioritizeDifficultMovement, SeedStyle]
+        [LogicLevel, PrioritizeDifficultMovement, SeedStyle],
     ),
     OptionGroup(
         "Ability and Capture Lock",
