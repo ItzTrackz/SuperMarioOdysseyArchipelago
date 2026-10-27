@@ -71,9 +71,9 @@ class MoonRequirement(Range):
     Determines the minimum number of moons required to progress in the game.
     """
     display_name = "Moon Requirement"
+    range_start = 0
+    range_end = 657
     default = 124
-    low = 0
-    high = 657
 
 class RequirementDifficulty(Choice):
     """
@@ -96,10 +96,9 @@ class RequirementDeviation(Range):
     How far each kingdom requirement may sit either side of its base value. A kingdom is rolled somewhere in base-deviation to base+deviation; the total stays what you set. Press A to type a number; 5 is the vanilla setting
     """
     display_name = "Requirement Deviation"
+    range_start = 0
+    range_end = 20
     default = 5
-    low = 0
-    high = 20
-
 #Progression and Logic
 
 class LogicLevel(Choice):

@@ -7,10 +7,10 @@ from .Items import item_table, SMOItem, filler_item_table, outfits, shop_items, 
     location_hint_list
 from .Locations import locations_table, SMOLocation, locations_list, post_game_locations_list, \
     special_locations_table, full_moon_locations_list, goals_table
-from .Options import SMOOptions
+from .Options import SMOOptions, option_groups
 from .Rules import set_rules
 from .Regions import create_regions
-from BaseClasses import Item, ItemClassification
+from BaseClasses import Item, ItemClassification, Tutorial
 from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import (Component, components, Type as component_type, SuffixIdentifier, launch as launch_component)
 from settings import Group, UserFolderPath
